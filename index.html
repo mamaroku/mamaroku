@@ -486,7 +486,7 @@ function chk(){
 
 // ── State ──
 const CATS=[...new Set(SHAPES.map(s=>s.cat))];
-let activeCat=CATS[0], selIdx=0, selSize=400;
+let activeCat=CATS[0], selIdx=0, selSize=900;
 let borderStyle='none', borderColor='#ffffff';
 let userImg=null, photoOx=0, photoOy=0;
 
@@ -561,7 +561,7 @@ function initUI(){
   // Color picker inits lazily when border panel first opens
 
   // Sizes
-  [{l:'S',p:200},{l:'M',p:400},{l:'L',p:600}].forEach(s=>{
+  [{l:'S',p:600},{l:'M',p:900},{l:'L',p:1200}].forEach(s=>{
     const b=document.createElement('div');
     b.className='szbtn'+(s.p===selSize?' selected':'');
     b.textContent=s.l;
