@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>mamaroku | 素材管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f6f2;
+  --sur: #fdfcfa;
+  --bd: #d8d4cc;
+  --bdl: #e8e4de;
+  --text: #3a3630;
+  --muted: #5a5450;
+  --faint: #7a7670;
+  --acc: #5a524a;
+  --rose: #d4a5a5;
+  --blush: #f4e8e4;
+  --dusty: #c8b8b0;
+  --brown: #8a6f60;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { 
+  height: 100%; 
+  width: 100%; 
+  background: var(--bg); 
+  font-family: 'Zen Kaku Gothic New', sans-serif; 
+  font-weight: 300; 
+  color: var(--text); 
+  overflow: hidden;
+}
+
+/* ── LOGIN ── */
+#login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg);
+  z-index: 100;
+}
+.ll {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem;
+  font-weight: 300;
+  letter-spacing: 0.35em;
+  color: var(--text);
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+.ls {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--faint);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+.lf {
+  width: 100%;
+  max-width: 300px;
+  border: 1px solid var(--bd);
+  padding: 1.4rem;
+  background: var(--sur);
+  position: relative;
+}
+.lf::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--bdl);
+  pointer-events: none;
+}
+.ln {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 1.1rem;
+  line-height: 1.7;
+}
+#pw-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  border: none;
+  border-bottom: 1px solid var(--bd);
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  margin-bottom: 1.1rem;
+  font-family: inherit;
+}
+#pw-btn {
+  width: 100%;
+  padding: 9px;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--bd);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+#pw-btn:hover { background: var(--text); color: var(--bg); }
+#pw-error {
+  font-size: 11px;
+  color: #a06060;
+  text-align: center;
+  margin-top: 7px;
+  min-height: 14px;
+}
+
+/* ── MAIN SCREEN ── */
+#main-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+}
+#main-screen.active { display: flex; }
+
+/* Header */
+.header {
+  background: var(--sur);
+  border-bottom: 1px solid var(--bdl);
+  padding: 16px;
+  flex-shrink: 0;
+}
+.header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.header p {
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+}
+
+/* Tab Navigation */
+.tabs {
+  display: flex;
+  background: var(--sur);
+  border-bottom: 1px solid var(--bdl);
+  flex-shrink: 0;
+}
+.tab {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  border-right: 1px solid var(--bdl);
+}
+.tab:last-child { border-right: none; }
+.tab.active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* Content Area */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--bg);
+}
+
+/* Category Management */
+.cat-section {
+  margin-bottom: 24px;
+}
+.cat-section h2 {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--acc);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bdl);
+}
+
+.cat-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cat-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  background: var(--sur);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+.cat-add-btn {
+  padding: 10px 20px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.cat-add-btn:hover { background: var(--acc); }
+
+.cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--sur);
+  border: 1px solid var(--bdl);
+  border-radius: 4px;
+}
+.cat-name {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+.cat-actions {
+  display: flex;
+  gap: 6px;
+}
+.cat-btn {
+  padding: 6px 12px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--bd);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.cat-btn:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
+.cat-btn.delete:hover { background: #a06060; border-color: #a06060; }
+
+/* Material Upload */
+.upload-section {
+  margin-bottom: 24px;
+}
+.upload-section h2 {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--acc);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bdl);
+}
+
+.upload-form {
+  background: var(--sur);
+  border: 1px solid var(--bdl);
+  padding: 16px;
+  border-radius: 4px;
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  background: var(--bg);
+  font-size: 12px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+
+.file-input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  border: 2px dashed var(--bd);
+  background: var(--bg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.file-input-wrapper:hover { border-color: var(--acc); }
+.file-input-wrapper input { display: none; }
+.file-icon {
+  font-size: 32px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.file-text {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.preview-area {
+  margin-top: 12px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.preview-area.active { display: flex; }
+.preview-img {
+  max-width: 200px;
+  max-height: 200px;
+  border: 1px solid var(--bd);
+  background: transparent;
+  display: block;
+  margin: 0 auto;
+}
+.upload-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  margin-top: 16px;
+}
+.upload-btn:hover { background: var(--acc); }
+.upload-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Material Gallery */
+.gallery-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bdl);
+}
+.gallery-section-header h2 {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--acc);
+  margin: 0; padding: 0; border: none;
+}
+.select-toggle-btn {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--bd);
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.select-toggle-btn:hover, .select-toggle-btn.active {
+  background: var(--text); color: var(--bg); border-color: var(--text);
+}
+.gallery-cats {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.gallery-cat {
+  background: var(--sur);
+  border: 1px solid var(--bdl);
+  padding: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gallery-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--bdl);
+}
+.gallery-cat-title {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.select-all-cat-btn {
+  display: none;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--bd);
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.select-mode .select-all-cat-btn { display: block; }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.gallery-item {
+  position: relative;
+  aspect-ratio: 1/1;
+  border: 2px solid var(--bd);
+  border-radius: 8px;
+  padding: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.gallery-item-delete {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: rgba(160, 96, 96, 0.9);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+}
+.gallery-item:hover .gallery-item-delete { opacity: 1; }
+.gallery-item-delete:hover { background: #a06060; }
+.select-mode .gallery-item { cursor: pointer; }
+.select-mode .gallery-item-delete { display: none !important; }
+.gallery-item.selected {
+  border-color: var(--rose);
+  background: rgba(212, 165, 165, 0.12);
+}
+.gallery-item.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--rose);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.bulk-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--text);
+  color: var(--bg);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+}
+.bulk-bar.visible { transform: translateY(0); }
+.bulk-count { font-size: 11px; letter-spacing: 0.08em; color: rgba(248,246,242,0.7); }
+.bulk-actions { display: flex; gap: 8px; }
+.bulk-delete-btn {
+  padding: 8px 16px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--rose);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.bulk-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.bulk-delete-btn:not(:disabled):hover { background: #a06060; }
+.bulk-cancel-btn {
+  padding: 8px 14px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  color: rgba(248,246,242,0.8);
+  border: 1px solid rgba(248,246,242,0.3);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.bulk-cancel-btn:hover { border-color: rgba(248,246,242,0.7); color: var(--bg); }
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="ll">mamaroku</div>
+  <div class="ls">material admin</div>
+  <div class="lf">
+    <div class="ln">管理者パスワードを入力してください</div>
+    <input type="password" id="pw-input" placeholder="パスワード" />
+    <button id="pw-btn">ログイン</button>
+    <div id="pw-error"></div>
+  </div>
+</div>
+
+<!-- Main Screen -->
+<div id="main-screen">
+  <div class="header">
+    <h1>素材管理</h1>
+    <p>カテゴリと素材を管理</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="categories">カテゴリ管理</button>
+    <button class="tab" data-tab="upload">素材アップロード</button>
+    <button class="tab" data-tab="gallery">素材一覧</button>
+    <button class="tab" data-tab="backup">バックアップ</button>
+  </div>
+
+  <div class="content">
+    <!-- Categories Tab -->
+    <div id="tab-categories" class="tab-content active">
+      <div class="cat-section">
+        <h2>カテゴリを追加</h2>
+        <div class="cat-input-group">
+          <input type="text" class="cat-input" id="new-cat-input" placeholder="カテゴリ名を入力" />
+          <button class="cat-add-btn" id="add-cat-btn">追加</button>
+        </div>
+      </div>
+
+      <div class="cat-section">
+        <h2>カテゴリ一覧</h2>
+        <div class="cat-list" id="cat-list"></div>
+      </div>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="tab-upload" class="tab-content" style="display: none;">
+      <div class="upload-section">
+        <h2>素材をアップロード</h2>
+        <div class="upload-form">
+          <div class="form-group">
+            <label class="form-label">カテゴリを選択</label>
+            <select class="form-select" id="upload-cat-select">
+              <option value="">カテゴリを選択してください</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">画像ファイル（PNG推奨）</label>
+            <label class="file-input-wrapper" id="file-wrapper">
+              <input type="file" id="file-input" accept="image/png,image/jpeg" multiple />
+              <div class="file-icon">📁</div>
+              <div class="file-text">クリックして画像を選択（複数選択可）</div>
+            </label>
+            <div class="preview-area" id="preview-area">
+              <div id="preview-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;"></div>
+              <div id="file-count" style="text-align: center; margin-top: 8px; font-size: 11px; color: var(--muted);"></div>
+            </div>
+          </div>
+
+          <button class="upload-btn" id="upload-submit-btn" disabled>アップロード</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Tab -->
+    <div id="tab-gallery" class="tab-content" style="display: none;">
+      <div class="gallery-section">
+        <div class="gallery-section-header">
+          <h2>アップロード済み素材</h2>
+          <button class="select-toggle-btn" id="select-toggle-btn">まとめて削除</button>
+        </div>
+        <div class="gallery-cats" id="gallery-cats"></div>
+      </div>
+    </div>
+
+    <!-- Backup Tab -->
+    <div id="tab-backup" class="tab-content" style="display: none;">
+      <div class="cat-section">
+        <h2>公開用素材データを書き出し</h2>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.6;">
+          ステッカーメーカーで使用する素材データ（materials.json）をダウンロードします。<br>
+          このファイルをステッカーメーカーと同じフォルダに配置してください。
+        </p>
+        <button class="cat-add-btn" id="export-public-btn" style="width: 100%;">
+          materials.json をダウンロード
+        </button>
+      </div>
+
+      <div class="cat-section" style="border-top: 1px solid var(--bdl); padding-top: 24px; margin-top: 24px;">
+        <h2>管理者用バックアップ</h2>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.6;">
+          全てのカテゴリと素材データをバックアップします。<br>
+          他のデバイスで管理画面を使用する場合や、バックアップとして保存できます。
+        </p>
+        <button class="cat-add-btn" id="export-btn" style="width: 100%;">
+          バックアップをダウンロード
+        </button>
+      </div>
+
+      <div class="cat-section">
+        <h2>バックアップから復元</h2>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.6;">
+          以前エクスポートしたバックアップファイルを読み込みます。<br>
+          <strong style="color: #a06060;">※ 現在のデータは上書きされます</strong>
+        </p>
+        <div class="upload-form">
+          <label class="file-input-wrapper" id="import-wrapper" style="padding: 24px;">
+            <input type="file" id="import-input" accept=".json" />
+            <div class="file-icon">📥</div>
+            <div class="file-text">JSONファイルを選択</div>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Storage Keys
+// ============================================================
+const STORAGE_KEYS = {
+  CATEGORIES: 'mamaroku_categories',
+  MATERIALS: 'mamaroku_materials',
+  SHARED_CATEGORIES: 'mamaroku_shared_categories',
+  SHARED_MATERIALS: 'mamaroku_shared_materials'
+};
+
+// ============================================================
+// Wait for DOM to be ready
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+
+// ============================================================
+// Login
+// ============================================================
+const PASSWORD = '93';
+let loginAttempts = 0;
+const MAX_ATTEMPTS = 5;
+let lockoutUntil = 0;
+
+document.getElementById('pw-btn').addEventListener('click', checkPassword);
+document.getElementById('pw-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+function checkPassword() {
+  const now = Date.now();
+  if (lockoutUntil > now) {
+    const remaining = Math.ceil((lockoutUntil - now) / 1000);
+    document.getElementById('pw-error').textContent = `${remaining}秒後に再試行してください`;
+    return;
+  }
+
+  const input = document.getElementById('pw-input').value;
+  if (input === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').classList.add('active');
+    loadCategories();
+    renderCategoryList();
+    renderUploadCategorySelect();
+    renderGallery();
+  } else {
+    loginAttempts++;
+    const remaining = MAX_ATTEMPTS - loginAttempts;
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      lockoutUntil = Date.now() + 60000;
+      document.getElementById('pw-error').textContent = '試行回数超過。60秒後に再試行してください';
+      setTimeout(() => {
+        loginAttempts = 0;
+        document.getElementById('pw-error').textContent = '';
+      }, 60000);
+    } else {
+      document.getElementById('pw-error').textContent = `パスワードが違います（残り${remaining}回）`;
+    }
+  }
+}
+
+// ============================================================
+// Tab Switching
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const tabName = tab.dataset.tab;
+    
+    // Update active tab
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    
+    // Update active content
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById(`tab-${tabName}`).style.display = 'block';
+    
+    // Refresh data
+    if (tabName === 'categories') {
+      renderCategoryList();
+    } else if (tabName === 'upload') {
+      renderUploadCategorySelect();
+    } else if (tabName === 'gallery') {
+      renderGallery();
+    }
+  });
+});
+
+// ============================================================
+// Data Management
+// ============================================================
+let categories = [];
+let materials = {};
+
+function loadCategories() {
+  const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+  categories = saved ? JSON.parse(saved) : [];
+}
+
+function saveCategories() {
+  localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+}
+
+function loadMaterials() {
+  const saved = localStorage.getItem(STORAGE_KEYS.MATERIALS);
+  materials = saved ? JSON.parse(saved) : {};
+}
+
+function saveMaterials() {
+  localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(materials));
+}
+
+// ============================================================
+// Category Management
+// ============================================================
+document.getElementById('add-cat-btn').addEventListener('click', addCategory);
+document.getElementById('new-cat-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') addCategory();
+});
+
+function addCategory() {
+  const input = document.getElementById('new-cat-input');
+  const name = input.value.trim();
+  
+  if (!name) {
+    alert('カテゴリ名を入力してください');
+    return;
+  }
+  
+  if (categories.includes(name)) {
+    alert('このカテゴリは既に存在します');
+    return;
+  }
+  
+  categories.push(name);
+  saveCategories();
+  input.value = '';
+  renderCategoryList();
+  renderUploadCategorySelect();
+  alert('カテゴリを追加しました');
+}
+
+function deleteCategory(catName) {
+  if (!confirm(`「${catName}」を削除しますか？\nこのカテゴリの素材もすべて削除されます。`)) {
+    return;
+  }
+  
+  categories = categories.filter(c => c !== catName);
+  saveCategories();
+  
+  // Delete materials in this category
+  loadMaterials();
+  delete materials[catName];
+  saveMaterials();
+  
+  renderCategoryList();
+  renderUploadCategorySelect();
+  renderGallery();
+}
+
+function renderCategoryList() {
+  const list = document.getElementById('cat-list');
+  
+  if (categories.length === 0) {
+    list.innerHTML = '<div class="empty-state">カテゴリがありません</div>';
+    return;
+  }
+  
+  list.innerHTML = categories.map(cat => `
+    <div class="cat-item">
+      <div class="cat-name">${cat}</div>
+      <div class="cat-actions">
+        <button class="cat-btn delete" onclick="deleteCategory('${cat}')">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// Material Upload
+// ============================================================
+let selectedFiles = [];
+let selectedFilesData = [];
+
+document.getElementById('file-input').addEventListener('change', handleFileSelect);
+document.getElementById('upload-submit-btn').addEventListener('click', uploadMaterial);
+
+function renderUploadCategorySelect() {
+  const select = document.getElementById('upload-cat-select');
+  select.innerHTML = '<option value="">カテゴリを選択してください</option>' +
+    categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+}
+
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+  
+  selectedFiles = files;
+  selectedFilesData = [];
+  
+  const previewContainer = document.getElementById('preview-container');
+  const fileCount = document.getElementById('file-count');
+  previewContainer.innerHTML = '';
+  
+  let loadedCount = 0;
+  
+  files.forEach((file, index) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      selectedFilesData[index] = {
+        name: file.name,
+        data: event.target.result
+      };
+      
+      // プレビュー画像を追加
+      const img = document.createElement('img');
+      img.src = event.target.result;
+      img.style.cssText = 'width: 100%; aspect-ratio: 1/1; object-fit: contain; border: 1px solid var(--bd); background: transparent;';
+      previewContainer.appendChild(img);
+      
+      loadedCount++;
+      if (loadedCount === files.length) {
+        document.getElementById('preview-area').classList.add('active');
+        fileCount.textContent = `${files.length}個のファイルを選択中`;
+        updateUploadButton();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateUploadButton() {
+  const catSelected = document.getElementById('upload-cat-select').value;
+  const fileSelected = selectedFiles.length > 0;
+  document.getElementById('upload-submit-btn').disabled = !(catSelected && fileSelected);
+}
+
+document.getElementById('upload-cat-select').addEventListener('change', updateUploadButton);
+
+function uploadMaterial() {
+  const category = document.getElementById('upload-cat-select').value;
+  
+  if (!category || selectedFilesData.length === 0) {
+    alert('カテゴリと画像を選択してください');
+    return;
+  }
+  
+  loadMaterials();
+  
+  if (!materials[category]) {
+    materials[category] = [];
+  }
+  
+  // 複数ファイルを一括追加
+  selectedFilesData.forEach(fileData => {
+    materials[category].push({
+      id: Date.now() + Math.random(), // ユニークなIDを生成
+      data: fileData.data,
+      name: fileData.name
+    });
+  });
+  
+  saveMaterials();
+  
+  const uploadCount = selectedFilesData.length;
+  
+  // Reset form
+  selectedFiles = [];
+  selectedFilesData = [];
+  document.getElementById('file-input').value = '';
+  document.getElementById('preview-area').classList.remove('active');
+  document.getElementById('preview-container').innerHTML = '';
+  document.getElementById('file-count').textContent = '';
+  document.getElementById('upload-cat-select').value = '';
+  updateUploadButton();
+  
+  alert(`${uploadCount}個の素材をアップロードしました`);
+}
+
+// ============================================================
+// Gallery
+// ============================================================
+let selectMode = false;
+let selectedItems = {};
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderGallery() {
+  loadMaterials();
+  const container = document.getElementById('gallery-cats');
+  container.classList.toggle('select-mode', selectMode);
+
+  if (categories.length === 0) {
+    container.innerHTML = '<div class="empty-state">カテゴリがありません</div>';
+    return;
+  }
+
+  container.innerHTML = categories.map(cat => {
+    const items = materials[cat] || [];
+    const catSel = selectedItems[cat] || new Set();
+    const allSel = items.length > 0 && items.every(m => catSel.has(m.id));
+
+    return `
+      <div class="gallery-cat" data-cat="${esc(cat)}">
+        <div class="gallery-cat-header">
+          <div class="gallery-cat-title">${esc(cat)} (${items.length})</div>
+          <button class="select-all-cat-btn">${allSel ? '全解除' : '全選択'}</button>
+        </div>
+        ${items.length === 0
+          ? '<div class="empty-state">素材がありません</div>'
+          : `<div class="gallery-grid">${items.map(item => `
+              <div class="gallery-item${catSel.has(item.id) ? ' selected' : ''}" data-cat="${esc(cat)}" data-id="${item.id}">
+                <img src="${item.data}" alt="${esc(item.name)}" />
+                <button class="gallery-item-delete" data-cat="${esc(cat)}" data-id="${item.id}">×</button>
+              </div>
+            `).join('')}</div>`
+        }
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteMaterial(category, itemId) {
+  if (!confirm('この素材を削除しますか?')) return;
+  loadMaterials();
+  materials[category] = materials[category].filter(m => m.id !== itemId);
+  saveMaterials();
+  renderGallery();
+}
+
+// ============================================================
+// Bulk Delete
+// ============================================================
+document.getElementById('gallery-cats').addEventListener('click', function(e) {
+  const selectAllBtn = e.target.closest('.select-all-cat-btn');
+  if (selectAllBtn && selectMode) {
+    e.stopPropagation();
+    const cat = selectAllBtn.closest('.gallery-cat').dataset.cat;
+    handleSelectAll(selectAllBtn, cat);
+    return;
+  }
+
+  const deleteBtn = e.target.closest('.gallery-item-delete');
+  if (deleteBtn) {
+    e.stopPropagation();
+    if (!selectMode) {
+      deleteMaterial(deleteBtn.dataset.cat, parseFloat(deleteBtn.dataset.id));
+    }
+    return;
+  }
+
+  if (!selectMode) return;
+  const item = e.target.closest('.gallery-item');
+  if (item) {
+    toggleItemSelect(item.dataset.cat, parseFloat(item.dataset.id), item);
+  }
+});
+
+document.getElementById('select-toggle-btn').addEventListener('click', toggleSelectMode);
+document.getElementById('bulk-cancel-btn').addEventListener('click', toggleSelectMode);
+document.getElementById('bulk-delete-btn').addEventListener('click', bulkDeleteSelected);
+
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  if (!selectMode) selectedItems = {};
+
+  const toggleBtn = document.getElementById('select-toggle-btn');
+  const bulkBar = document.getElementById('bulk-bar');
+  const galleryCats = document.getElementById('gallery-cats');
+
+  if (selectMode) {
+    toggleBtn.textContent = 'キャンセル';
+    toggleBtn.classList.add('active');
+    bulkBar.classList.add('visible');
+    galleryCats.classList.add('select-mode');
+  } else {
+    toggleBtn.textContent = 'まとめて削除';
+    toggleBtn.classList.remove('active');
+    bulkBar.classList.remove('visible');
+    galleryCats.classList.remove('select-mode');
+    renderGallery();
+  }
+  updateBulkBar();
+}
+
+function toggleItemSelect(cat, itemId, el) {
+  if (!selectedItems[cat]) selectedItems[cat] = new Set();
+  if (selectedItems[cat].has(itemId)) {
+    selectedItems[cat].delete(itemId);
+    el.classList.remove('selected');
+  } else {
+    selectedItems[cat].add(itemId);
+    el.classList.add('selected');
+  }
+  updateSelectAllBtn(cat);
+  updateBulkBar();
+}
+
+function handleSelectAll(btn, cat) {
+  loadMaterials();
+  const catMaterials = materials[cat] || [];
+  if (!selectedItems[cat]) selectedItems[cat] = new Set();
+  const allSel = catMaterials.every(m => selectedItems[cat].has(m.id));
+
+  const catEl = btn.closest('.gallery-cat');
+  catMaterials.forEach(m => allSel ? selectedItems[cat].delete(m.id) : selectedItems[cat].add(m.id));
+  catEl.querySelectorAll('.gallery-item').forEach(el => el.classList.toggle('selected', !allSel));
+  btn.textContent = allSel ? '全選択' : '全解除';
+  updateBulkBar();
+}
+
+function updateSelectAllBtn(cat) {
+  loadMaterials();
+  const catEl = document.querySelector(`.gallery-cat[data-cat="${CSS.escape(cat)}"]`);
+  if (!catEl) return;
+  const btn = catEl.querySelector('.select-all-cat-btn');
+  if (!btn) return;
+  const catMaterials = materials[cat] || [];
+  const catSel = selectedItems[cat] || new Set();
+  btn.textContent = catMaterials.length > 0 && catMaterials.every(m => catSel.has(m.id)) ? '全解除' : '全選択';
+}
+
+function updateBulkBar() {
+  let total = 0;
+  Object.values(selectedItems).forEach(s => total += s.size);
+  document.getElementById('bulk-count').textContent = total === 0 ? '素材を選択してください' : `${total}件を選択中`;
+  document.getElementById('bulk-delete-btn').disabled = total === 0;
+}
+
+function bulkDeleteSelected() {
+  let total = 0;
+  Object.values(selectedItems).forEach(s => total += s.size);
+  if (total === 0) return;
+  if (!confirm(`選択した${total}件の素材を削除しますか？`)) return;
+
+  loadMaterials();
+  Object.entries(selectedItems).forEach(([cat, ids]) => {
+    if (materials[cat]) materials[cat] = materials[cat].filter(m => !ids.has(m.id));
+  });
+  saveMaterials();
+
+  selectMode = false;
+  selectedItems = {};
+  const toggleBtn = document.getElementById('select-toggle-btn');
+  const bulkBar = document.getElementById('bulk-bar');
+  const galleryCats = document.getElementById('gallery-cats');
+  toggleBtn.textContent = 'まとめて削除';
+  toggleBtn.classList.remove('active');
+  bulkBar.classList.remove('visible');
+  galleryCats.classList.remove('select-mode');
+  renderGallery();
+}
+
+// ============================================================
+// Backup & Restore
+// ============================================================
+document.getElementById('export-public-btn').addEventListener('click', exportPublicMaterials);
+document.getElementById('export-btn').addEventListener('click', exportData);
+document.getElementById('import-input').addEventListener('change', importData);
+
+function exportPublicMaterials() {
+  loadCategories();
+  loadMaterials();
+  
+  // 公開用のシンプルな形式
+  const data = {
+    categories: categories,
+    materials: materials
+  };
+  
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'materials.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('materials.json をダウンロードしました\nステッカーメーカーと同じフォルダに配置してください');
+}
+
+function exportData() {
+  loadCategories();
+  loadMaterials();
+  
+  const data = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    categories: categories,
+    materials: materials
+  };
+  
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mamaroku-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('データをダウンロードしました');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (!confirm('現在のデータは上書きされます。よろしいですか？')) {
+    e.target.value = '';
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      
+      // バージョンチェック（将来の拡張用）
+      if (!data.categories || !data.materials) {
+        throw new Error('無効なデータ形式です');
+      }
+      
+      // データを保存
+      categories = data.categories;
+      materials = data.materials;
+      saveCategories();
+      saveMaterials();
+      
+      // 画面を更新
+      renderCategoryList();
+      renderUploadCategorySelect();
+      renderGallery();
+      
+      alert('データをインポートしました');
+      e.target.value = '';
+    } catch (error) {
+      alert('エラー: ' + error.message);
+      e.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// Initialize
+// ============================================================
+loadCategories();
+loadMaterials();
+
+}); // End of DOMContentLoaded
+</script>
+
+<!-- Bulk Delete Bar -->
+<div class="bulk-bar" id="bulk-bar">
+  <span class="bulk-count" id="bulk-count">素材を選択してください</span>
+  <div class="bulk-actions">
+    <button class="bulk-cancel-btn" id="bulk-cancel-btn">キャンセル</button>
+    <button class="bulk-delete-btn" id="bulk-delete-btn" disabled>削除</button>
+  </div>
+</div>
+
+</body>
+</html>
