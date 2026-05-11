@@ -420,6 +420,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <!-- shape panel -->
     <div class="panel-inner" id="panel-shape" style="display:none">
       <div class="cat-row" id="cat-row"></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <button id="rotate-btn" onclick="shapeRotation=(shapeRotation+45)%360;document.getElementById('rotate-deg').textContent=shapeRotation+'°';if(userImg)requestAnimationFrame(()=>render());" style="padding:3px 10px;font-size:11px;letter-spacing:.08em;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">↻ 45° 回転</button>
+        <span id="rotate-deg" style="font-size:10px;color:var(--faint);">0°</span>
+      </div>
       <div class="sgrid" id="shape-grid"></div>
     </div>
     <!-- border panel -->
@@ -489,6 +493,7 @@ const CATS=[...new Set(SHAPES.map(s=>s.cat))];
 let activeCat=CATS[0], selIdx=0, selSize=900;
 let borderStyle='none', borderColor='#ffffff';
 let userImg=null, photoOx=0, photoOy=0;
+let shapeRotation=0;
 
 // ── Panel toggle ──
 let activePanel=null;
@@ -527,7 +532,7 @@ function initUI(){
     b.textContent=CAT_LABELS[cat]||cat.toUpperCase();
     b.onclick=()=>{
       document.querySelectorAll('.cat-opt').forEach(x=>x.classList.remove('selected'));
-      b.classList.add('selected'); activeCat=cat; renderGrid();
+      b.classList.add('selected'); activeCat=cat; shapeRotation=0; const rd=document.getElementById('rotate-deg'); if(rd)rd.textContent='0°'; renderGrid();
     };
     catRow.appendChild(b);
   });
@@ -599,7 +604,7 @@ function renderGrid(){
     const wrap=document.createElement('div');
     wrap.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="width:100%;height:100%;display:block;"><g fill="#8a8480">${s.inner}</g></svg>`;
     btn.appendChild(wrap.firstElementChild);
-    btn.onclick=()=>{ document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); selIdx=i; render(); };
+    btn.onclick=()=>{ document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); selIdx=i; shapeRotation=0; const rd=document.getElementById('rotate-deg'); if(rd)rd.textContent='0°'; render(); };
     grid.appendChild(btn);
   });
 }
@@ -700,7 +705,9 @@ function drawShapeElements(ctx,size,mode,strokeWidth){
   const sc=Math.min(size/vbW,size/vbH);
   const tx=(size-vbW*sc)/2-vbX*sc;
   const ty=(size-vbH*sc)/2-vbY*sc;
-  ctx.save(); ctx.translate(tx,ty); ctx.scale(sc,sc);
+  ctx.save();
+  ctx.translate(size/2,size/2); ctx.rotate(shapeRotation*Math.PI/180); ctx.translate(-size/2,-size/2);
+  ctx.translate(tx,ty); ctx.scale(sc,sc);
   if(mode==='stroke'){ ctx.lineWidth=strokeWidth/sc; ctx.lineJoin='round'; ctx.lineCap='round'; }
   const parser=new DOMParser();
   const doc=parser.parseFromString('<svg xmlns="http://www.w3.org/2000/svg">'+SHAPES[selIdx].inner+'</svg>','image/svg+xml');
