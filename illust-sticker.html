@@ -369,6 +369,7 @@ function idbClear(){return openDB().then(db=>new Promise((resolve,reject)=>{cons
 function csGetAll(){return openDB().then(db=>new Promise((res,rej)=>{const r=db.transaction(CS_STORE).objectStore(CS_STORE).getAll();r.onsuccess=()=>res(r.result);r.onerror=e=>rej(e.target.error);}));}
 function csPutMany(items){return openDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(CS_STORE,'readwrite');const st=tx.objectStore(CS_STORE);items.forEach(it=>st.put(it));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);}));}
 function csDelete(id){return openDB().then(db=>new Promise((res,rej)=>{const r=db.transaction(CS_STORE,'readwrite').objectStore(CS_STORE).delete(id);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);}));}
+function csDeleteAll(){return openDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(CS_STORE,'readwrite');tx.objectStore(CS_STORE).clear();tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);}));}
 const VB_DEFAULT = '0 0 702.33 723.61';
 
 let selIdx=0, selSize=400, selColor='#231815';
@@ -784,7 +785,7 @@ document.getElementById('adm-export-public').onclick=async()=>{
   const mats={};admCats.forEach(c=>mats[c]=[]);
   allItems.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)).forEach(item=>{if(mats[item.category])mats[item.category].push(item);});
   cs.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity));
-  const jsonStr=JSON.stringify({categories:admCats,materials:mats,customShapes:cs},null,2);
+  const jsonStr=JSON.stringify({updatedAt:new Date().toISOString(),categories:admCats,materials:mats,customShapes:cs},null,2);
   const blob=new Blob([jsonStr],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='materials.json';a.click();
   const token=localStorage.getItem('mamaroku_gh_token');
@@ -939,10 +940,33 @@ async function migrateFromLocalStorage(){
   }catch(e){console.warn('[migrate] 移行失敗:',e);}
 }
 
+// ── Remote sync ──
+async function syncFromRemote(){
+  try{
+    const r=await fetch('materials.json?_='+Date.now());
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!d.updatedAt)return;
+    const last=localStorage.getItem('mamaroku_sync_ts');
+    if(last===d.updatedAt)return;
+    if(d.categories)localStorage.setItem(CAT_KEY,JSON.stringify(d.categories));
+    if(d.materials){
+      await idbClear();
+      const items=[];
+      Object.entries(d.materials).forEach(([cat,arr])=>(arr||[]).forEach(item=>items.push({...item,category:item.category||cat})));
+      if(items.length)await idbPutMany(items);
+    }
+    if(d.customShapes!==undefined){
+      await csDeleteAll();
+      if(d.customShapes.length)await csPutMany(d.customShapes);
+    }
+    localStorage.setItem('mamaroku_sync_ts',d.updatedAt);
+  }catch(e){}
+}
+
 // ── Init ──
-renderGrid();
 updatePreview();
-(async()=>{await migrateFromLocalStorage();await loadMaterials();})();
+(async()=>{await migrateFromLocalStorage();await syncFromRemote();await loadMaterials();await renderGrid();})();
 </script>
 </body>
 </html>
