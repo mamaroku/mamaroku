@@ -568,7 +568,7 @@ async function loadMaterials(){
   fetch('materials.json').then(r=>r.ok?r.json():null).then(data=>{
     if(!data){container.innerHTML='<div style="font-size:11px;color:var(--faint);padding:4px;">素材なし</div>';return;}
     const bycat={};const cats=data.categories||Object.keys(data.materials||{});
-    Object.keys(data.materials||{}).forEach(cat=>{bycat[cat]=(data.materials[cat]||[]).map(item=>({src:item.data,label:item.name||cat}));});
+    Object.keys(data.materials||{}).forEach(cat=>{bycat[cat]=(data.materials[cat]||[]).map(item=>({src:item.data,label:item.name||cat,sortOrder:item.sortOrder}));Object.keys(bycat).forEach(c=>bycat[c].sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)));});
     renderByCat(bycat,cats);
   }).catch(()=>{container.innerHTML='<div style="font-size:11px;color:var(--faint);padding:4px;">素材なし</div>';});
 }
@@ -759,7 +759,7 @@ async function admBulkDel(){let t=0;Object.values(admSelItems).forEach(s=>t+=s.s
 document.getElementById('adm-export-public').onclick=async()=>{
   admLoadCats();const allItems=await idbGetAll().catch(()=>[]);
   const mats={};admCats.forEach(c=>mats[c]=[]);
-  allItems.forEach(item=>{if(mats[item.category])mats[item.category].push(item);});
+  allItems.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)).forEach(item=>{if(mats[item.category])mats[item.category].push(item);});
   const blob=new Blob([JSON.stringify({categories:admCats,materials:mats},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='materials.json';a.click();
 };
