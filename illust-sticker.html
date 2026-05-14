@@ -280,7 +280,9 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <div class="adm-section">
         <h2>公開用データを書き出し</h2>
         <p>ステッカーメーカーで使用するmaterials.jsonをダウンロード、またはGitHubに直接アップロードします。</p>
-        <button class="adm-btn adm-btn-full" id="adm-export-public">GitHubにアップロード &amp; ダウンロード</button>
+        <button class="adm-btn adm-btn-full" id="adm-recompress-btn">① 既存素材を再圧縮（初回のみ）</button>
+        <div id="adm-recompress-status" style="font-size:11px;margin-top:6px;min-height:16px;text-align:center;"></div>
+        <button class="adm-btn adm-btn-full" id="adm-export-public" style="margin-top:8px;">② GitHubにアップロード &amp; ダウンロード</button>
         <div id="adm-gh-push-status" style="font-size:11px;margin-top:6px;min-height:16px;text-align:center;"></div>
       </div>
       <div class="adm-section" style="border-top:1px solid var(--bdl);padding-top:20px;margin-top:20px;">
@@ -660,7 +662,7 @@ function admHandleFiles(e){
   admSelFiles=files;admSelFilesData=[];
   const grid=document.getElementById('adm-preview-grid'),cnt=document.getElementById('adm-file-count');
   grid.innerHTML='';let loaded=0;
-  const MAX=600;
+  const MAX=400;
   files.forEach((f,i)=>{
     const rd=new FileReader();rd.onload=ev=>{
       const src=ev.target.result;
@@ -668,7 +670,9 @@ function admHandleFiles(e){
         const w=img2.width,h=img2.height,sc=Math.min(1,MAX/Math.max(w,h));
         const cv=document.createElement('canvas');cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);
         cv.getContext('2d').drawImage(img2,0,0,cv.width,cv.height);
-        const data=cv.toDataURL('image/png');
+        const px=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;
+        let hasAlpha=false;for(let j=3;j<px.length;j+=4){if(px[j]<250){hasAlpha=true;break;}}
+        const data=hasAlpha?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',0.82);
         admSelFilesData[i]={name:f.name,data};
         const thumb=document.createElement('img');thumb.src=data;grid.appendChild(thumb);
         if(++loaded===files.length){document.getElementById('adm-preview-area').classList.add('active');cnt.textContent=`${files.length}個を選択中`;admUpdateUploadBtn();}
@@ -826,6 +830,34 @@ document.getElementById('adm-import-input').addEventListener('change',e=>{
 });
 
 function admEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── 既存素材の再圧縮 ──
+document.getElementById('adm-recompress-btn').onclick=async()=>{
+  const st=document.getElementById('adm-recompress-status');
+  st.style.color='var(--faint)';st.textContent='再圧縮中...';
+  const all=await idbGetAll().catch(()=>[]);
+  if(!all.length){st.textContent='素材がありません';return;}
+  const MAX=400;
+  let done=0;
+  const recompressed=await Promise.all(all.map(item=>new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const w=img.width,h=img.height,sc=Math.min(1,MAX/Math.max(w,h));
+      const cv=document.createElement('canvas');cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      const px=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;
+      let hasAlpha=false;for(let j=3;j<px.length;j+=4){if(px[j]<250){hasAlpha=true;break;}}
+      const data=hasAlpha?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',0.82);
+      st.textContent=`再圧縮中... ${++done}/${all.length}`;
+      res({...item,data});
+    };
+    img.onerror=()=>res(item);
+    img.src=item.data;
+  })));
+  await idbPutMany(recompressed);
+  const totalMB=(recompressed.reduce((s,m)=>s+m.data.length,0)/1024/1024).toFixed(2);
+  st.style.color='#5a9a5a';st.textContent=`完了！${all.length}件を再圧縮しました（約${totalMB}MB）`;
+};
 
 // ── GitHub連携 ──
 function admLoadGhSettings(){
