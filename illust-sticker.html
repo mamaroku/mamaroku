@@ -279,8 +279,21 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <div class="adm-tab-content" id="adm-tab-backup">
       <div class="adm-section">
         <h2>公開用データを書き出し</h2>
-        <p>ステッカーメーカーで使用するmaterials.jsonをダウンロードします。</p>
-        <button class="adm-btn adm-btn-full" id="adm-export-public">materials.json をダウンロード</button>
+        <p>ステッカーメーカーで使用するmaterials.jsonをダウンロード、またはGitHubに直接アップロードします。</p>
+        <button class="adm-btn adm-btn-full" id="adm-export-public">GitHubにアップロード &amp; ダウンロード</button>
+        <div id="adm-gh-push-status" style="font-size:11px;margin-top:6px;min-height:16px;text-align:center;"></div>
+      </div>
+      <div class="adm-section" style="border-top:1px solid var(--bdl);padding-top:20px;margin-top:20px;">
+        <h2>GitHub連携設定</h2>
+        <p style="font-size:11px;color:var(--faint);">Personal Access Token（classic）を設定すると自動アップロードが有効になります。トークンには <code>public_repo</code> 権限が必要です。</p>
+        <label class="adm-form-label">Personal Access Token</label>
+        <input type="password" id="adm-gh-token" placeholder="ghp_xxxxxxxxxxxx" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--bdl);border-radius:4px;background:var(--bg2);color:var(--fg);font-size:12px;margin-bottom:6px;">
+        <label class="adm-form-label">リポジトリ（owner/repo）</label>
+        <input type="text" id="adm-gh-repo" placeholder="mamaroku/mamaroku" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--bdl);border-radius:4px;background:var(--bg2);color:var(--fg);font-size:12px;margin-bottom:6px;">
+        <label class="adm-form-label">ファイルパス</label>
+        <input type="text" id="adm-gh-filepath" placeholder="mamaroku/materials.json" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--bdl);border-radius:4px;background:var(--bg2);color:var(--fg);font-size:12px;margin-bottom:8px;">
+        <button class="adm-btn adm-btn-full" id="adm-gh-save">設定を保存</button>
+        <div id="adm-gh-save-status" style="font-size:11px;margin-top:6px;min-height:16px;text-align:center;"></div>
       </div>
       <div class="adm-section" style="border-top:1px solid var(--bdl);padding-top:20px;margin-top:20px;">
         <h2>バックアップ</h2>
@@ -480,6 +493,9 @@ async function renderGrid(){
     grid.appendChild(item);
   });
   customShapes=await csGetAll().catch(()=>[]);
+  if(!customShapes.length){
+    try{const r=await fetch('materials.json');if(r.ok){const d=await r.json();if(d.customShapes&&d.customShapes.length){await csPutMany(d.customShapes);customShapes=d.customShapes;}}}catch(e){}
+  }
   customShapes.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity));
   if(customShapes.length){
     const sep=document.createElement('div');sep.style.cssText='grid-column:1/-1;height:1px;background:var(--bdl);margin:4px 0;';grid.appendChild(sep);
@@ -598,6 +614,7 @@ document.querySelectorAll('.adm-tab').forEach(tab=>{
     else if(name==='upload'){admLoadCats();admRenderUploadSelect();}
     else if(name==='gallery')admRenderGallery();
     else if(name==='illustrations')admRenderIllustGallery();
+    else if(name==='backup')admLoadGhSettings();
   });
 });
 
@@ -758,10 +775,24 @@ async function admBulkDel(){let t=0;Object.values(admSelItems).forEach(s=>t+=s.s
 // Backup
 document.getElementById('adm-export-public').onclick=async()=>{
   admLoadCats();const allItems=await idbGetAll().catch(()=>[]);
+  const cs=await csGetAll().catch(()=>[]);
   const mats={};admCats.forEach(c=>mats[c]=[]);
   allItems.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)).forEach(item=>{if(mats[item.category])mats[item.category].push(item);});
-  const blob=new Blob([JSON.stringify({categories:admCats,materials:mats},null,2)],{type:'application/json'});
+  cs.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity));
+  const jsonStr=JSON.stringify({categories:admCats,materials:mats,customShapes:cs},null,2);
+  const blob=new Blob([jsonStr],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='materials.json';a.click();
+  const token=localStorage.getItem('mamaroku_gh_token');
+  if(token){
+    const st=document.getElementById('adm-gh-push-status');
+    st.style.color='var(--faint)';st.textContent='GitHubにアップロード中...';
+    try{
+      const ok=await admPushToGitHub(jsonStr);
+      st.style.color=ok?'#5a9a5a':'#a06060';
+      st.textContent=ok?'GitHubへのアップロード完了 ✓':'アップロード失敗。トークンまたはパスを確認してください';
+    }catch(e){st.style.color='#a06060';st.textContent='エラー: '+e.message;}
+    setTimeout(()=>{st.textContent='';},5000);
+  }
 };
 document.getElementById('adm-export-backup').onclick=async()=>{
   admLoadCats();const allItems=await idbGetAll().catch(()=>[]);
@@ -789,6 +820,35 @@ document.getElementById('adm-import-input').addEventListener('change',e=>{
 });
 
 function admEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── GitHub連携 ──
+function admLoadGhSettings(){
+  document.getElementById('adm-gh-token').value=localStorage.getItem('mamaroku_gh_token')||'';
+  document.getElementById('adm-gh-repo').value=localStorage.getItem('mamaroku_gh_repo')||'mamaroku/mamaroku';
+  document.getElementById('adm-gh-filepath').value=localStorage.getItem('mamaroku_gh_filepath')||'mamaroku/materials.json';
+}
+document.getElementById('adm-gh-save').onclick=()=>{
+  localStorage.setItem('mamaroku_gh_token',document.getElementById('adm-gh-token').value.trim());
+  localStorage.setItem('mamaroku_gh_repo',document.getElementById('adm-gh-repo').value.trim());
+  localStorage.setItem('mamaroku_gh_filepath',document.getElementById('adm-gh-filepath').value.trim());
+  const st=document.getElementById('adm-gh-save-status');
+  st.style.color='#5a9a5a';st.textContent='保存しました';
+  setTimeout(()=>{st.textContent='';},2000);
+};
+async function admPushToGitHub(jsonStr){
+  const token=localStorage.getItem('mamaroku_gh_token');
+  const repo=localStorage.getItem('mamaroku_gh_repo')||'mamaroku/mamaroku';
+  const path=localStorage.getItem('mamaroku_gh_filepath')||'mamaroku/materials.json';
+  const url=`https://api.github.com/repos/${repo}/contents/${path}`;
+  const headers={'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+  let sha;
+  try{const r=await fetch(url,{headers});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
+  const content=btoa(unescape(encodeURIComponent(jsonStr)));
+  const body={message:'Update materials.json',content};
+  if(sha)body.sha=sha;
+  const res=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
+  return res.ok;
+}
 
 // ── Custom Illustration (SVG) Admin ──
 let admSvgFiles=[];
