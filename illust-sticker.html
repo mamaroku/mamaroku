@@ -880,7 +880,6 @@ async function admPushToGitHub(jsonStr){
   const url=`https://api.github.com/repos/${repo}/contents/${path}`;
   const headers={'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
   const sizeMB=(jsonStr.length/1024/1024).toFixed(2);
-  if(jsonStr.length>9000000)throw new Error(`ファイルが大きすぎます (${sizeMB}MB)。GitHub APIの上限は約9MBです`);
   let sha;
   try{const r=await fetch(url,{headers});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
   const content=btoa(unescape(encodeURIComponent(jsonStr)));
