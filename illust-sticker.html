@@ -512,9 +512,14 @@ async function renderGrid(){
 function updateSwatch(){const sw=document.getElementById('color-swatch');sw.style.background=selColor;sw.style.borderColor=selColor==='#ffffff'?'#bbb':selColor;}
 function setColor(c){selColor=c;updateSwatch();document.getElementById('color-native').value=c;document.getElementById('color-hex').textContent=c.toUpperCase();document.querySelectorAll('.preset').forEach(p=>p.classList.toggle('sel',p.dataset.color===c));renderGrid();updatePreview();}
 updateSwatch();
-['#231815','#ffffff','#efefef','#d4dad4','#c2ccd2','#e0ddca','#cc98a5','#527586','#83867e','#604c3f','#a8c8b8','#e8c878','#e07858','#8870a8','#5888b0','#b05878'].forEach(c=>{
+['#231815','#ffffff',
+ '#7b9db2','#c27d8a','#8c9050','#a8a898','#c89a18','#4e2e10',
+ '#c47858','#5c82a2','#3c5c3a','#c4bc28','#82acac','#987aaa',
+ '#edda30','#9088a8','#e8c0b0','#7c5070','#3c6868','#bcbc2a',
+ '#524e70','#c8b888','#981828','#6e90a8','#cf9090','#6a9898'
+].forEach(c=>{
   const p=document.createElement('div');p.className='preset'+(c===selColor?' sel':'');p.dataset.color=c;
-  p.style.cssText=`background:${c};border:1.5px solid ${c==='#ffffff'||c==='#efefef'?'#bbb':'transparent'};`;
+  p.style.cssText=`background:${c};border:1.5px solid ${c==='#ffffff'?'#bbb':'transparent'};`;
   p.onclick=()=>{fillMode='color';setColor(c);};document.getElementById('color-presets').appendChild(p);
 });
 document.getElementById('color-native').oninput=function(){fillMode='color';setColor(this.value);};
