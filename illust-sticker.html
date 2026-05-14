@@ -560,7 +560,8 @@ async function loadMaterials(){
   };
   if(allItems.length){
     admLoadCats();
-    const bycat={};allItems.forEach(m=>{if(!bycat[m.category])bycat[m.category]=[];bycat[m.category].push({src:m.data,label:m.name||m.category});});
+    const bycat={};allItems.forEach(m=>{if(!bycat[m.category])bycat[m.category]=[];bycat[m.category].push({src:m.data,label:m.name||m.category,sortOrder:m.sortOrder});});
+    Object.keys(bycat).forEach(cat=>bycat[cat].sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)));
     const cats=admCats.length?admCats:Object.keys(bycat);
     renderByCat(bycat,cats);return;
   }
