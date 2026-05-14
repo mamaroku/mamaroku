@@ -606,8 +606,8 @@ let admCats=[], admSelMode=false, admSelItems={}, admSelFiles=[], admSelFilesDat
 function admLoadCats(){admCats=JSON.parse(localStorage.getItem(CAT_KEY)||'[]');}
 function admSaveCats(){localStorage.setItem(CAT_KEY,JSON.stringify(admCats));}
 
-async function showAdmin(){document.getElementById('admin-screen').classList.add('open');admLoadCats();admRenderCatList();admRenderUploadSelect();await admRenderGallery();}
-function hideAdmin(){document.getElementById('admin-screen').classList.remove('open');loadMaterials();}
+async function showAdmin(){admIsOpen=true;document.getElementById('admin-screen').classList.add('open');admLoadCats();admRenderCatList();admRenderUploadSelect();await admRenderGallery();}
+function hideAdmin(){admIsOpen=false;document.getElementById('admin-screen').classList.remove('open');loadMaterials();}
 
 // Admin tabs
 document.querySelectorAll('.adm-tab').forEach(tab=>{
@@ -941,14 +941,14 @@ async function migrateFromLocalStorage(){
 }
 
 // ── Remote sync ──
+let admIsOpen=false;
 async function syncFromRemote(){
+  if(admIsOpen)return;
   try{
     const r=await fetch('materials.json?_='+Date.now());
     if(!r.ok)return;
     const d=await r.json();
-    if(!d.updatedAt)return;
-    const last=localStorage.getItem('mamaroku_sync_ts');
-    if(last===d.updatedAt)return;
+    if(!d.customShapes&&!d.materials&&!d.categories)return;
     if(d.categories)localStorage.setItem(CAT_KEY,JSON.stringify(d.categories));
     if(d.materials){
       await idbClear();
@@ -960,7 +960,6 @@ async function syncFromRemote(){
       await csDeleteAll();
       if(d.customShapes.length)await csPutMany(d.customShapes);
     }
-    localStorage.setItem('mamaroku_sync_ts',d.updatedAt);
   }catch(e){}
 }
 
