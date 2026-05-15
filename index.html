@@ -56,7 +56,7 @@ html,body{height:100%;width:100%;background:var(--bg);font-family:'Zen Kaku Goth
   flex:1;min-height:0;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  background:var(--bg);padding:8px;gap:6px;
+  background:#c8c3bb;padding:8px;gap:6px;
   position:relative;
 }
 #preview{display:block;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
@@ -561,7 +561,7 @@ function initUI(){
   // Color picker inits lazily when border panel first opens
 
   // Sizes
-  [{l:'S',p:200},{l:'M',p:400},{l:'L',p:600}].forEach(s=>{
+  [{l:'S',p:400},{l:'M',p:700},{l:'L',p:1000}].forEach(s=>{
     const b=document.createElement('div');
     b.className='szbtn'+(s.p===selSize?' selected':'');
     b.textContent=s.l;
