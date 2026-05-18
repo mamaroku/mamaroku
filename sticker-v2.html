@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>mamaroku | sticker maker</title>
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="mamaroku">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f8f6f2;--sur:#fdfcfa;--bd:#d8d4cc;--bdl:#e8e4de;--text:#3a3630;--muted:#5a5450;--faint:#7a7670;--acc:#5a524a;--hover:#f0ede8;--brown:#3a3630;--rose:#a06070;--blush:#f5eee8;--dusty:#6a5055;--cream:#fdfcfa;}
@@ -433,7 +437,14 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 <!-- Premium unlock modal -->
 <div id="premium-modal" onclick="if(event.target===this)closePremiumModal()">
   <div id="premium-modal-box">
-    <div id="premium-modal-title">🔒 PREMIUM</div>
+    <div id="premium-modal-title">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="42" height="48" fill="none" stroke="currentColor" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px;">
+        <path d="M25 52V36C25 20 75 20 75 36V52"/>
+        <rect x="8" y="52" width="84" height="58" rx="2"/>
+        <circle cx="50" cy="81" r="8" fill="currentColor" stroke="none"/>
+      </svg>
+      PREMIUM
+    </div>
     <div id="premium-modal-desc">コードを入力して<br>プレミアムコンテンツを解除できます</div>
     <input type="text" id="premium-code-input" placeholder="コードを入力" autocomplete="off" spellcheck="false">
     <div id="premium-code-error"></div>
@@ -528,7 +539,7 @@ function renderCategoryTabs(){
     const isPremium=!premiumUnlocked&&PREMIUM_SHAPE_CATS.includes(cat);
     const b=document.createElement('div');
     b.className='cat-opt'+(cat===activeCat?' selected':'')+(isPremium?' premium-locked':'');
-    b.textContent=(isPremium?'🔒 ':'')+(CAT_LABELS[cat]||cat.toUpperCase());
+    b.innerHTML=(isPremium?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="10" height="12" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="currentColor" stroke="none"/></svg>':'')+(CAT_LABELS[cat]||cat.toUpperCase());
     b.onclick=()=>{
       document.querySelectorAll('.cat-opt').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');activeCat=cat;renderGrid();
@@ -610,8 +621,8 @@ function renderGrid(){
     btn.appendChild(wrap.firstElementChild);
     if(isCatPremium){
       const lk=document.createElement('div');
-      lk.textContent='🔒';
-      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;pointer-events:none;';
+      lk.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none" stroke="var(--text)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="var(--text)" stroke="none"/></svg>';
+      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:11px;height:13px;pointer-events:none;';
       btn.appendChild(lk);
       btn.onclick=()=>showUnlockModal();
     }else{
@@ -1054,7 +1065,7 @@ function buildMaterialScreen() {
     const btn=document.createElement('button');
     btn.className='mat-filter-btn'+(isCatLocked?' premium-locked':'');
     btn.dataset.category=cat;
-    btn.textContent=(isCatLocked?'🔒 ':'')+cat;
+    btn.innerHTML=(isCatLocked?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="10" height="12" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="currentColor" stroke="none"/></svg>':'')+cat;
     btn.addEventListener('click',()=>filterMaterials(cat));
     filterContainer.appendChild(btn);
   });
@@ -1065,7 +1076,7 @@ function buildMaterialScreen() {
 
 function renderLockedMaterials(){
   const grid=document.getElementById('mat-grid');
-  grid.innerHTML='<div onclick="showUnlockModal()" style="grid-column:1/-1;text-align:center;padding:48px 16px;cursor:pointer;"><div style="font-size:2.5rem;margin-bottom:14px;">🔒</div><div style="font-size:13px;color:var(--rose);letter-spacing:.05em;margin-bottom:8px;">プレミアム限定コンテンツ</div><div style="font-size:11px;color:var(--faint);line-height:1.9;">コードを入力して解除できます<br>タップしてコードを入力</div></div>';
+  grid.innerHTML='<div onclick="showUnlockModal()" style="grid-column:1/-1;text-align:center;padding:48px 16px;cursor:pointer;"><div style="margin-bottom:14px;display:flex;justify-content:center;"><svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 115\' width=\'40\' height=\'46\' fill=\'none\' stroke=\'var(--text)\' stroke-width=\'7.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M25 52V36C25 20 75 20 75 36V52\'/><rect x=\'8\' y=\'52\' width=\'84\' height=\'58\' rx=\'2\'/><circle cx=\'50\' cy=\'81\' r=\'8\' fill=\'var(--text)\' stroke=\'none\'/></svg></div><div style="font-size:13px;color:var(--rose);letter-spacing:.05em;margin-bottom:8px;">プレミアム限定コンテンツ</div><div style="font-size:11px;color:var(--faint);line-height:1.9;">コードを入力して解除できます<br>タップしてコードを入力</div></div>';
 }
 
 function filterMaterials(category) {
@@ -1104,8 +1115,8 @@ function renderMaterials(materials) {
     card.appendChild(imgEl);
     if(isMatLocked){
       const lk=document.createElement('div');
-      lk.textContent='🔒';
-      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;pointer-events:none;';
+      lk.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none" stroke="var(--text)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="8" fill="var(--text)" stroke="none"/></svg>';
+      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:22px;height:26px;pointer-events:none;';
       card.appendChild(lk);
       card.addEventListener('click',()=>showUnlockModal());
     }else{
