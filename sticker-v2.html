@@ -216,11 +216,12 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 }
 .mat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
   gap: 3px;
   padding: 6px;
   overflow-y: auto;
   flex: 1;
+  align-content: start;
 }
 .mat-card {
   background: transparent;
@@ -617,7 +618,7 @@ function renderGrid(){
     btn.style.position='relative';
     const vb=VBOXES[i];
     const wrap=document.createElement('div');
-    wrap.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="width:100%;height:100%;display:block;${isCatPremium?'opacity:0.3;':''}"><g fill="#8a8480">${s.inner}</g></svg>`;
+    wrap.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="width:100%;height:100%;display:block;"><g fill="#8a8480">${s.inner}</g></svg>`;
     btn.appendChild(wrap.firstElementChild);
     if(isCatPremium){
       const lk=document.createElement('div');
@@ -1111,7 +1112,7 @@ function renderMaterials(materials) {
     const imgEl = document.createElement('img');
     imgEl.src = m.src;
     imgEl.alt = m.label;
-    if(isMatLocked) imgEl.style.opacity='0.35';
+    // isMatLocked opacity removed — show full image
     card.appendChild(imgEl);
     if(isMatLocked){
       const lk=document.createElement('div');
