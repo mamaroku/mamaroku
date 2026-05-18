@@ -527,10 +527,9 @@ function renderCategoryTabs(){
   CATS.forEach(cat=>{
     const isPremium=!premiumUnlocked&&PREMIUM_SHAPE_CATS.includes(cat);
     const b=document.createElement('div');
-    b.className='cat-opt'+(cat===activeCat&&!isPremium?' selected':'')+(isPremium?' premium-locked':'');
+    b.className='cat-opt'+(cat===activeCat?' selected':'')+(isPremium?' premium-locked':'');
     b.textContent=(isPremium?'🔒 ':'')+(CAT_LABELS[cat]||cat.toUpperCase());
     b.onclick=()=>{
-      if(isPremium){showUnlockModal();return;}
       document.querySelectorAll('.cat-opt').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');activeCat=cat;renderGrid();
     };
@@ -597,18 +596,27 @@ bboxTarget.innerHTML='';
 
 function renderGrid(){
   const grid=document.getElementById('shape-grid'); grid.innerHTML='';
-  // Reset selIdx to first shape in this category to prevent out-of-range
   const firstInCat=SHAPES.findIndex(s=>s.cat===activeCat);
   if(firstInCat>=0 && (selIdx<0||SHAPES[selIdx]?.cat!==activeCat)) selIdx=firstInCat;
+  const isCatPremium=!premiumUnlocked&&PREMIUM_SHAPE_CATS.includes(activeCat);
   SHAPES.forEach((s,i)=>{
     if(s.cat!==activeCat)return;
     const btn=document.createElement('div');
-    btn.className='sbtn'+(i===selIdx?' selected':'');
+    btn.className='sbtn'+(i===selIdx&&!isCatPremium?' selected':'');
+    btn.style.position='relative';
     const vb=VBOXES[i];
     const wrap=document.createElement('div');
-    wrap.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="width:100%;height:100%;display:block;"><g fill="#8a8480">${s.inner}</g></svg>`;
+    wrap.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="width:100%;height:100%;display:block;${isCatPremium?'opacity:0.3;':''}"><g fill="#8a8480">${s.inner}</g></svg>`;
     btn.appendChild(wrap.firstElementChild);
-    btn.onclick=()=>{ document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); selIdx=i; render(); };
+    if(isCatPremium){
+      const lk=document.createElement('div');
+      lk.textContent='🔒';
+      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;pointer-events:none;';
+      btn.appendChild(lk);
+      btn.onclick=()=>showUnlockModal();
+    }else{
+      btn.onclick=()=>{ document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); selIdx=i; render(); };
+    }
     grid.appendChild(btn);
   });
 }
@@ -1032,40 +1040,27 @@ function buildMaterialScreen() {
   // カテゴリ一覧を取得
   const categories = [...new Set(MATERIALS.map(m => m.category))];
   
-  // プレミアムチェック
-  const allLocked=PREMIUM_MATERIAL_CATS==='all'&&!premiumUnlocked;
-  
   // カテゴリフィルターボタンを生成
   filterContainer.innerHTML='';
   const allBtn=document.createElement('button');
-  allBtn.className='mat-filter-btn active'+(allLocked?' premium-locked':'');
+  allBtn.className='mat-filter-btn active';
   allBtn.dataset.category='all';
-  allBtn.textContent=(allLocked?'🔒 ':'')+'すべて';
-  allBtn.addEventListener('click',()=>{
-    if(allLocked){showUnlockModal();return;}
-    filterMaterials('all');
-  });
+  allBtn.textContent='すべて';
+  allBtn.addEventListener('click',()=>filterMaterials('all'));
   filterContainer.appendChild(allBtn);
-  
+
   categories.forEach(cat => {
     const isCatLocked=!premiumUnlocked&&(PREMIUM_MATERIAL_CATS==='all'||(Array.isArray(PREMIUM_MATERIAL_CATS)&&PREMIUM_MATERIAL_CATS.includes(cat)));
     const btn=document.createElement('button');
     btn.className='mat-filter-btn'+(isCatLocked?' premium-locked':'');
     btn.dataset.category=cat;
     btn.textContent=(isCatLocked?'🔒 ':'')+cat;
-    btn.addEventListener('click',()=>{
-      if(isCatLocked){showUnlockModal();return;}
-      filterMaterials(cat);
-    });
+    btn.addEventListener('click',()=>filterMaterials(cat));
     filterContainer.appendChild(btn);
   });
-  
+
   // 初期表示
-  if(allLocked){
-    renderLockedMaterials();
-  }else{
-    renderMaterials(MATERIALS);
-  }
+  renderMaterials(MATERIALS);
 }
 
 function renderLockedMaterials(){
@@ -1098,13 +1093,24 @@ function renderMaterials(materials) {
   }
   
   materials.forEach(m => {
+    const isMatLocked=!premiumUnlocked&&(PREMIUM_MATERIAL_CATS==='all'||(Array.isArray(PREMIUM_MATERIAL_CATS)&&PREMIUM_MATERIAL_CATS.includes(m.category)));
     const card = document.createElement('div');
     card.className = 'mat-card';
+    card.style.position='relative';
     const imgEl = document.createElement('img');
     imgEl.src = m.src;
     imgEl.alt = m.label;
+    if(isMatLocked) imgEl.style.opacity='0.35';
     card.appendChild(imgEl);
-    card.addEventListener('click', () => selectMaterial(m.src));
+    if(isMatLocked){
+      const lk=document.createElement('div');
+      lk.textContent='🔒';
+      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;pointer-events:none;';
+      card.appendChild(lk);
+      card.addEventListener('click',()=>showUnlockModal());
+    }else{
+      card.addEventListener('click', () => selectMaterial(m.src));
+    }
     grid.appendChild(card);
   });
 }
