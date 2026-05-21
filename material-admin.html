@@ -263,6 +263,10 @@ html, body {
 }
 .cat-btn:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
 .cat-btn.delete:hover { background: #a06060; border-color: #a06060; }
+.cat-btn.lock { font-size: 13px; padding: 4px 10px; letter-spacing: 0; }
+.cat-btn.lock.locked { color: #a06060; border-color: #a06060; }
+.cat-btn.lock:hover { background: transparent; color: var(--acc); border-color: var(--acc); }
+.cat-btn.lock.locked:hover { background: transparent; color: #7aaa7a; border-color: #7aaa7a; }
 
 /* Material Upload */
 .upload-section {
@@ -694,7 +698,8 @@ const STORAGE_KEYS = {
   CATEGORIES: 'mamaroku_categories',
   MATERIALS: 'mamaroku_materials',
   SHARED_CATEGORIES: 'mamaroku_shared_categories',
-  SHARED_MATERIALS: 'mamaroku_shared_materials'
+  SHARED_MATERIALS: 'mamaroku_shared_materials',
+  LOCKED_CATS: 'mamaroku_locked_cats'
 };
 
 // ============================================================
@@ -734,6 +739,7 @@ async function checkPassword() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-screen').classList.add('active');
     loadCategories();
+    loadLockedCats();
     renderCategoryList();
     renderUploadCategorySelect();
     renderGallery();
@@ -784,6 +790,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ============================================================
 let categories = [];
 let materials = {};
+let lockedCats = [];
 
 function loadCategories() {
   const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
@@ -801,6 +808,25 @@ function loadMaterials() {
 
 function saveMaterials() {
   localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(materials));
+}
+
+function loadLockedCats() {
+  const saved = localStorage.getItem(STORAGE_KEYS.LOCKED_CATS);
+  lockedCats = saved ? JSON.parse(saved) : [];
+}
+
+function saveLockedCats() {
+  localStorage.setItem(STORAGE_KEYS.LOCKED_CATS, JSON.stringify(lockedCats));
+}
+
+function toggleCatLock(catName) {
+  if (lockedCats.includes(catName)) {
+    lockedCats = lockedCats.filter(c => c !== catName);
+  } else {
+    lockedCats.push(catName);
+  }
+  saveLockedCats();
+  renderCategoryList();
 }
 
 // ============================================================
@@ -853,20 +879,23 @@ function deleteCategory(catName) {
 
 function renderCategoryList() {
   const list = document.getElementById('cat-list');
-  
+
   if (categories.length === 0) {
     list.innerHTML = '<div class="empty-state">カテゴリがありません</div>';
     return;
   }
-  
-  list.innerHTML = categories.map(cat => `
+
+  list.innerHTML = categories.map(cat => {
+    const isLocked = lockedCats.includes(cat);
+    return `
     <div class="cat-item">
       <div class="cat-name">${cat}</div>
       <div class="cat-actions">
+        <button class="cat-btn lock${isLocked ? ' locked' : ''}" onclick="toggleCatLock('${cat}')" title="${isLocked ? '鍵あり（タップで解除）' : '鍵なし（タップでロック）'}">${isLocked ? '🔒' : '🔓'}</button>
         <button class="cat-btn delete" onclick="deleteCategory('${cat}')">削除</button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // ============================================================
@@ -1156,10 +1185,12 @@ document.getElementById('import-input').addEventListener('change', importData);
 function exportPublicMaterials() {
   loadCategories();
   loadMaterials();
-  
+  loadLockedCats();
+
   // 公開用のシンプルな形式
   const data = {
     categories: categories,
+    lockedCats: lockedCats,
     materials: materials
   };
   
@@ -1248,6 +1279,7 @@ function importData(e) {
 // Initialize
 // ============================================================
 loadCategories();
+loadLockedCats();
 loadMaterials();
 
 }); // End of DOMContentLoaded

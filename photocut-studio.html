@@ -497,7 +497,7 @@ let shapeRotation=0;
 
 // ── Premium ──
 const PREMIUM_SHAPE_CATS=['basic_2','unenu_2','cloud','flower','star','template'];
-const PREMIUM_MATERIAL_CATS='all'; // 'all' = すべて。配列指定も可: ['フレーム','TAPE']
+let PREMIUM_MATERIAL_CATS=['PAPER','label','コラージュ']; // materials.jsonのlockedCatsで上書きされる
 const PREMIUM_HASH='3210ad9deff5b371545972e73bad0340dd6848e4017441aa588e30f2b6e187d4';
 
 let premiumUnlocked=localStorage.getItem('mamaroku_premium')==='1';
@@ -1003,6 +1003,7 @@ async function loadMaterialsFromJSON() {
     try { const r = await fetch('materials.json?_=' + Date.now()); if(r.ok) data = await r.json(); } catch(e) {}
   }
   if(!data) return [];
+  if(Array.isArray(data.lockedCats)) PREMIUM_MATERIAL_CATS = data.lockedCats;
   const catTargets = data.catTargets || {};
   const allMaterials = [];
   const cats = data.categories || Object.keys(data.materials || {});
