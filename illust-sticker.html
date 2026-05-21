@@ -394,7 +394,7 @@ bboxTarget.innerHTML='';
 
 // ── SVG→Canvas ──
 async function svgToCanvas(size,inner,vbox,color){
-  const svgStr=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbox}" width="${size}" height="${size}">${inner.replace(/__C__/g,color)}</svg>`;
+  const svgStr=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbox}" width="${size}" height="${size}" fill="${color}">${inner.replace(/__C__/g,color)}</svg>`;
   const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   return new Promise((resolve,reject)=>{
@@ -409,6 +409,14 @@ async function renderBlob(size){
   let inner,vb;
   if(selCustomId){const cs=customShapes.find(s=>s.id===selCustomId);if(!cs)return new Blob([],{type:'image/png'});inner=cs.inner;vb=cs.viewBox;}
   else{inner=SHAPES[selIdx].inner;vb=VBOXES[selIdx];}
+  if(fillMode==='material'&&userImg){
+    const pC=document.createElement('canvas');pC.width=pC.height=size;
+    const ctx=pC.getContext('2d');
+    const sc=Math.min(size/userImg.width,size/userImg.height);
+    const w=userImg.width*sc,h=userImg.height*sc;
+    ctx.drawImage(userImg,(size-w)/2,(size-h)/2,w,h);
+    return await new Promise(r=>pC.toBlob(r,'image/png'));
+  }
   if(fillMode==='color'||!userImg){
     const c=await svgToCanvas(size,inner,vb,fillMode==='color'?selColor:'#ccc');
     return await new Promise(r=>c.toBlob(r,'image/png'));
@@ -495,7 +503,7 @@ async function renderGrid(){
   const grid=document.getElementById('grid');grid.innerHTML='';
   SHAPES.forEach((s,i)=>{
     const item=document.createElement('div');item.className='item'+(selCustomId===null&&i===selIdx?' sel':'');
-    item.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VBOXES[i]}">${s.inner.replace(/__C__/g,selColor)}</svg>`;
+    item.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VBOXES[i]}" fill="${selColor}">${s.inner.replace(/__C__/g,selColor)}</svg>`;
     item.onclick=()=>{document.querySelectorAll('.item').forEach(x=>x.classList.remove('sel'));item.classList.add('sel');selIdx=i;selCustomId=null;updatePreview();};
     grid.appendChild(item);
   });
@@ -508,7 +516,7 @@ async function renderGrid(){
     const sep=document.createElement('div');sep.style.cssText='grid-column:1/-1;height:1px;background:var(--bdl);margin:4px 0;';grid.appendChild(sep);
     customShapes.forEach(s=>{
       const item=document.createElement('div');item.className='item'+(selCustomId===s.id?' sel':'');
-      item.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${s.viewBox}">${s.inner.replace(/__C__/g,selColor)}</svg>`;
+      item.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${s.viewBox}" fill="${selColor}">${s.inner.replace(/__C__/g,selColor)}</svg>`;
       item.onclick=()=>{document.querySelectorAll('.item').forEach(x=>x.classList.remove('sel'));item.classList.add('sel');selCustomId=s.id;updatePreview();};
       grid.appendChild(item);
     });
@@ -534,6 +542,9 @@ document.getElementById('color-native').oninput=function(){fillMode='color';setC
 // ── Photo ──
 function loadImage(src){
   const img=new Image();img.onload=()=>{userImg=img;fillMode='photo';photoOx=0;photoOy=0;document.getElementById('zoom').value=100;document.getElementById('zoom-val').textContent='100%';document.getElementById('zoom-row').style.display='flex';updatePreview();};img.src=src;
+}
+function loadMaterial(src){
+  const img=new Image();img.onload=()=>{userImg=img;fillMode='material';document.getElementById('zoom-row').style.display='none';updatePreview();};img.src=src;
 }
 function addMyPhoto(src,activate){
   const sec=document.getElementById('myphoto-section'),grid=document.getElementById('myphoto-grid');
@@ -579,7 +590,7 @@ async function loadMaterials(){
       items.forEach(m=>{
         const card=document.createElement('div');card.className='mat-card';
         const img=document.createElement('img');img.src=m.src;img.alt=m.label;card.appendChild(img);
-        card.onclick=()=>{document.querySelectorAll('.mat-cat-grid .mat-card,#myphoto-grid .mat-card').forEach(x=>x.classList.remove('sel'));card.classList.add('sel');loadImage(m.src);};
+        card.onclick=()=>{document.querySelectorAll('.mat-cat-grid .mat-card,#myphoto-grid .mat-card').forEach(x=>x.classList.remove('sel'));card.classList.add('sel');loadMaterial(m.src);};
         grid.appendChild(card);
       });
       sec.appendChild(grid);container.appendChild(sec);

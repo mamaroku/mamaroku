@@ -476,7 +476,7 @@ const SHAPES=[{"label": "", "cat": "basic_1", "inner": "<path fill=\"#231815\" d
 const CATS=['basic_1','basic_3','basic_4','rafu','template','biribiri','basic_2','unenu_2','cloud','flower','star'];
 let activeCat=CATS[0], selIdx=0, selSize=400;
 let borderStyle='none', borderColor='#ffffff';
-let userImg=null, photoOx=0, photoOy=0;
+let userImg=null, photoOx=0, photoOy=0, fillMode='photo';
 let shapeRotation=0;
 
 
@@ -654,7 +654,7 @@ function loadImageFile(file){
   rd.onload=ev=>{
     const tmp=new Image();
     tmp.onload=()=>{
-      userImg=tmp;
+      userImg=tmp; fillMode='photo';
       document.getElementById('dl-btn').disabled=false;
       document.getElementById('copy-btn').disabled=false;
       document.getElementById('zoom').value=100;
@@ -670,6 +670,19 @@ function loadImageFile(file){
     tmp.src=ev.target.result;
   };
   rd.readAsDataURL(file);
+}
+function loadMaterialImage(src){
+  const img=new Image();
+  img.onload=()=>{
+    userImg=img; fillMode='material';
+    photoOx=0; photoOy=0;
+    document.getElementById('dl-btn').disabled=false;
+    document.getElementById('copy-btn').disabled=false;
+    const ph=document.getElementById('preview-placeholder');
+    if(ph) ph.style.display='none';
+    hideMaterialScreen();
+  };
+  img.src=src;
 }
 fileIn.addEventListener('change',e=>{
   if(e.target.files&&e.target.files[0]) loadImageFile(e.target.files[0]);
@@ -799,10 +812,18 @@ function renderToCanvas(canvas,size){
   const oy=photoOy*(size/previewW);
   const photoC=document.createElement('canvas'); photoC.width=size; photoC.height=size;
   const pCtx=photoC.getContext('2d');
-  if(userImg){ const sc=Math.max(size/userImg.width,size/userImg.height)*zoom; pCtx.drawImage(userImg,(size-userImg.width*sc)/2+ox,(size-userImg.height*sc)/2+oy,userImg.width*sc,userImg.height*sc); }
-  const maskC=document.createElement('canvas'); maskC.width=size; maskC.height=size;
-  drawShapeMask(maskC.getContext('2d'),size);
-  pCtx.globalCompositeOperation='destination-in'; pCtx.drawImage(maskC,0,0);
+  if(userImg){
+    if(fillMode==='material'){
+      const sc=Math.min(size/userImg.width,size/userImg.height);
+      pCtx.drawImage(userImg,(size-userImg.width*sc)/2,(size-userImg.height*sc)/2,userImg.width*sc,userImg.height*sc);
+    }else{
+      const sc=Math.max(size/userImg.width,size/userImg.height)*zoom;
+      pCtx.drawImage(userImg,(size-userImg.width*sc)/2+ox,(size-userImg.height*sc)/2+oy,userImg.width*sc,userImg.height*sc);
+      const maskC=document.createElement('canvas'); maskC.width=size; maskC.height=size;
+      drawShapeMask(maskC.getContext('2d'),size);
+      pCtx.globalCompositeOperation='destination-in'; pCtx.drawImage(maskC,0,0);
+    }
+  }
   let borderC=null;
   if(hasBorder){
     borderC=document.createElement('canvas'); borderC.width=full; borderC.height=full;
@@ -1142,7 +1163,7 @@ function renderMaterials(materials) {
       card.appendChild(lk);
       card.addEventListener('click',()=>showUnlockModal());
     }else{
-      card.addEventListener('click', () => selectMaterial(m.src));
+      card.addEventListener('click', () => loadMaterialImage(m.src));
     }
     grid.appendChild(card);
   });
