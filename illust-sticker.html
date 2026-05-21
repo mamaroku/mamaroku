@@ -120,6 +120,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .adm-cat-name{font-size:12px;letter-spacing:.06em;}
 .adm-cat-del{padding:5px 10px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--bd);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .2s;}
 .adm-cat-del:hover{background:#a06060;color:#fff;border-color:#a06060;}
+.adm-cat-handle{cursor:grab;color:var(--faint);font-size:15px;padding-right:10px;user-select:none;opacity:.5;}
+.adm-cat-handle:active{cursor:grabbing;}
+.adm-cat-item.dragging{opacity:.35;}
+.adm-cat-item.drag-over{border-color:var(--acc);background:var(--hover);}
 .adm-form{background:var(--sur);border:1px solid var(--bdl);padding:16px;margin-bottom:16px;}
 .adm-form-label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .adm-select{width:100%;padding:10px 12px;border:1px solid var(--bd);background:var(--bg);font-size:12px;color:var(--text);font-family:inherit;outline:none;margin-bottom:16px;}
@@ -660,8 +664,29 @@ async function admDeleteCat(cat){
 }
 function admRenderCatList(){
   const list=document.getElementById('adm-cat-list');
-  list.innerHTML=admCats.length?admCats.map(c=>`<div class="adm-cat-item"><div class="adm-cat-name">${admEsc(c)}</div><button class="adm-cat-del" onclick="admDeleteCat('${admEsc(c)}')">削除</button></div>`).join(''):'<div class="adm-empty">カテゴリがありません</div>';
+  list.innerHTML=admCats.length?admCats.map(c=>`<div class="adm-cat-item" draggable="true" data-cat="${admEsc(c)}"><div style="display:flex;align-items:center;"><span class="adm-cat-handle">⠿</span><div class="adm-cat-name">${admEsc(c)}</div></div><button class="adm-cat-del" onclick="admDeleteCat('${admEsc(c)}')">削除</button></div>`).join(''):'<div class="adm-empty">カテゴリがありません</div>';
 }
+(function(){
+  let _dragCat=null;
+  const list=document.getElementById('adm-cat-list');
+  list.addEventListener('dragstart',e=>{
+    const item=e.target.closest('.adm-cat-item[draggable]');if(!item)return;
+    _dragCat=item.dataset.cat;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';
+  });
+  list.addEventListener('dragend',()=>{list.querySelectorAll('.dragging,.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));});
+  list.addEventListener('dragover',e=>{
+    e.preventDefault();const item=e.target.closest('.adm-cat-item[draggable]');if(!item)return;
+    list.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));item.classList.add('drag-over');
+  });
+  list.addEventListener('drop',e=>{
+    e.preventDefault();const item=e.target.closest('.adm-cat-item[draggable]');
+    if(!item||item.dataset.cat===_dragCat)return;
+    const fi=admCats.indexOf(_dragCat),ti=admCats.indexOf(item.dataset.cat);
+    if(fi<0||ti<0)return;
+    admCats.splice(fi,1);admCats.splice(ti,0,_dragCat);
+    admSaveCats();admRenderCatList();admRenderUploadSelect();_dragCat=null;
+  });
+})();
 
 // Upload
 function admRenderUploadSelect(){
