@@ -698,7 +698,7 @@ document.getElementById('adm-file-input').addEventListener('change',admHandleFil
 document.getElementById('adm-upload-cat').addEventListener('change',admUpdateUploadBtn);
 document.getElementById('adm-upload-btn').onclick=admUpload;
 function admHandleFiles(e){
-  const files=Array.from(e.target.files);if(!files.length)return;
+  const files=Array.from(e.target.files).sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));if(!files.length)return;
   admSelFiles=files;admSelFilesData=[];
   const grid=document.getElementById('adm-preview-grid'),cnt=document.getElementById('adm-file-count');
   grid.innerHTML='';let loaded=0;
@@ -800,7 +800,7 @@ document.getElementById('adm-gallery-cats').addEventListener('click',e=>{
 });
 async function admSortByName(cat){
   const all=await idbGetAll();
-  const sorted=all.filter(m=>m.category===cat).sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  const sorted=all.filter(m=>m.category===cat).sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));
   const updates=sorted.map((m,i)=>({...m,sortOrder:i}));
   await idbPutMany(updates);
   await admRenderGallery();
