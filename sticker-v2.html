@@ -115,9 +115,12 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .sbtn svg{width:100%;height:100%;display:block;}
 
 /* border panel */
-#panel-border .bopt-row{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;}
-.bopt{padding:4px 8px;font-size:12px;letter-spacing:.08em;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
+#panel-border .bopt-row{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px;}
+.bopt{padding:4px 10px;font-size:12px;letter-spacing:.08em;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
 .bopt.selected{background:var(--text);border-color:var(--text);color:var(--bg);}
+#border-width-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#border-width-row span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap;}
+#border-width-val{font-size:12px;color:var(--acc);min-width:28px;text-align:right;}
 .crow{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;}
 .csw{width:20px;height:20px;border-radius:50%;cursor:pointer;border:1.5px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0;}
 .csw:hover,.csw.selected{border-color:var(--acc);transform:scale(1.15);}
@@ -429,6 +432,11 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <!-- border panel -->
     <div class="panel-inner" id="panel-border" style="display:none">
       <div class="bopt-row" id="border-row"></div>
+      <div id="border-width-row" style="display:none">
+        <span>太さ</span>
+        <input type="range" id="border-width-slider" min="1" max="18" value="6" step="1">
+        <span id="border-width-val">6</span>
+      </div>
       <div id="color-wrap" style="display:none">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <input type="color" id="color-native" value="#ffffff" style="width:36px;height:36px;border:1px solid var(--bdl);border-radius:4px;cursor:pointer;padding:2px;background:var(--sur);">
@@ -475,7 +483,7 @@ const SHAPES=[{"label": "", "cat": "basic_1", "inner": "<path fill=\"#231815\" d
 // ── State ──
 const CATS=['basic_1','basic_3','basic_4','rafu','template','biribiri','basic_2','unenu_2','cloud','flower','star'];
 let activeCat=CATS[0], selIdx=0, selSize=400;
-let borderStyle='none', borderColor='#ffffff';
+let borderStyle='none', borderColor='#ffffff', borderWidth=6;
 let userImg=null, photoOx=0, photoOy=0, fillMode='photo';
 let shapeRotation=0;
 
@@ -569,10 +577,8 @@ function initUI(){
   // Border options
   const BOPTS=[
     {val:'none',label:'なし'},
-    {val:'border_thin',label:'フチ（細）'},
-    {val:'border_thick',label:'フチ（太）'},
-    {val:'bordershadow_thin',label:'フチ＋影（細）'},
-    {val:'bordershadow_thick',label:'フチ＋影（太）'},
+    {val:'border',label:'フチ'},
+    {val:'bordershadow',label:'フチ＋影'},
     {val:'shadow_only',label:'影のみ'},
   ];
   const brow=document.getElementById('border-row');
@@ -584,11 +590,18 @@ function initUI(){
       document.querySelectorAll('.bopt').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected'); borderStyle=opt.val;
       const showColor=borderStyle.startsWith('border');
+      const showWidth=borderStyle.startsWith('border');
       document.getElementById('color-wrap').style.display=showColor?'block':'none';
+      document.getElementById('border-width-row').style.display=showWidth?'flex':'none';
       if(showColor && !colorPickerInited){ colorPickerInited=true; initColorPicker(); }
       if(userImg) requestAnimationFrame(()=>render());
     };
     brow.appendChild(b);
+  });
+  document.getElementById('border-width-slider').addEventListener('input',function(){
+    borderWidth=parseInt(this.value);
+    document.getElementById('border-width-val').textContent=this.value;
+    if(userImg) requestAnimationFrame(()=>render());
   });
 
   // Color picker inits lazily when border panel first opens
@@ -797,8 +810,7 @@ function drawShapeMask(ctx,size){ ctx.fillStyle='#000'; drawShapeElements(ctx,si
 function renderToCanvas(canvas,size){
   const hasBorder=borderStyle.startsWith('border');
   const hasShadow=borderStyle.includes('shadow')||borderStyle==='shadow_only';
-  const isThick=borderStyle.includes('thick');
-  const borderPx=hasBorder?(isThick?size*.11:size*.055):0;
+  const borderPx=hasBorder?size*(borderWidth/100):0;
   const borderOverhang=hasBorder?Math.ceil(borderPx):0;
   const shadowPad=hasShadow?Math.round(size*.04):0;
   const pad=borderOverhang+shadowPad;
@@ -954,37 +966,40 @@ let MATERIALS = [];
 
 async function loadMaterialsFromJSON() {
   let data = null;
-  // 1. illust-sticker.htmlがGitHubプッシュ時に保存したキャッシュを優先
-  const cache = localStorage.getItem('mamaroku_materials_cache');
-  if (cache) { try { data = JSON.parse(cache); } catch(e) {} }
-  // 2. キャッシュがなければGitHub APIから取得
-  if (!data) {
-    const repo = localStorage.getItem('mamaroku_gh_repo');
-    const token = localStorage.getItem('mamaroku_gh_token');
-    const path = localStorage.getItem('mamaroku_gh_filepath') || 'mamaroku/materials.json';
-    if (repo && token) {
-      try {
-        const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-          headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
-        });
-        if (mr.ok) {
-          const meta = await mr.json();
-          const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
-            headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
+  if(location.protocol !== 'file:') {
+    // 公開サイト（http/https）: materials.jsonを直接取得（トークン不要）
+    try {
+      const r = await fetch('materials.json?_=' + Date.now());
+      if(r.ok) data = await r.json();
+    } catch(e) {}
+  } else {
+    // ローカル（file://）: キャッシュ → GitHub API → ローカルファイルの順
+    const cache = localStorage.getItem('mamaroku_materials_cache');
+    if(cache) { try { data = JSON.parse(cache); } catch(e) {} }
+    if(!data) {
+      const repo = localStorage.getItem('mamaroku_gh_repo');
+      const token = localStorage.getItem('mamaroku_gh_token');
+      const path = localStorage.getItem('mamaroku_gh_filepath') || 'mamaroku/materials.json';
+      if(repo && token) {
+        try {
+          const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+            headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
           });
-          if (br.ok) data = await br.json();
-        }
-      } catch(e) {}
+          if(mr.ok) {
+            const meta = await mr.json();
+            const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
+              headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
+            });
+            if(br.ok) data = await br.json();
+          }
+        } catch(e) {}
+      }
+    }
+    if(!data) {
+      try { const r = await fetch('materials.json'); if(r.ok) data = await r.json(); } catch(e) {}
     }
   }
-  // 3. それでもなければローカルのmaterials.jsonを使用
-  if (!data) {
-    try {
-      const r = await fetch('materials.json');
-      if (r.ok) data = await r.json();
-    } catch(e) {}
-  }
-  if (!data) return [];
+  if(!data) return [];
   const allMaterials = [];
   const cats = data.categories || Object.keys(data.materials || {});
   cats.forEach(cat => {
