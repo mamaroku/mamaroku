@@ -121,6 +121,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .adm-cat-del{padding:5px 10px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--bd);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .2s;}
 .adm-cat-del:hover{background:#a06060;color:#fff;border-color:#a06060;}
 .adm-cat-handle{cursor:grab;color:var(--faint);font-size:15px;padding-right:10px;user-select:none;opacity:.5;}
+.adm-cat-target{font-size:11px;padding:2px 4px;border:1px solid var(--bdl);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer;margin-right:6px;flex-shrink:0;}
 .adm-cat-handle:active{cursor:grabbing;}
 .adm-cat-item.dragging{opacity:.35;}
 .adm-cat-item.drag-over{border-color:var(--acc);background:var(--hover);}
@@ -362,6 +363,7 @@ const SHAPES = [{"cat": "illust", "inner": "<path fill=\"__C__\" d=\"M293.3,224.
 // ── IndexedDB helpers ──
 const IDB_NAME='mamarokuIllustDB', IDB_VER=2, IDB_STORE='materials', CS_STORE='customShapes';
 const CAT_KEY='mamaroku_categories';
+const CAT_TARGET_KEY='mamaroku_cat_targets';
 function openDB(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(IDB_NAME,IDB_VER);
@@ -605,7 +607,7 @@ async function loadMaterials(){
     admLoadCats();
     const bycat={};allItems.forEach(m=>{if(!bycat[m.category])bycat[m.category]=[];bycat[m.category].push({src:m.data,label:m.name||m.category,sortOrder:m.sortOrder});});
     Object.keys(bycat).forEach(cat=>bycat[cat].sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)));
-    const cats=admCats.length?admCats:Object.keys(bycat);
+    const cats=(admCats.length?admCats:Object.keys(bycat)).filter(c=>{const t=admCatTargets[c]||'both';return t==='both'||t==='illust';});
     renderByCat(bycat,cats);return;
   }
   fetch('materials.json').then(r=>r.ok?r.json():null).then(data=>{
@@ -622,10 +624,11 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // ════════════════════════════════════════════
 // ADMIN
 // ════════════════════════════════════════════
-let admCats=[], admSelMode=false, admSelItems={}, admSelFiles=[], admSelFilesData=[];
+let admCats=[], admCatTargets={}, admSelMode=false, admSelItems={}, admSelFiles=[], admSelFilesData=[];
 
-function admLoadCats(){admCats=JSON.parse(localStorage.getItem(CAT_KEY)||'[]');}
-function admSaveCats(){localStorage.setItem(CAT_KEY,JSON.stringify(admCats));}
+function admLoadCats(){admCats=JSON.parse(localStorage.getItem(CAT_KEY)||'[]');admCatTargets=JSON.parse(localStorage.getItem(CAT_TARGET_KEY)||'{}');}
+function admSaveCats(){localStorage.setItem(CAT_KEY,JSON.stringify(admCats));localStorage.setItem(CAT_TARGET_KEY,JSON.stringify(admCatTargets));}
+function admSetCatTarget(cat,val){admCatTargets[cat]=val;admSaveCats();}
 
 async function showAdmin(){admIsOpen=true;document.getElementById('admin-screen').classList.add('open');admLoadCats();admRenderCatList();admRenderUploadSelect();await admRenderGallery();}
 function hideAdmin(){admIsOpen=false;document.getElementById('admin-screen').classList.remove('open');loadMaterials();}
@@ -653,18 +656,19 @@ function admAddCat(){
   if(!name){alert('カテゴリ名を入力してください');return;}
   admLoadCats();
   if(admCats.includes(name)){alert('このカテゴリは既に存在します');return;}
-  admCats.push(name);admSaveCats();inp.value='';admRenderCatList();admRenderUploadSelect();
+  admCats.push(name);if(!admCatTargets[name])admCatTargets[name]='both';admSaveCats();inp.value='';admRenderCatList();admRenderUploadSelect();
 }
 async function admDeleteCat(cat){
   if(!confirm(`「${cat}」を削除しますか？\nこのカテゴリの素材もすべて削除されます。`))return;
   admLoadCats();
-  admCats=admCats.filter(c=>c!==cat);admSaveCats();
+  admCats=admCats.filter(c=>c!==cat);delete admCatTargets[cat];admSaveCats();
   await idbDeleteByCategory(cat);
   admRenderCatList();admRenderUploadSelect();admRenderGallery();
 }
 function admRenderCatList(){
   const list=document.getElementById('adm-cat-list');
-  list.innerHTML=admCats.length?admCats.map(c=>`<div class="adm-cat-item" draggable="true" data-cat="${admEsc(c)}"><div style="display:flex;align-items:center;"><span class="adm-cat-handle">⠿</span><div class="adm-cat-name">${admEsc(c)}</div></div><button class="adm-cat-del" onclick="admDeleteCat('${admEsc(c)}')">削除</button></div>`).join(''):'<div class="adm-empty">カテゴリがありません</div>';
+  const tOpts=(c)=>{const t=admCatTargets[c]||'both';return`<option value="both"${t==='both'?' selected':''}>両方</option><option value="illust"${t==='illust'?' selected':''}>イラストのみ</option><option value="sticker"${t==='sticker'?' selected':''}>スタンプのみ</option>`;};
+  list.innerHTML=admCats.length?admCats.map(c=>`<div class="adm-cat-item" draggable="true" data-cat="${admEsc(c)}"><div style="display:flex;align-items:center;flex:1;min-width:0;"><span class="adm-cat-handle">⠿</span><div class="adm-cat-name">${admEsc(c)}</div></div><select class="adm-cat-target" onchange="admSetCatTarget('${admEsc(c)}',this.value)">${tOpts(c)}</select><button class="adm-cat-del" onclick="admDeleteCat('${admEsc(c)}')">削除</button></div>`).join(''):'<div class="adm-empty">カテゴリがありません</div>';
 }
 (function(){
   let _dragCat=null;
@@ -829,7 +833,7 @@ document.getElementById('adm-export-public').onclick=async()=>{
   const mats={};admCats.forEach(c=>mats[c]=[]);
   allItems.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)).forEach(item=>{if(mats[item.category])mats[item.category].push(item);});
   cs.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity));
-  const jsonStr=JSON.stringify({updatedAt:new Date().toISOString(),categories:admCats,materials:mats,customShapes:cs},null,2);
+  const jsonStr=JSON.stringify({updatedAt:new Date().toISOString(),categories:admCats,catTargets:admCatTargets,materials:mats,customShapes:cs},null,2);
   const blob=new Blob([jsonStr],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='materials.json';a.click();
   const token=localStorage.getItem('mamaroku_gh_token');
@@ -1078,6 +1082,7 @@ async function syncFromRemote(){
     if(isLocal&&syncMsg)showSyncStatus(syncMsg);
     if(!d||(!d.customShapes&&!d.materials&&!d.categories))return;
     if(d.categories)localStorage.setItem(CAT_KEY,JSON.stringify(d.categories));
+    if(d.catTargets)localStorage.setItem(CAT_TARGET_KEY,JSON.stringify(d.catTargets));
     if(d.materials){
       await idbClear();
       const items=[];
