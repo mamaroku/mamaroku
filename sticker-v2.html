@@ -966,38 +966,34 @@ let MATERIALS = [];
 
 async function loadMaterialsFromJSON() {
   let data = null;
-  if(location.protocol !== 'file:') {
-    // 公開サイト（http/https）: materials.jsonを直接取得（トークン不要）
+  const isLocal = location.protocol === 'file:';
+  const repo = localStorage.getItem('mamaroku_gh_repo');
+  const token = localStorage.getItem('mamaroku_gh_token');
+  if(localStorage.getItem('mamaroku_gh_filepath')==='mamaroku/materials.json') localStorage.setItem('mamaroku_gh_filepath','materials.json');
+  const path = localStorage.getItem('mamaroku_gh_filepath') || 'materials.json';
+  // 1. トークンがあればGitHub API（どの環境でも最新を取得）
+  if(repo && token) {
     try {
-      const r = await fetch('materials.json?_=' + Date.now());
-      if(r.ok) data = await r.json();
+      const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+        headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
+      });
+      if(mr.ok) {
+        const meta = await mr.json();
+        const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
+          headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
+        });
+        if(br.ok) data = await br.json();
+      }
     } catch(e) {}
-  } else {
-    // ローカル（file://）: キャッシュ → GitHub API → ローカルファイルの順
+  }
+  // 2. file://かつトークンなし → localStorageキャッシュ
+  if(!data && isLocal) {
     const cache = localStorage.getItem('mamaroku_materials_cache');
     if(cache) { try { data = JSON.parse(cache); } catch(e) {} }
-    if(!data) {
-      const repo = localStorage.getItem('mamaroku_gh_repo');
-      const token = localStorage.getItem('mamaroku_gh_token');
-      const path = localStorage.getItem('mamaroku_gh_filepath') || 'mamaroku/materials.json';
-      if(repo && token) {
-        try {
-          const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-            headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
-          });
-          if(mr.ok) {
-            const meta = await mr.json();
-            const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
-              headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
-            });
-            if(br.ok) data = await br.json();
-          }
-        } catch(e) {}
-      }
-    }
-    if(!data) {
-      try { const r = await fetch('materials.json'); if(r.ok) data = await r.json(); } catch(e) {}
-    }
+  }
+  // 3. 最終フォールバック: materials.json直接
+  if(!data) {
+    try { const r = await fetch('materials.json?_=' + Date.now()); if(r.ok) data = await r.json(); } catch(e) {}
   }
   if(!data) return [];
   const allMaterials = [];
