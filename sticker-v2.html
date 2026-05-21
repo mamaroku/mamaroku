@@ -953,38 +953,47 @@ window.addEventListener('resize',resizePreview);
 let MATERIALS = [];
 
 async function loadMaterialsFromJSON() {
-  console.log('素材読み込み開始');
-  try {
-    const response = await fetch('materials.json');
-    
-    if (!response.ok) {
-      console.warn('materials.json not found');
-      return [];
-    }
-    
-    const data = await response.json();
-    console.log('読み込んだカテゴリ数:', data.categories ? data.categories.length : 0);
-    
-    const allMaterials = [];
-    
-    // 全カテゴリの素材を1つの配列にまとめる
-    Object.keys(data.materials || {}).forEach(category => {
-      console.log(`カテゴリ "${category}":`, data.materials[category].length, '個');
-      data.materials[category].forEach(item => {
-        allMaterials.push({
-          label: item.name || category,
-          src: item.data,
-          category: category
+  let data = null;
+  // 1. illust-sticker.htmlがGitHubプッシュ時に保存したキャッシュを優先
+  const cache = localStorage.getItem('mamaroku_materials_cache');
+  if (cache) { try { data = JSON.parse(cache); } catch(e) {} }
+  // 2. キャッシュがなければGitHub APIから取得
+  if (!data) {
+    const repo = localStorage.getItem('mamaroku_gh_repo');
+    const token = localStorage.getItem('mamaroku_gh_token');
+    const path = localStorage.getItem('mamaroku_gh_filepath') || 'mamaroku/materials.json';
+    if (repo && token) {
+      try {
+        const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
         });
-      });
-    });
-    
-    console.log('合計素材数:', allMaterials.length);
-    return allMaterials;
-  } catch (error) {
-    console.error('素材読み込みエラー:', error);
-    return [];
+        if (mr.ok) {
+          const meta = await mr.json();
+          const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
+            headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
+          });
+          if (br.ok) data = await br.json();
+        }
+      } catch(e) {}
+    }
   }
+  // 3. それでもなければローカルのmaterials.jsonを使用
+  if (!data) {
+    try {
+      const r = await fetch('materials.json');
+      if (r.ok) data = await r.json();
+    } catch(e) {}
+  }
+  if (!data) return [];
+  const allMaterials = [];
+  const cats = data.categories || Object.keys(data.materials || {});
+  cats.forEach(cat => {
+    const items = (data.materials[cat] || []).slice().sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity));
+    items.forEach(item => {
+      allMaterials.push({ label: item.name || cat, src: item.data, category: cat });
+    });
+  });
+  return allMaterials;
 }
 
 // 初期化時に素材を読み込む
