@@ -233,7 +233,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 }
 .mat-cat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 3px;
 }
 .mat-card {
@@ -336,6 +336,8 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #premium-code-submit{width:100%;padding:9px;font-size:11px;font-weight:300;letter-spacing:.3em;text-transform:uppercase;background:transparent;color:var(--text);border:1px solid var(--bd);cursor:pointer;font-family:inherit;transition:all .2s;}
 #premium-code-submit:hover{background:var(--text);color:var(--bg);}
 #premium-modal-cancel{width:100%;padding:7px;font-size:10px;font-weight:300;letter-spacing:.2em;text-transform:uppercase;background:transparent;color:var(--faint);border:none;cursor:pointer;font-family:inherit;}
+#premium-buy-link{display:block;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--faint);text-decoration:none;padding:4px;border-top:1px solid var(--bdl);margin-top:2px;transition:color .2s;}
+#premium-buy-link:hover{color:var(--rose);}
 .cat-opt.premium-locked{opacity:0.5;}
 .mat-filter-btn.premium-locked{opacity:0.5;}
 </style>
@@ -473,6 +475,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <div id="premium-code-error"></div>
     <button id="premium-code-submit">解除する</button>
     <button id="premium-modal-cancel" onclick="closePremiumModal()">キャンセル</button>
+    <a id="premium-buy-link" href="https://mamaroku.stores.jp/" target="_blank" rel="noopener">コードをお持ちでない方はこちら →</a>
   </div>
 </div>
 
