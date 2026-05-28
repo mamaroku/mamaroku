@@ -161,6 +161,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .adm-gallery-item.dragging{opacity:0.3;}
 .adm-gallery-item.drag-over{outline:2px solid var(--rose);outline-offset:-2px;background:rgba(212,165,165,.18);}
 .adm-select-mode .adm-item-del{display:none!important;}
+.adm-item-lock{position:absolute;top:2px;left:2px;width:16px;height:16px;background:rgba(180,180,180,.6);border:none;border-radius:50%;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:1;transition:all .2s;padding:0;line-height:1;}
+.adm-gallery-item.item-locked .adm-item-lock{background:rgba(160,96,96,.9);}
+.adm-gallery-item.item-locked{border-color:#c08080;}
+.adm-select-mode .adm-item-lock{display:none!important;}
 .adm-gallery-item.selected{border-color:var(--rose);background:rgba(212,165,165,.12);}
 .adm-gallery-item.selected::after{content:'✓';position:absolute;top:3px;left:3px;width:16px;height:16px;background:var(--rose);border-radius:50%;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;z-index:1;}
 .adm-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:var(--text);color:var(--bg);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;z-index:150;transform:translateY(100%);transition:transform .25s ease;}
@@ -674,7 +678,7 @@ async function admDeleteCat(cat){
 function admRenderCatList(){
   const list=document.getElementById('adm-cat-list');
   const tOpts=(c)=>{const t=admCatTargets[c]||'both';return`<option value="both"${t==='both'?' selected':''}>両方</option><option value="illust"${t==='illust'?' selected':''}>イラストのみ</option><option value="sticker"${t==='sticker'?' selected':''}>スタンプのみ</option>`;};
-  list.innerHTML=admCats.length?admCats.map(c=>`<div class="adm-cat-item" draggable="true" data-cat="${admEsc(c)}"><div style="display:flex;align-items:center;flex:1;min-width:0;"><span class="adm-cat-handle">⠿</span><div class="adm-cat-name">${admEsc(c)}</div></div><select class="adm-cat-target" onchange="admSetCatTarget('${admEsc(c)}',this.value)">${tOpts(c)}</select><button class="adm-cat-lock${admLockedCats.includes(c)?' locked':''}" onclick="admToggleCatLock('${admEsc(c)}')" title="${admLockedCats.includes(c)?'鍵あり（タップで解除）':'鍵なし（タップでロック）'}">${admLockedCats.includes(c)?'🔒':'🔓'}</button><button class="adm-cat-del" onclick="admDeleteCat('${admEsc(c)}')">削除</button></div>`).join(''):'<div class="adm-empty">カテゴリがありません</div>';
+  list.innerHTML=admCats.length?admCats.map(c=>`<div class="adm-cat-item" draggable="true" data-cat="${admEsc(c)}"><div style="display:flex;align-items:center;flex:1;min-width:0;"><span class="adm-cat-handle">⠿</span><div class="adm-cat-name">${admEsc(c)}</div></div><select class="adm-cat-target" onchange="admSetCatTarget('${admEsc(c)}',this.value)">${tOpts(c)}</select><button class="adm-cat-del" onclick="admDeleteCat('${admEsc(c)}')">削除</button></div>`).join(''):'<div class="adm-empty">カテゴリがありません</div>';
 }
 (function(){
   let _dragCat=null;
@@ -764,7 +768,7 @@ async function admRenderGallery(){
   allItems.forEach(item=>{if(matsByCat[item.category])matsByCat[item.category].push(item);});
   cont.innerHTML=admCats.map(cat=>{
     const items=(matsByCat[cat]||[]).slice().sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)),catSel=admSelItems[cat]||new Set(),allSel=items.length>0&&items.every(m=>catSel.has(m.id));
-    return`<div class="adm-gallery-cat" data-cat="${admEsc(cat)}"><div class="adm-gallery-cat-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="adm-gallery-cat-title">${admEsc(cat)} (${items.length})</div><button class="adm-cat-lock${admLockedCats.includes(cat)?' locked':''}" onclick="admToggleCatLock('${admEsc(cat)}')" title="${admLockedCats.includes(cat)?'鍵あり（タップで解除）':'鍵なし（タップでロック）'}">${admLockedCats.includes(cat)?'🔒':'🔓'}</button></div><div style="display:flex;gap:6px;align-items:center;"><button class="adm-sort-name-btn adm-cat-del" data-cat="${admEsc(cat)}">名前順</button><button class="adm-sel-all">${allSel?'全解除':'全選択'}</button></div></div>${items.length?`<div class="adm-gallery-grid">${items.map(item=>`<div class="adm-gallery-item${catSel.has(item.id)?' selected':''}" data-cat="${admEsc(cat)}" data-id="${item.id}" draggable="true"><img src="${item.data}" alt="${admEsc(item.name)}"><button class="adm-item-del" data-cat="${admEsc(cat)}" data-id="${item.id}">×</button></div>`).join('')}</div>`:'<div class="adm-empty">素材がありません</div>'}</div>`;
+    return`<div class="adm-gallery-cat" data-cat="${admEsc(cat)}"><div class="adm-gallery-cat-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="adm-gallery-cat-title">${admEsc(cat)} (${items.length})</div><button class="adm-cat-lock${admLockedCats.includes(cat)?' locked':''}" onclick="admToggleCatLock('${admEsc(cat)}')" title="${admLockedCats.includes(cat)?'鍵あり（タップで解除）':'鍵なし（タップでロック）'}">${admLockedCats.includes(cat)?'🔒':'🔓'}</button></div><div style="display:flex;gap:6px;align-items:center;"><button class="adm-sort-name-btn adm-cat-del" data-cat="${admEsc(cat)}">名前順</button><button class="adm-sel-all">${allSel?'全解除':'全選択'}</button></div></div>${items.length?`<div class="adm-gallery-grid">${items.map(item=>`<div class="adm-gallery-item${catSel.has(item.id)?' selected':''}${item.locked?' item-locked':''}" data-cat="${admEsc(cat)}" data-id="${item.id}" draggable="true"><img src="${item.data}" alt="${admEsc(item.name)}"><button class="adm-item-lock" data-cat="${admEsc(cat)}" data-id="${item.id}" title="${item.locked?'ロック中（タップで解除）':'ロックなし（タップでロック）'}">${item.locked?'🔒':'🔓'}</button><button class="adm-item-del" data-cat="${admEsc(cat)}" data-id="${item.id}">×</button></div>`).join('')}</div>`:'<div class="adm-empty">素材がありません</div>'}</div>`;
   }).join('');
 }
 // ── Drag & Drop reorder ──
@@ -803,6 +807,8 @@ document.getElementById('adm-gallery-cats').addEventListener('click',e=>{
   if(sortBtn){e.stopPropagation();admSortByName(sortBtn.dataset.cat);return;}
   const selAllBtn=e.target.closest('.adm-sel-all');
   if(selAllBtn&&admSelMode){e.stopPropagation();admHandleSelAll(selAllBtn,selAllBtn.closest('.adm-gallery-cat').dataset.cat);return;}
+  const lockBtn=e.target.closest('.adm-item-lock');
+  if(lockBtn&&!admSelMode){e.stopPropagation();admToggleItemLock(lockBtn.dataset.cat,parseFloat(lockBtn.dataset.id));return;}
   const delBtn=e.target.closest('.adm-item-del');
   if(delBtn&&!admSelMode){e.stopPropagation();admDelMaterial(delBtn.dataset.cat,parseFloat(delBtn.dataset.id));return;}
   if(!admSelMode)return;
@@ -815,6 +821,7 @@ async function admSortByName(cat){
   await idbPutMany(updates);
   await admRenderGallery();
 }
+async function admToggleItemLock(cat,id){const all=await idbGetAll();const item=all.find(m=>m.id===id);if(!item)return;item.locked=!item.locked;await idbPut(item);admRenderGallery();}
 async function admDelMaterial(cat,id){if(!confirm('この素材を削除しますか？'))return;await idbDelete(id);admRenderGallery();}
 document.getElementById('adm-sel-toggle').onclick=admToggleSelMode;
 document.getElementById('adm-bulk-cancel').onclick=admToggleSelMode;
