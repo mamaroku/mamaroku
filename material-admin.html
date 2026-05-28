@@ -485,8 +485,31 @@ html, body {
 }
 .gallery-item:hover .gallery-item-delete { opacity: 1; }
 .gallery-item-delete:hover { background: #a06060; }
+.gallery-item-lock {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: rgba(100, 100, 100, 0.75);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.gallery-item:hover .gallery-item-lock { opacity: 1; }
+.gallery-item.item-locked .gallery-item-lock { opacity: 1; background: rgba(160, 96, 96, 0.9); }
+.gallery-item.item-locked { border-color: #c08080; }
 .select-mode .gallery-item { cursor: pointer; }
 .select-mode .gallery-item-delete { display: none !important; }
+.select-mode .gallery-item-lock { display: none !important; }
 .gallery-item.selected {
   border-color: var(--rose);
   background: rgba(212, 165, 165, 0.12);
@@ -1033,8 +1056,9 @@ function renderGallery() {
         ${items.length === 0
           ? '<div class="empty-state">素材がありません</div>'
           : `<div class="gallery-grid">${items.map(item => `
-              <div class="gallery-item${catSel.has(item.id) ? ' selected' : ''}" data-cat="${esc(cat)}" data-id="${item.id}">
+              <div class="gallery-item${catSel.has(item.id) ? ' selected' : ''}${item.locked ? ' item-locked' : ''}" data-cat="${esc(cat)}" data-id="${item.id}">
                 <img src="${item.data}" alt="${esc(item.name)}" />
+                <button class="gallery-item-lock" data-cat="${esc(cat)}" data-id="${item.id}" title="${item.locked ? 'ロック中（タップで解除）' : 'ロックなし（タップでロック）'}">${item.locked ? '🔒' : '🔓'}</button>
                 <button class="gallery-item-delete" data-cat="${esc(cat)}" data-id="${item.id}">×</button>
               </div>
             `).join('')}</div>`
@@ -1042,6 +1066,15 @@ function renderGallery() {
       </div>
     `;
   }).join('');
+}
+
+function toggleItemLock(category, itemId) {
+  loadMaterials();
+  const item = (materials[category] || []).find(m => m.id === itemId);
+  if (!item) return;
+  item.locked = !item.locked;
+  saveMaterials();
+  renderGallery();
 }
 
 function deleteMaterial(category, itemId) {
@@ -1061,6 +1094,15 @@ document.getElementById('gallery-cats').addEventListener('click', function(e) {
     e.stopPropagation();
     const cat = selectAllBtn.closest('.gallery-cat').dataset.cat;
     handleSelectAll(selectAllBtn, cat);
+    return;
+  }
+
+  const lockBtn = e.target.closest('.gallery-item-lock');
+  if (lockBtn) {
+    e.stopPropagation();
+    if (!selectMode) {
+      toggleItemLock(lockBtn.dataset.cat, parseFloat(lockBtn.dataset.id));
+    }
     return;
   }
 

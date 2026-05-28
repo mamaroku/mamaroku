@@ -1015,7 +1015,7 @@ async function loadMaterialsFromJSON() {
     if(t !== 'both' && t !== 'sticker') return;
     const items = (data.materials[cat] || []).slice().sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity));
     items.forEach(item => {
-      allMaterials.push({ label: item.name || cat, src: item.data, category: cat });
+      allMaterials.push({ label: item.name || cat, src: item.data, category: cat, locked: item.locked ?? false });
     });
   });
   return allMaterials;
@@ -1150,7 +1150,8 @@ function buildMaterialScreen() {
       imgEl.src = m.src;
       imgEl.alt = m.label;
       card.appendChild(imgEl);
-      if (isCatLocked) {
+      const isItemLocked = isCatLocked || (!premiumUnlocked && m.locked);
+      if (isItemLocked) {
         const lk = document.createElement('div');
         lk.innerHTML = lockSvg;
         lk.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:22px;height:26px;pointer-events:none;';
