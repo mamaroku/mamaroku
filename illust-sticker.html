@@ -151,6 +151,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .adm-gallery-cat-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text);}
 .adm-sel-all{display:none;font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--bd);background:transparent;color:var(--muted);padding:4px 8px;cursor:pointer;font-family:inherit;}
 .adm-select-mode .adm-sel-all{display:block;}
+.adm-select-mode .adm-cat-lock{display:none;}
 .adm-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:4px;}
 .adm-gallery-item{position:relative;aspect-ratio:1;border:2px solid var(--bd);padding:6px;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:grab;}
 .adm-gallery-item img{width:100%;height:100%;object-fit:contain;}
@@ -633,7 +634,7 @@ let admCats=[], admCatTargets={}, admLockedCats=[], admSelMode=false, admSelItem
 function admLoadCats(){admCats=JSON.parse(localStorage.getItem(CAT_KEY)||'[]');admCatTargets=JSON.parse(localStorage.getItem(CAT_TARGET_KEY)||'{}');admLockedCats=JSON.parse(localStorage.getItem(LOCKED_CATS_KEY)||'[]');}
 function admSaveCats(){localStorage.setItem(CAT_KEY,JSON.stringify(admCats));localStorage.setItem(CAT_TARGET_KEY,JSON.stringify(admCatTargets));localStorage.setItem(LOCKED_CATS_KEY,JSON.stringify(admLockedCats));}
 function admSetCatTarget(cat,val){admCatTargets[cat]=val;admSaveCats();}
-function admToggleCatLock(cat){admLockedCats.includes(cat)?admLockedCats=admLockedCats.filter(c=>c!==cat):admLockedCats.push(cat);admSaveCats();admRenderCatList();}
+function admToggleCatLock(cat){admLockedCats.includes(cat)?admLockedCats=admLockedCats.filter(c=>c!==cat):admLockedCats.push(cat);admSaveCats();admRenderCatList();admRenderGallery();}
 
 async function showAdmin(){admIsOpen=true;document.getElementById('admin-screen').classList.add('open');admLoadCats();admRenderCatList();admRenderUploadSelect();await admRenderGallery();}
 function hideAdmin(){admIsOpen=false;document.getElementById('admin-screen').classList.remove('open');loadMaterials();}
@@ -763,7 +764,7 @@ async function admRenderGallery(){
   allItems.forEach(item=>{if(matsByCat[item.category])matsByCat[item.category].push(item);});
   cont.innerHTML=admCats.map(cat=>{
     const items=(matsByCat[cat]||[]).slice().sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)),catSel=admSelItems[cat]||new Set(),allSel=items.length>0&&items.every(m=>catSel.has(m.id));
-    return`<div class="adm-gallery-cat" data-cat="${admEsc(cat)}"><div class="adm-gallery-cat-hd"><div class="adm-gallery-cat-title">${admEsc(cat)} (${items.length})</div><div style="display:flex;gap:6px;align-items:center;"><button class="adm-sort-name-btn adm-cat-del" data-cat="${admEsc(cat)}">名前順</button><button class="adm-sel-all">${allSel?'全解除':'全選択'}</button></div></div>${items.length?`<div class="adm-gallery-grid">${items.map(item=>`<div class="adm-gallery-item${catSel.has(item.id)?' selected':''}" data-cat="${admEsc(cat)}" data-id="${item.id}" draggable="true"><img src="${item.data}" alt="${admEsc(item.name)}"><button class="adm-item-del" data-cat="${admEsc(cat)}" data-id="${item.id}">×</button></div>`).join('')}</div>`:'<div class="adm-empty">素材がありません</div>'}</div>`;
+    return`<div class="adm-gallery-cat" data-cat="${admEsc(cat)}"><div class="adm-gallery-cat-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="adm-gallery-cat-title">${admEsc(cat)} (${items.length})</div><button class="adm-cat-lock${admLockedCats.includes(cat)?' locked':''}" onclick="admToggleCatLock('${admEsc(cat)}')" title="${admLockedCats.includes(cat)?'鍵あり（タップで解除）':'鍵なし（タップでロック）'}">${admLockedCats.includes(cat)?'🔒':'🔓'}</button></div><div style="display:flex;gap:6px;align-items:center;"><button class="adm-sort-name-btn adm-cat-del" data-cat="${admEsc(cat)}">名前順</button><button class="adm-sel-all">${allSel?'全解除':'全選択'}</button></div></div>${items.length?`<div class="adm-gallery-grid">${items.map(item=>`<div class="adm-gallery-item${catSel.has(item.id)?' selected':''}" data-cat="${admEsc(cat)}" data-id="${item.id}" draggable="true"><img src="${item.data}" alt="${admEsc(item.name)}"><button class="adm-item-del" data-cat="${admEsc(cat)}" data-id="${item.id}">×</button></div>`).join('')}</div>`:'<div class="adm-empty">素材がありません</div>'}</div>`;
   }).join('');
 }
 // ── Drag & Drop reorder ──
