@@ -573,7 +573,7 @@ function renderCategoryTabs(){
     const isPremium=!premiumUnlocked&&PREMIUM_SHAPE_CATS.includes(cat);
     const b=document.createElement('div');
     b.className='cat-opt'+(cat===activeCat?' selected':'')+(isPremium?' premium-locked':'');
-    b.innerHTML=(isPremium?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="10" height="12" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="currentColor" stroke="none"/></svg>':'')+(CAT_LABELS[cat]||cat.toUpperCase());
+    b.innerHTML=(isPremium?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="16" height="19" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="currentColor" stroke="none"/></svg>':'')+(CAT_LABELS[cat]||cat.toUpperCase());
     b.onclick=()=>{
       document.querySelectorAll('.cat-opt').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');activeCat=cat;renderGrid();
@@ -660,8 +660,8 @@ function renderGrid(){
     btn.appendChild(wrap.firstElementChild);
     if(isCatPremium){
       const lk=document.createElement('div');
-      lk.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none" stroke="var(--text)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="var(--text)" stroke="none"/></svg>';
-      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:11px;height:13px;pointer-events:none;';
+      lk.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="#ffffff" stroke="none"/></svg>';
+      lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:28px;pointer-events:none;';
       btn.appendChild(lk);
       btn.onclick=()=>showUnlockModal();
     }else{
@@ -1156,7 +1156,7 @@ function buildMaterialScreen() {
       if (isItemLocked) {
         const lk = document.createElement('div');
         lk.innerHTML = lockSvg;
-        lk.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:22px;height:26px;pointer-events:none;';
+        lk.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:35px;pointer-events:none;';
         card.appendChild(lk);
         card.addEventListener('click', () => showUnlockModal());
       } else {
