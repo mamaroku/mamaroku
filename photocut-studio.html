@@ -107,7 +107,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 
 /* shape panel */
 #panel-shape .cat-row{display:flex;gap:3px;margin-bottom:6px;flex-wrap:wrap;}
-.cat-opt{padding:4px 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
+.cat-opt{display:inline-flex;align-items:center;padding:4px 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
 .cat-opt.selected{background:var(--text);border-color:var(--text);color:var(--bg);}
 .sgrid{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;}
 .sbtn{aspect-ratio:1;border:1px solid var(--bdl);background:var(--sur);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:2px;transition:border-color .1s,background .1s;}
@@ -573,7 +573,7 @@ function renderCategoryTabs(){
     const isPremium=!premiumUnlocked&&PREMIUM_SHAPE_CATS.includes(cat);
     const b=document.createElement('div');
     b.className='cat-opt'+(cat===activeCat?' selected':'')+(isPremium?' premium-locked':'');
-    b.innerHTML=(isPremium?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="16" height="19" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="currentColor" stroke="none"/></svg>':'')+(CAT_LABELS[cat]||cat.toUpperCase());
+    b.innerHTML=(isPremium?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="16" height="19" fill="currentColor" style="margin-right:4px;flex-shrink:0;"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>':'')+(CAT_LABELS[cat]||cat.toUpperCase());
     b.onclick=()=>{
       document.querySelectorAll('.cat-opt').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');activeCat=cat;renderGrid();
@@ -660,7 +660,7 @@ function renderGrid(){
     btn.appendChild(wrap.firstElementChild);
     if(isCatPremium){
       const lk=document.createElement('div');
-      lk.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="9" fill="#ffffff" stroke="none"/></svg>';
+      lk.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="#ffffff"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>';
       lk.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:28px;pointer-events:none;';
       btn.appendChild(lk);
       btn.onclick=()=>showUnlockModal();
@@ -1126,7 +1126,7 @@ function buildMaterialScreen() {
   }
 
   const categories = [...new Set(MATERIALS.map(m => m.category))];
-  const lockSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none" stroke="var(--text)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M25 52V36C25 20 75 20 75 36V52"/><rect x="8" y="52" width="84" height="58" rx="2"/><circle cx="50" cy="81" r="8" fill="var(--text)" stroke="none"/></svg>';
+  const lockSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="var(--text)"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>';
 
   categories.forEach(cat => {
     const items = MATERIALS.filter(m => m.category === cat);
