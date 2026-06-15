@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="イラストスタンプ">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=Tsunagi+Gothic+Black&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f8f6f2;--sur:#fdfcfa;--bd:#d8d4cc;--bdl:#e8e4de;--text:#3a3630;--muted:#5a5450;--faint:#7a7670;--acc:#5a524a;--hover:#f0ede8;--rose:#d4a5a5;--blush:#f4e8e4;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -193,25 +193,27 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #app.date-mode #grid-wrap{display:none;}
 #app.date-mode #zoom-row{display:none!important;}
 
-#dl-canvas-wrap{background:repeating-conic-gradient(#ddd 0% 25%,#f5f5f5 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);margin-bottom:14px;display:flex;justify-content:center;}
-#dl-canvas{display:block;width:auto;height:auto;max-width:100%;max-height:42vh;}
-#dl-caption{font-size:10px;color:var(--faint);text-align:center;letter-spacing:.06em;margin-bottom:14px;}
+#dl-canvas-wrap{background:repeating-conic-gradient(#ddd 0% 25%,#f5f5f5 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);margin-bottom:10px;display:flex;justify-content:center;}
+#dl-canvas{display:block;width:auto;height:auto;max-width:100%;max-height:34vh;}
+#dl-caption{font-size:10px;color:var(--faint);text-align:center;letter-spacing:.06em;margin-bottom:8px;}
 .dl-field{margin-bottom:12px;}
 .dl-field label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;}
 .dl-field input[type=date],.dl-field input[type=text],.dl-field select{width:100%;padding:9px 10px;border:1px solid var(--bd);background:var(--bg);font-size:13px;color:var(--text);font-family:inherit;outline:none;}
-.dl-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.dl-row{display:flex;gap:8px;margin-bottom:8px;}
+.dl-row .dl-field{flex:1;min-width:0;margin-bottom:0;}
+.dl-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
 .dl-preset{width:30px;height:30px;border-radius:50%;cursor:pointer;border:1.5px solid var(--bdl);transition:transform .1s;}
 .dl-preset:hover{transform:scale(1.12);}
 .dl-preset.sel{outline:2px solid var(--acc);outline-offset:2px;}
-.dl-colors{display:flex;gap:8px;margin-bottom:16px;}
+.dl-colors{display:flex;gap:8px;margin-bottom:10px;}
 .dl-color-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
 .dl-color-item input[type=color]{width:100%;height:32px;border:1px solid var(--bd);background:none;padding:1px;cursor:pointer;}
 .dl-color-item span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
-.dl-layout-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.dl-layout-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
 .dl-layout-btn{width:28px;height:28px;flex-shrink:0;border:1px solid var(--bd);background:var(--sur);font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
 .dl-layout-btn:hover{border-color:var(--acc);color:var(--acc);}
 .dl-layout-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
-.dl-row-btns{display:flex;gap:8px;margin-bottom:16px;}
+.dl-row-btns{display:flex;gap:8px;margin-bottom:10px;}
 .dl-row-btns button{flex:1;padding:9px;border:1px solid var(--bd);background:transparent;font-size:11px;letter-spacing:.06em;color:var(--text);cursor:pointer;font-family:inherit;transition:all .2s;}
 .dl-row-btns button:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
 #dl-copy-btn{width:100%;padding:11px;background:var(--text);color:var(--bg);border:none;font-size:11px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all .2s;}
@@ -262,26 +264,30 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <div class="panel-sec" id="sec-date">
       <div id="dl-canvas-wrap"><canvas id="dl-canvas"></canvas></div>
       <div id="dl-caption"></div>
-      <div class="dl-field">
-        <label>日付</label>
-        <input type="date" id="dl-date">
-      </div>
-      <div class="dl-field">
-        <label>ラベル（任意）</label>
-        <input type="text" id="dl-label" placeholder="例: MONTHLY PLANNER">
+      <div class="dl-row">
+        <div class="dl-field">
+          <label>日付</label>
+          <input type="date" id="dl-date">
+        </div>
+        <div class="dl-field">
+          <label>ラベル（任意）</label>
+          <input type="text" id="dl-label" placeholder="例: MONTHLY PLANNER">
+        </div>
       </div>
       <div class="dl-presets" id="dl-presets"></div>
       <div class="dl-colors">
         <div class="dl-color-item"><input type="color" id="dl-fg"><span>文字</span></div>
         <div class="dl-color-item"><input type="color" id="dl-accent"><span>アクセント</span></div>
       </div>
-      <div class="dl-field">
-        <label>フォント</label>
-        <select id="dl-font"></select>
-      </div>
-      <div class="dl-field">
-        <label>出力サイズ</label>
-        <select id="dl-size"></select>
+      <div class="dl-row">
+        <div class="dl-field">
+          <label>フォント</label>
+          <select id="dl-font"></select>
+        </div>
+        <div class="dl-field">
+          <label>出力サイズ</label>
+          <select id="dl-size"></select>
+        </div>
       </div>
       <div class="dl-layout-grid" id="dl-layout-grid"></div>
       <div class="dl-row-btns">
@@ -1211,6 +1217,9 @@ const DL_PRESETS=[
   {name:'セージグリーン',fg:'#34392c',accent:'#7e9c63'},
   {name:'ネイビー',fg:'#1f2a44',accent:'#3a5a99'},
 ];
+const DL_WEB_FONTS=[
+  'Darumadrop One','Tsunagi Gothic Black',
+];
 const DL_FALLBACK_FONTS=[
   'Hiragino Sans','Hiragino Mincho ProN','Hiragino Maru Gothic ProN','ヒラギノ丸ゴ ProN',
   '游ゴシック体','游明朝体','筑紫A丸ゴシック','筑紫B丸ゴシック',
@@ -1812,12 +1821,24 @@ async function dlPopulateFonts(){
     }catch(e){/* 権限なし・未対応 → フォールバック一覧を使用 */}
   }
   sel.innerHTML='';
+  const webGroup=document.createElement('optgroup');
+  webGroup.label='Webフォント';
+  DL_WEB_FONTS.forEach(name=>{
+    const opt=document.createElement('option');
+    opt.value=name;opt.textContent=name;
+    opt.style.fontFamily=`"${name}"`;
+    webGroup.appendChild(opt);
+  });
+  sel.appendChild(webGroup);
+  const sysGroup=document.createElement('optgroup');
+  sysGroup.label='システムフォント';
   names.forEach(name=>{
     const opt=document.createElement('option');
     opt.value=name;opt.textContent=name;
     opt.style.fontFamily=`"${name}"`;
-    sel.appendChild(opt);
+    sysGroup.appendChild(opt);
   });
+  sel.appendChild(sysGroup);
   const def=names.includes('Hiragino Sans')?'Hiragino Sans':names[0];
   sel.value=def;
   DL_FONT=`"${def}",sans-serif`;
@@ -1826,8 +1847,12 @@ async function dlInit(){
   document.getElementById('dl-date').value=new Date().toISOString().slice(0,10);
 
   await dlPopulateFonts();
-  document.getElementById('dl-font').addEventListener('change',()=>{
-    DL_FONT=`"${document.getElementById('dl-font').value}",sans-serif`;
+  document.getElementById('dl-font').addEventListener('change',async()=>{
+    const name=document.getElementById('dl-font').value;
+    DL_FONT=`"${name}",sans-serif`;
+    if(DL_WEB_FONTS.includes(name)){
+      try{await document.fonts.load(`16px "${name}"`);}catch(e){}
+    }
     dlRender();
   });
 
