@@ -185,6 +185,37 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #app.photo-mode #panel.open{flex:1;max-height:none!important;overflow-y:auto;transition:none;}
 #app.photo-mode #grid-wrap{display:none;}
 #app.photo-mode #zoom-row{display:none!important;}
+
+/* ── 日付レイアウトモード ── */
+#app.date-mode #preview-strip{display:none;}
+#app.date-mode .sz-grp{display:none;}
+#app.date-mode #panel.open{flex:1;max-height:none!important;overflow-y:auto;transition:none;}
+#app.date-mode #grid-wrap{display:none;}
+#app.date-mode #zoom-row{display:none!important;}
+
+#dl-canvas-wrap{background:repeating-conic-gradient(#ddd 0% 25%,#f5f5f5 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);margin-bottom:14px;display:flex;justify-content:center;}
+#dl-canvas{display:block;width:auto;height:auto;max-width:100%;max-height:42vh;}
+#dl-caption{font-size:10px;color:var(--faint);text-align:center;letter-spacing:.06em;margin-bottom:14px;}
+.dl-field{margin-bottom:12px;}
+.dl-field label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;}
+.dl-field input[type=date],.dl-field input[type=text],.dl-field select{width:100%;padding:9px 10px;border:1px solid var(--bd);background:var(--bg);font-size:13px;color:var(--text);font-family:inherit;outline:none;}
+.dl-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.dl-preset{width:30px;height:30px;border-radius:50%;cursor:pointer;border:1.5px solid var(--bdl);transition:transform .1s;}
+.dl-preset:hover{transform:scale(1.12);}
+.dl-preset.sel{outline:2px solid var(--acc);outline-offset:2px;}
+.dl-colors{display:flex;gap:8px;margin-bottom:16px;}
+.dl-color-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.dl-color-item input[type=color]{width:100%;height:32px;border:1px solid var(--bd);background:none;padding:1px;cursor:pointer;}
+.dl-color-item span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+.dl-layout-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.dl-layout-btn{width:28px;height:28px;flex-shrink:0;border:1px solid var(--bd);background:var(--sur);font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
+.dl-layout-btn:hover{border-color:var(--acc);color:var(--acc);}
+.dl-layout-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.dl-row-btns{display:flex;gap:8px;margin-bottom:16px;}
+.dl-row-btns button{flex:1;padding:9px;border:1px solid var(--bd);background:transparent;font-size:11px;letter-spacing:.06em;color:var(--text);cursor:pointer;font-family:inherit;transition:all .2s;}
+.dl-row-btns button:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
+#dl-copy-btn{width:100%;padding:11px;background:var(--text);color:var(--bg);border:none;font-size:11px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all .2s;}
+#dl-copy-btn:hover{background:var(--acc);}
 </style>
 </head>
 <body>
@@ -202,6 +233,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   <div id="tool-bar">
     <button class="tool-tab active" id="tab-color" onclick="switchTab('color')">カラー</button>
     <button class="tool-tab" id="tab-photo" onclick="switchTab('photo')">写真・素材</button>
+    <button class="tool-tab" id="tab-date" onclick="switchTab('date')">日付</button>
   </div>
   <div id="panel">
     <div class="panel-sec active" id="sec-color">
@@ -226,6 +258,38 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       </div>
       <div class="photo-section-title">素材</div>
       <div class="photo-grid" id="mat-grid"><div style="font-size:11px;color:var(--faint);padding:4px 0;">読み込み中…</div></div>
+    </div>
+    <div class="panel-sec" id="sec-date">
+      <div id="dl-canvas-wrap"><canvas id="dl-canvas"></canvas></div>
+      <div id="dl-caption"></div>
+      <div class="dl-field">
+        <label>日付</label>
+        <input type="date" id="dl-date">
+      </div>
+      <div class="dl-field">
+        <label>ラベル（任意）</label>
+        <input type="text" id="dl-label" placeholder="例: MONTHLY PLANNER">
+      </div>
+      <div class="dl-presets" id="dl-presets"></div>
+      <div class="dl-colors">
+        <div class="dl-color-item"><input type="color" id="dl-fg"><span>文字</span></div>
+        <div class="dl-color-item"><input type="color" id="dl-accent"><span>アクセント</span></div>
+      </div>
+      <div class="dl-field">
+        <label>フォント</label>
+        <select id="dl-font"></select>
+      </div>
+      <div class="dl-field">
+        <label>出力サイズ</label>
+        <select id="dl-size"></select>
+      </div>
+      <div class="dl-layout-grid" id="dl-layout-grid"></div>
+      <div class="dl-row-btns">
+        <button id="dl-prev" type="button">‹ 前へ</button>
+        <button id="dl-shuffle" type="button">シャッフル</button>
+        <button id="dl-next" type="button">次へ ›</button>
+      </div>
+      <button id="dl-copy-btn" type="button">コピー</button>
     </div>
   </div>
   <div id="zoom-row" style="display:none;">
@@ -488,10 +552,24 @@ function switchTab(tab){
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-photo').classList.add('active');
     panel.classList.add('open');panelOpen=true;
+    app.classList.remove('date-mode');
     app.classList.add('photo-mode');
     return;
   }
+  if(tab==='date'){
+    activeTab=tab;
+    document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-date').classList.add('active');
+    document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
+    document.getElementById('sec-date').classList.add('active');
+    panel.classList.add('open');panelOpen=true;
+    app.classList.remove('photo-mode');
+    app.classList.add('date-mode');
+    if(!dlInitialized){dlInit();dlInitialized=true;}
+    return;
+  }
   app.classList.remove('photo-mode');
+  app.classList.remove('date-mode');
   if(activeTab===tab&&panelOpen){panel.classList.remove('open');panelOpen=false;return;}
   activeTab=tab;
   document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
@@ -1111,6 +1189,693 @@ async function syncFromRemote(){
   }catch(e){
     if(isLocal)showSyncStatus('同期エラー: '+e.message);
   }
+}
+
+// ════════════════════════════════════════════
+// 日付レイアウト (Date Layout)
+// ════════════════════════════════════════════
+let dlInitialized=false, dlCurrentLayout=0;
+const DL_MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DL_DAY_NAMES=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+const DL_SIZES=[
+  {key:'a4',label:'A4 (1240×1754・標準)',w:1240,h:1754},
+  {key:'a4hi',label:'A4 (2480×3508・高解像度)',w:2480,h:3508},
+  {key:'letter',label:'レター (1700×2200)',w:1700,h:2200},
+  {key:'ipad',label:'iPad縦 (1668×2388)',w:1668,h:2388},
+];
+const DL_PRESETS=[
+  {name:'ブラック',fg:'#1a1a1a',accent:'#1a1a1a'},
+  {name:'ホワイト',fg:'#ffffff',accent:'#ffffff'},
+  {name:'アースベージュ',fg:'#3a2e22',accent:'#c9774a'},
+  {name:'パステルピンク',fg:'#4a3a3d',accent:'#e88aa0'},
+  {name:'セージグリーン',fg:'#34392c',accent:'#7e9c63'},
+  {name:'ネイビー',fg:'#1f2a44',accent:'#3a5a99'},
+];
+const DL_FALLBACK_FONTS=[
+  'Hiragino Sans','Hiragino Mincho ProN','Hiragino Maru Gothic ProN',
+  'Helvetica Neue','Arial','Arial Black','Avenir Next','Avenir','Futura','Optima',
+  'Georgia','Times New Roman','American Typewriter','Didot','Palatino',
+  'Courier New','Menlo',
+  'Marker Felt','Chalkboard SE','Bradley Hand','Noteworthy','Comic Sans MS','Chalkduster','Snell Roundhand',
+];
+let DL_FONT="'Hiragino Sans',sans-serif";
+
+function dlLuminance(hex){
+  const c=hex.replace('#','');
+  const r=parseInt(c.substr(0,2),16)/255,g=parseInt(c.substr(2,2),16)/255,b=parseInt(c.substr(4,2),16)/255;
+  return 0.299*r+0.587*g+0.114*b;
+}
+function dlOnColor(hex){return dlLuminance(hex)>0.55?'#1a1a1a':'#ffffff';}
+function dlFitFont(ctx,text,maxWidth,maxSize,family,weight){
+  let size=maxSize;
+  ctx.font=`${weight} ${size}px ${family}`;
+  while(ctx.measureText(text).width>maxWidth&&size>6){
+    size-=Math.max(1,size*0.01);
+    ctx.font=`${weight} ${size}px ${family}`;
+  }
+  return size;
+}
+function dlDrawSpaced(ctx,text,cx,y,spacing){
+  const chars=text.split('');
+  const widths=chars.map(ch=>ctx.measureText(ch).width);
+  const total=widths.reduce((a,b)=>a+b,0)+spacing*(chars.length-1);
+  let x=cx-total/2;
+  const prevAlign=ctx.textAlign;
+  ctx.textAlign='left';
+  chars.forEach((ch,i)=>{
+    ctx.fillText(ch,x,y);
+    x+=widths[i]+spacing;
+  });
+  ctx.textAlign=prevAlign;
+}
+function dlGetData(){
+  let dateVal=document.getElementById('dl-date').value;
+  if(!dateVal)dateVal=new Date().toISOString().slice(0,10);
+  const [y,m,d]=dateVal.split('-').map(Number);
+  const dateObj=new Date(y,m-1,d);
+  const month=DL_MONTH_NAMES[m-1];
+  const weekday=DL_DAY_NAMES[dateObj.getDay()];
+  return {
+    year:String(y),yearShort:String(y).slice(2),
+    month:m,monthStr:String(m).padStart(2,'0'),
+    day:d,dayStr:String(d).padStart(2,'0'),
+    monthName:month,monthUpper:month.toUpperCase(),monthShort:month.slice(0,3).toUpperCase(),
+    dayName:weekday,dayShort:weekday.slice(0,3),
+    label:document.getElementById('dl-label').value.trim(),
+  };
+}
+function dlGetColors(){
+  return {
+    fg:document.getElementById('dl-fg').value,
+    accent:document.getElementById('dl-accent').value,
+  };
+}
+function dlGetSize(){return DL_SIZES[document.getElementById('dl-size').selectedIndex];}
+
+const DL_LAYOUTS=[
+  { // 1. コーナーブロック
+    name:'コーナーブロック',
+    draw(ctx,W,H,d,c){
+      ctx.fillStyle=c.fg;
+      ctx.save();
+      ctx.translate(W*0.12,H*0.5);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      const fs=dlFitFont(ctx,d.monthUpper,H*0.94,H*0.24,DL_FONT,'900');
+      ctx.font=`900 ${fs}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,0,0);
+      ctx.restore();
+
+      const bw=W*0.5,bh=H*0.24;
+      ctx.fillStyle=c.accent;
+      ctx.fillRect(W-bw,H-bh,bw,bh);
+      ctx.fillStyle=dlOnColor(c.accent);
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      const dateStr=`${d.year}.${d.monthStr}.${d.dayStr}`;
+      const fs2=dlFitFont(ctx,dateStr,bw*0.82,bh*0.42,DL_FONT,'900');
+      ctx.font=`900 ${fs2}px ${DL_FONT}`;
+      ctx.fillText(dateStr,W-bw+bw*0.09,H-bh*0.42);
+      ctx.font=`700 ${bh*0.13}px ${DL_FONT}`;
+      ctx.fillText((d.label||d.dayName).toUpperCase(),W-bw+bw*0.09,H-bh*0.16);
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`700 ${H*0.022}px ${DL_FONT}`;
+      ctx.textAlign='right';
+      ctx.fillText(d.year,W-W*0.06,H*0.08);
+    }
+  },
+  { // 2. スイスグリッド
+    name:'スイスグリッド',
+    draw(ctx,W,H,d,c){
+      const pad=W*0.08;
+      ctx.strokeStyle=c.fg;ctx.lineWidth=W*0.003;
+      ctx.beginPath();ctx.moveTo(pad,H*0.14);ctx.lineTo(W-pad,H*0.14);ctx.stroke();
+
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.font=`700 ${H*0.024}px ${DL_FONT}`;
+      ctx.fillText(`${d.year} / ${d.dayName}`,pad,H*0.105);
+
+      ctx.font=`900 ${H*0.28}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,pad,H*0.42);
+
+      ctx.fillStyle=c.accent;
+      ctx.font=`900 ${H*0.34}px ${DL_FONT}`;
+      ctx.fillText(d.dayStr,pad,H*0.75);
+
+      ctx.strokeStyle=c.fg;
+      ctx.beginPath();ctx.moveTo(pad,H*0.85);ctx.lineTo(W-pad,H*0.85);ctx.stroke();
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
+      ctx.fillText((d.label||'CALENDAR').toUpperCase(),pad,H*0.9);
+    }
+  },
+  { // 3. カレンダーグリッド
+    name:'カレンダーグリッド',
+    draw(ctx,W,H,d,c){
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.font=`900 ${H*0.09}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,W*0.08,H*0.14);
+      ctx.font=`700 ${H*0.04}px ${DL_FONT}`;
+      ctx.fillText(d.year,W*0.08,H*0.2);
+
+      const daysInMonth=new Date(Number(d.year),d.month,0).getDate();
+      const cols=7,rows=Math.ceil(daysInMonth/cols);
+      const gridX=W*0.08,gridY=H*0.28,gridW=W*0.84,gridH=H*0.5;
+      const cellW=gridW/cols,cellH=gridH/rows,gap=cellW*0.12;
+      for(let i=0;i<daysInMonth;i++){
+        const col=i%cols,row=Math.floor(i/cols);
+        const x=gridX+col*cellW,y=gridY+row*cellH;
+        const day=i+1;
+        if(day===d.day){
+          ctx.fillStyle=c.accent;
+          ctx.fillRect(x,y,cellW-gap,cellH-gap);
+          ctx.fillStyle=dlOnColor(c.accent);
+        }else{
+          ctx.strokeStyle=c.fg;ctx.globalAlpha=0.25;ctx.lineWidth=W*0.0015;
+          ctx.strokeRect(x,y,cellW-gap,cellH-gap);
+          ctx.globalAlpha=1;
+          ctx.fillStyle=c.fg;
+        }
+        ctx.font=`700 ${cellH*0.28}px ${DL_FONT}`;
+        ctx.fillText(String(day),x+cellW*0.08,y+cellH*0.32);
+      }
+      ctx.fillStyle=c.fg;
+      ctx.font=`700 ${H*0.025}px ${DL_FONT}`;
+      ctx.fillText((d.label||d.dayName),W*0.08,H*0.92);
+    }
+  },
+  { // 4. ダイアゴナル
+    name:'ダイアゴナル',
+    draw(ctx,W,H,d,c){
+      ctx.save();
+      ctx.translate(W*0.5,H*0.5);
+      ctx.rotate(-12*Math.PI/180);
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`900 ${H*0.16}px ${DL_FONT}`;
+      ctx.fillText(`${d.monthShort} ${d.dayStr}`,0,-H*0.06);
+      ctx.fillStyle=c.accent;
+      ctx.font=`900 ${H*0.2}px ${DL_FONT}`;
+      ctx.fillText(d.year,0,H*0.12);
+      ctx.restore();
+
+      ctx.fillStyle=c.fg;
+      ctx.fillRect(W*0.06,H*0.06,W*0.3,H*0.05);
+      ctx.fillStyle=dlOnColor(c.fg);
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.font=`700 ${H*0.022}px ${DL_FONT}`;
+      ctx.fillText((d.label||d.dayName).toUpperCase(),W*0.08,H*0.085);
+    }
+  },
+  { // 5. スプリットブロック
+    name:'スプリットブロック',
+    draw(ctx,W,H,d,c){
+      const splitY=H*0.42;
+      ctx.fillStyle=c.accent;ctx.fillRect(0,0,W,splitY);
+
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`900 ${H*0.42}px ${DL_FONT}`;
+
+      ctx.save();
+      ctx.beginPath();ctx.rect(0,0,W,splitY);ctx.clip();
+      ctx.fillStyle=dlOnColor(c.accent);
+      ctx.fillText(d.dayStr,W*0.5,splitY);
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();ctx.rect(0,splitY,W,H-splitY);ctx.clip();
+      ctx.fillStyle=c.fg;
+      ctx.fillText(d.dayStr,W*0.5,splitY);
+      ctx.restore();
+
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.fillStyle=dlOnColor(c.accent);
+      ctx.font=`700 ${H*0.035}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,W*0.08,H*0.12);
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`700 ${H*0.03}px ${DL_FONT}`;
+      ctx.fillText(`${d.year} / ${d.dayName}`,W*0.08,H*0.92);
+      if(d.label){
+        ctx.font=`600 ${H*0.024}px ${DL_FONT}`;
+        ctx.fillText(d.label,W*0.08,H*0.96);
+      }
+    }
+  },
+  { // 6. ミニマルセンター
+    name:'ミニマルセンター',
+    draw(ctx,W,H,d,c){
+      ctx.strokeStyle=c.fg;ctx.lineWidth=W*0.003;
+      const lineW=W*0.3;
+      ctx.beginPath();ctx.moveTo(W*0.5-lineW/2,H*0.32);ctx.lineTo(W*0.5+lineW/2,H*0.32);ctx.stroke();
+
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+      ctx.font=`900 ${H*0.32}px ${DL_FONT}`;
+      ctx.fillText(d.dayStr,W*0.5,H*0.58);
+
+      ctx.beginPath();ctx.moveTo(W*0.5-lineW/2,H*0.64);ctx.lineTo(W*0.5+lineW/2,H*0.64);ctx.stroke();
+
+      ctx.fillStyle=c.accent;
+      ctx.font=`700 ${H*0.035}px ${DL_FONT}`;
+      ctx.fillText(`${d.monthName.toUpperCase()} ${d.year}`,W*0.5,H*0.7);
+
+      if(d.label){
+        ctx.fillStyle=c.fg;
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.76);
+      }
+    }
+  },
+  { // 7. タイプウォール
+    name:'タイプウォール',
+    draw(ctx,W,H,d,c){
+      ctx.fillStyle=c.accent;ctx.fillRect(0,0,W,H);
+      const lines=[d.dayName,`${d.monthName} ${d.dayStr}`,d.year,d.monthUpper,d.label||d.dayName];
+      const rowH=H/lines.length;
+      ctx.fillStyle=dlOnColor(c.accent);
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      lines.forEach((line,i)=>{
+        const text=(line||' ').toUpperCase();
+        const fs=dlFitFont(ctx,text,W*1.05,rowH*0.82,DL_FONT,'900');
+        ctx.font=`900 ${fs}px ${DL_FONT}`;
+        ctx.fillText(text,-W*0.01,rowH*(i+0.5));
+      });
+    }
+  },
+  { // 8. サークルアクセント
+    name:'サークルアクセント',
+    draw(ctx,W,H,d,c){
+      ctx.fillStyle=c.accent;
+      ctx.beginPath();
+      ctx.arc(W*0.7,H*0.35,W*0.34,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.font=`900 ${H*0.3}px ${DL_FONT}`;
+      ctx.fillText(d.dayStr,W*0.08,H*0.55);
+
+      ctx.font=`700 ${H*0.04}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,W*0.08,H*0.65);
+
+      ctx.fillStyle=dlOnColor(c.accent);
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`700 ${H*0.03}px ${DL_FONT}`;
+      ctx.fillText(d.year,W*0.7,H*0.35);
+
+      if(d.label){
+        ctx.fillStyle=c.fg;ctx.textAlign='left';ctx.textBaseline='alphabetic';
+        ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.08,H*0.92);
+      }
+    }
+  },
+  { // 9. 縦組み
+    name:'縦組み',
+    draw(ctx,W,H,d,c){
+      ctx.strokeStyle=c.fg;ctx.globalAlpha=0.3;ctx.lineWidth=W*0.002;
+      ctx.strokeRect(W*0.06,H*0.06,W*0.88,H*0.88);
+      ctx.globalAlpha=1;
+
+      const chars=`${d.year}年${d.month}月${d.day}日`.split('');
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      const fs=H*0.06;
+      ctx.font=`700 ${fs}px ${DL_FONT}`;
+      const x=W*0.82,startY=H*0.18;
+      chars.forEach((ch,i)=>ctx.fillText(ch,x,startY+i*fs*1.15));
+
+      ctx.strokeStyle=c.accent;ctx.lineWidth=W*0.006;
+      ctx.beginPath();ctx.moveTo(W*0.7,H*0.1);ctx.lineTo(W*0.7,H*0.9);ctx.stroke();
+
+      ctx.save();
+      ctx.translate(W*0.18,H*0.5);
+      ctx.rotate(Math.PI/2);
+      ctx.fillStyle=c.accent;
+      ctx.font=`900 ${H*0.045}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper+(d.label?' / '+d.label.toUpperCase():''),0,0);
+      ctx.restore();
+    }
+  },
+  { // 10. アウトライン数字
+    name:'アウトライン数字',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='middle';
+
+      ctx.fillStyle=c.accent;
+      ctx.font=`900 ${H*0.22}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,W*0.5,H*0.28);
+
+      ctx.strokeStyle=c.fg;ctx.lineWidth=W*0.008;
+      ctx.font=`900 ${H*0.5}px ${DL_FONT}`;
+      ctx.strokeText(d.dayStr,W*0.5,H*0.62);
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`700 ${H*0.035}px ${DL_FONT}`;
+      ctx.fillText(`${d.year}  ${d.dayName}`,W*0.5,H*0.9);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
+        ctx.fillStyle=c.accent;
+        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.95);
+      }
+    }
+  },
+  { // 11. モジュラータブ
+    name:'モジュラータブ',
+    draw(ctx,W,H,d,c){
+      const tabs=[
+        {label:'YEAR',value:d.year},
+        {label:'MONTH',value:d.monthStr},
+        {label:'DAY',value:d.dayStr},
+        {label:'WEEKDAY',value:d.dayShort},
+      ];
+      const pad=W*0.06,gap=W*0.03;
+      const tabW=(W-pad*2-gap*3)/4,tabH=H*0.22;
+      tabs.forEach((t,i)=>{
+        const x=pad+i*(tabW+gap),y=H*0.08;
+        if(i===2){
+          ctx.fillStyle=c.accent;
+          ctx.fillRect(x,y,tabW,tabH);
+        }else{
+          ctx.strokeStyle=c.fg;ctx.globalAlpha=0.3;ctx.lineWidth=W*0.0015;
+          ctx.strokeRect(x,y,tabW,tabH);
+          ctx.globalAlpha=1;
+        }
+        ctx.fillStyle=i===2?dlOnColor(c.accent):c.fg;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        const fs=dlFitFont(ctx,t.value,tabW*0.8,tabH*0.4,DL_FONT,'900');
+        ctx.font=`900 ${fs}px ${DL_FONT}`;
+        ctx.fillText(t.value,x+tabW/2,y+tabH*0.42);
+        ctx.font=`700 ${tabH*0.12}px ${DL_FONT}`;
+        ctx.fillText(t.label,x+tabW/2,y+tabH*0.78);
+      });
+
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.font=`900 ${H*0.18}px ${DL_FONT}`;
+      ctx.fillText(d.monthName,pad,H*0.62);
+
+      if(d.label){
+        ctx.font=`700 ${H*0.03}px ${DL_FONT}`;
+        ctx.fillStyle=c.accent;
+        ctx.fillText(d.label.toUpperCase(),pad,H*0.7);
+      }
+    }
+  },
+  { // 12. フルブリードウォール
+    name:'フルブリードウォール',
+    draw(ctx,W,H,d,c){
+      ctx.fillStyle=c.accent;ctx.fillRect(0,0,W,H);
+
+      ctx.fillStyle=dlOnColor(c.accent);
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`900 ${H*0.55}px ${DL_FONT}`;
+      ctx.fillText(d.monthUpper,W*0.5,H*0.38);
+
+      const stripH=H*0.16;
+      ctx.fillStyle=c.fg;
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.font=`700 ${stripH*0.34}px ${DL_FONT}`;
+      ctx.fillText(`${d.dayStr}.${d.monthStr}.${d.year}`,W*0.06,H-stripH*0.5);
+
+      if(d.label){
+        ctx.textAlign='right';
+        ctx.font=`600 ${stripH*0.24}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.94,H-stripH*0.5);
+      }
+    }
+  },
+  { // 13. デイトライン
+    name:'デイトライン',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='right';ctx.textBaseline='alphabetic';
+      ctx.fillStyle=c.fg;
+      const text=`${d.monthName}.${d.day}.${d.year}`;
+      const fs=dlFitFont(ctx,text,W*0.86,H*0.06,DL_FONT,'400');
+      ctx.font=`400 ${fs}px ${DL_FONT}`;
+      ctx.fillText(text,W*0.94,H*0.1);
+
+      if(d.label){
+        ctx.fillStyle=c.accent;
+        ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.94,H*0.135);
+      }
+    }
+  },
+  { // 14. スタックレター
+    name:'スタックレター',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      const lines=[d.monthName,String(d.day),d.year];
+      const longest=lines.reduce((a,b)=>a.length>=b.length?a:b);
+      const fs=dlFitFont(ctx,longest,W*0.78,H*0.09,DL_FONT,'400');
+      ctx.font=`400 ${fs}px ${DL_FONT}`;
+      const lineH=fs*1.5;
+      const startY=H*0.34;
+      ctx.fillStyle=c.fg;
+      ctx.fillText(lines[0],W*0.12,startY);
+      ctx.fillStyle=c.accent;
+      ctx.fillText(lines[1],W*0.12,startY+lineH);
+      ctx.fillStyle=c.fg;
+      ctx.fillText(lines[2],W*0.12,startY+lineH*2);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.12,startY+lineH*2+fs*0.85);
+      }
+    }
+  },
+  { // 15. アンダーラインスタンプ
+    name:'アンダーラインスタンプ',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+
+      ctx.fillStyle=c.fg;
+      const fs1=dlFitFont(ctx,d.monthName,W*0.6,H*0.07,DL_FONT,'400');
+      ctx.font=`400 ${fs1}px ${DL_FONT}`;
+      ctx.fillText(d.monthName,W*0.5,H*0.32);
+
+      ctx.strokeStyle=c.fg;ctx.lineWidth=H*0.0025;
+      ctx.beginPath();
+      ctx.moveTo(W*0.35,H*0.37);
+      ctx.lineTo(W*0.65,H*0.37);
+      ctx.stroke();
+
+      ctx.fillStyle=c.accent;
+      ctx.font=`700 ${H*0.2}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.55);
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`400 ${H*0.03}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.64,H*0.018);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.7);
+      }
+    }
+  },
+  { // 16. ジャンボセンター
+    name:'ジャンボセンター',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+
+      ctx.fillStyle=c.fg;
+      const fs1=dlFitFont(ctx,d.monthName,W*0.7,H*0.06,DL_FONT,'400');
+      ctx.font=`400 ${fs1}px ${DL_FONT}`;
+      ctx.fillText(d.monthName,W*0.5,H*0.2);
+
+      ctx.fillStyle=c.accent;
+      ctx.textBaseline='middle';
+      const fs2=dlFitFont(ctx,String(d.day),W*0.9,H*0.46,DL_FONT,'700');
+      ctx.font=`700 ${fs2}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.5);
+
+      ctx.fillStyle=c.fg;
+      ctx.textBaseline='alphabetic';
+      ctx.font=`400 ${H*0.032}px ${DL_FONT}`;
+      ctx.fillText(d.year,W*0.5,H*0.84);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.89);
+      }
+    }
+  },
+  { // 17. ドットセンター
+    name:'ドットセンター',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`400 ${H*0.028}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.16,H*0.015);
+
+      ctx.fillStyle=c.accent;
+      ctx.textBaseline='middle';
+      const fs2=dlFitFont(ctx,String(d.day),W*0.9,H*0.44,DL_FONT,'700');
+      ctx.font=`700 ${fs2}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.46);
+
+      ctx.fillStyle=c.fg;
+      ctx.beginPath();
+      ctx.arc(W*0.5,H*0.62,H*0.008,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.textBaseline='alphabetic';
+      ctx.font=`400 ${H*0.028}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.74,H*0.015);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.8,H*0.012);
+      }
+    }
+  },
+  { // 18. イヤー・デイ・マンス
+    name:'イヤー・デイ・マンス',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`400 ${H*0.028}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.16,H*0.015);
+
+      ctx.fillStyle=c.accent;
+      ctx.textBaseline='middle';
+      const fs3=dlFitFont(ctx,String(d.day),W*0.9,H*0.46,DL_FONT,'700');
+      ctx.font=`700 ${fs3}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.5);
+
+      ctx.fillStyle=c.fg;
+      ctx.textBaseline='alphabetic';
+      ctx.font=`400 ${H*0.03}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.84,H*0.016);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.9,H*0.012);
+      }
+    }
+  },
+];
+
+function dlRender(){
+  const d=dlGetData(),c=dlGetColors(),size=dlGetSize();
+  const canvas=document.getElementById('dl-canvas');
+  canvas.width=size.w;canvas.height=size.h;
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.globalAlpha=1;
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.clearRect(0,0,size.w,size.h);
+  DL_LAYOUTS[dlCurrentLayout].draw(ctx,size.w,size.h,d,c);
+}
+function dlApplyPreset(i){
+  const p=DL_PRESETS[i];
+  document.getElementById('dl-fg').value=p.fg;
+  document.getElementById('dl-accent').value=p.accent;
+  document.querySelectorAll('.dl-preset').forEach((el,idx)=>el.classList.toggle('sel',idx===i));
+  dlRender();
+}
+function dlUpdateLayoutUI(){
+  document.querySelectorAll('.dl-layout-btn').forEach((el,idx)=>el.classList.toggle('active',idx===dlCurrentLayout));
+  document.getElementById('dl-caption').textContent=`Layout ${dlCurrentLayout+1} / ${DL_LAYOUTS.length} — ${DL_LAYOUTS[dlCurrentLayout].name}`;
+}
+async function dlCopyImage(){
+  const canvas=document.getElementById('dl-canvas');
+  try{
+    await navigator.clipboard.write([new ClipboardItem({'image/png':new Promise(r=>canvas.toBlob(r,'image/png'))})]);
+    showToast('コピーしました ✓');
+  }catch(e){
+    canvas.toBlob(blob=>{
+      window.open(URL.createObjectURL(blob),'_blank');
+      showToast('画像を長押しでコピーできます');
+    },'image/png');
+  }
+}
+async function dlPopulateFonts(){
+  const sel=document.getElementById('dl-font');
+  let names=DL_FALLBACK_FONTS;
+  if('queryLocalFonts' in window){
+    try{
+      const fonts=await window.queryLocalFonts();
+      const set=new Set(fonts.map(f=>f.family));
+      if(set.size)names=[...set].sort((a,b)=>a.localeCompare(b,'ja'));
+    }catch(e){/* 権限なし・未対応 → フォールバック一覧を使用 */}
+  }
+  sel.innerHTML='';
+  names.forEach(name=>{
+    const opt=document.createElement('option');
+    opt.value=name;opt.textContent=name;
+    opt.style.fontFamily=`"${name}"`;
+    sel.appendChild(opt);
+  });
+  const def=names.includes('Hiragino Sans')?'Hiragino Sans':names[0];
+  sel.value=def;
+  DL_FONT=`"${def}",sans-serif`;
+}
+async function dlInit(){
+  document.getElementById('dl-date').value=new Date().toISOString().slice(0,10);
+
+  await dlPopulateFonts();
+  document.getElementById('dl-font').addEventListener('change',()=>{
+    DL_FONT=`"${document.getElementById('dl-font').value}",sans-serif`;
+    dlRender();
+  });
+
+  const sizeSel=document.getElementById('dl-size');
+  DL_SIZES.forEach(s=>{
+    const opt=document.createElement('option');
+    opt.value=s.key;opt.textContent=s.label;
+    sizeSel.appendChild(opt);
+  });
+
+  const presetRow=document.getElementById('dl-presets');
+  DL_PRESETS.forEach((p,i)=>{
+    const sw=document.createElement('div');
+    sw.className='dl-preset';
+    sw.title=p.name;
+    sw.style.background=`linear-gradient(135deg, ${p.fg} 50%, ${p.accent} 50%)`;
+    sw.onclick=()=>dlApplyPreset(i);
+    presetRow.appendChild(sw);
+  });
+
+  const layoutGrid=document.getElementById('dl-layout-grid');
+  DL_LAYOUTS.forEach((l,i)=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='dl-layout-btn';
+    btn.textContent=i+1;
+    btn.title=l.name;
+    btn.onclick=()=>{dlCurrentLayout=i;dlUpdateLayoutUI();dlRender();};
+    layoutGrid.appendChild(btn);
+  });
+
+  ['dl-date','dl-label','dl-fg','dl-accent','dl-size'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',dlRender);
+  });
+  document.getElementById('dl-prev').onclick=()=>{
+    dlCurrentLayout=(dlCurrentLayout-1+DL_LAYOUTS.length)%DL_LAYOUTS.length;dlUpdateLayoutUI();dlRender();
+  };
+  document.getElementById('dl-next').onclick=()=>{
+    dlCurrentLayout=(dlCurrentLayout+1)%DL_LAYOUTS.length;dlUpdateLayoutUI();dlRender();
+  };
+  document.getElementById('dl-shuffle').onclick=()=>{
+    dlCurrentLayout=Math.floor(Math.random()*DL_LAYOUTS.length);
+    dlApplyPreset(Math.floor(Math.random()*DL_PRESETS.length));
+    dlUpdateLayoutUI();dlRender();
+  };
+  document.getElementById('dl-copy-btn').onclick=dlCopyImage;
+
+  dlApplyPreset(0);
+  dlUpdateLayoutUI();
+  dlRender();
 }
 
 // ── Init ──
