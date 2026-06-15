@@ -1259,6 +1259,17 @@ function dlDrawSpaced(ctx,text,cx,y,spacing){
   });
   ctx.textAlign=prevAlign;
 }
+function dlDrawSpacedLeft(ctx,text,x,y,spacing){
+  const chars=text.split('');
+  const prevAlign=ctx.textAlign;
+  ctx.textAlign='left';
+  let cx=x;
+  chars.forEach(ch=>{
+    ctx.fillText(ch,cx,y);
+    cx+=ctx.measureText(ch).width+spacing;
+  });
+  ctx.textAlign=prevAlign;
+}
 function dlGetData(){
   let dateVal=document.getElementById('dl-date').value;
   if(!dateVal)dateVal=new Date().toISOString().slice(0,10);
@@ -1532,31 +1543,7 @@ const DL_LAYOUTS=[
       ctx.restore();
     }
   },
-  { // 10. アウトライン数字
-    name:'アウトライン数字',
-    draw(ctx,W,H,d,c){
-      ctx.textAlign='center';ctx.textBaseline='middle';
-
-      ctx.fillStyle=c.accent;
-      ctx.font=`900 ${H*0.22}px ${DL_FONT}`;
-      ctx.fillText(d.monthUpper,W*0.5,H*0.28);
-
-      ctx.strokeStyle=c.fg;ctx.lineWidth=W*0.008;
-      ctx.font=`900 ${H*0.5}px ${DL_FONT}`;
-      ctx.strokeText(d.dayStr,W*0.5,H*0.62);
-
-      ctx.fillStyle=c.fg;
-      ctx.font=`700 ${H*0.035}px ${DL_FONT}`;
-      ctx.fillText(`${d.year}  ${d.dayName}`,W*0.5,H*0.9);
-
-      if(d.label){
-        ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
-        ctx.fillStyle=c.accent;
-        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.95);
-      }
-    }
-  },
-  { // 11. モジュラータブ
+  { // 10. モジュラータブ
     name:'モジュラータブ',
     draw(ctx,W,H,d,c){
       const tabs=[
@@ -1598,179 +1585,132 @@ const DL_LAYOUTS=[
       }
     }
   },
-  { // 12. フルブリードウォール
-    name:'フルブリードウォール',
-    draw(ctx,W,H,d,c){
-      ctx.fillStyle=c.accent;ctx.fillRect(0,0,W,H);
-
-      ctx.fillStyle=dlOnColor(c.accent);
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.font=`900 ${H*0.55}px ${DL_FONT}`;
-      ctx.fillText(d.monthUpper,W*0.5,H*0.38);
-
-      const stripH=H*0.16;
-      ctx.fillStyle=c.fg;
-      ctx.textAlign='left';ctx.textBaseline='middle';
-      ctx.font=`700 ${stripH*0.34}px ${DL_FONT}`;
-      ctx.fillText(`${d.dayStr}.${d.monthStr}.${d.year}`,W*0.06,H-stripH*0.5);
-
-      if(d.label){
-        ctx.textAlign='right';
-        ctx.font=`600 ${stripH*0.24}px ${DL_FONT}`;
-        ctx.fillText(d.label.toUpperCase(),W*0.94,H-stripH*0.5);
-      }
-    }
-  },
-  { // 13. デイトライン
-    name:'デイトライン',
-    draw(ctx,W,H,d,c){
-      ctx.textAlign='right';ctx.textBaseline='alphabetic';
-      ctx.fillStyle=c.fg;
-      const text=`${d.monthName}.${d.day}.${d.year}`;
-      const fs=dlFitFont(ctx,text,W*0.86,H*0.06,DL_FONT,'400');
-      ctx.font=`400 ${fs}px ${DL_FONT}`;
-      ctx.fillText(text,W*0.94,H*0.1);
-
-      if(d.label){
-        ctx.fillStyle=c.accent;
-        ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
-        ctx.fillText(d.label.toUpperCase(),W*0.94,H*0.135);
-      }
-    }
-  },
-  { // 14. スタックレター
-    name:'スタックレター',
+  { // 11. ドットタブ
+    name:'ドットタブ',
     draw(ctx,W,H,d,c){
       ctx.textAlign='left';ctx.textBaseline='alphabetic';
-      const lines=[d.monthName,String(d.day),d.year];
-      const longest=lines.reduce((a,b)=>a.length>=b.length?a:b);
-      const fs=dlFitFont(ctx,longest,W*0.78,H*0.09,DL_FONT,'400');
-      ctx.font=`400 ${fs}px ${DL_FONT}`;
-      const lineH=fs*1.5;
-      const startY=H*0.34;
+
       ctx.fillStyle=c.fg;
-      ctx.fillText(lines[0],W*0.12,startY);
+      ctx.font=`400 ${H*0.024}px ${DL_FONT}`;
+      dlDrawSpacedLeft(ctx,d.monthName.toLowerCase(),W*0.08,H*0.1,H*0.012);
+
       ctx.fillStyle=c.accent;
-      ctx.fillText(lines[1],W*0.12,startY+lineH);
+      const fs=dlFitFont(ctx,String(d.day),W*0.86,H*0.4,DL_FONT,'400');
+      ctx.font=`400 ${fs}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.06,H*0.56);
+
       ctx.fillStyle=c.fg;
-      ctx.fillText(lines[2],W*0.12,startY+lineH*2);
+      ctx.beginPath();
+      ctx.arc(W*0.09,H*0.66,H*0.007,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.font=`400 ${H*0.024}px ${DL_FONT}`;
+      dlDrawSpacedLeft(ctx,d.year,W*0.08,H*0.82,H*0.014);
 
       if(d.label){
         ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
-        ctx.fillText(d.label.toUpperCase(),W*0.12,startY+lineH*2+fs*0.85);
+        dlDrawSpacedLeft(ctx,d.label.toUpperCase(),W*0.08,H*0.88,H*0.01);
       }
     }
   },
-  { // 15. アンダーラインスタンプ
-    name:'アンダーラインスタンプ',
+  { // 12. イヤーナンバー
+    name:'イヤーナンバー',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`400 ${H*0.026}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.13,H*0.013);
+
+      ctx.fillStyle=c.accent;
+      ctx.textBaseline='middle';
+      const fs=dlFitFont(ctx,String(d.day),W*0.7,H*0.5,DL_FONT,'400');
+      ctx.font=`400 ${fs}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.5);
+
+      ctx.fillStyle=c.fg;
+      ctx.textBaseline='alphabetic';
+      ctx.font=`400 ${H*0.026}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.88,H*0.013);
+
+      if(d.label){
+        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
+        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.94,H*0.01);
+      }
+    }
+  },
+  { // 13. イヤーナンバー(ボールド)
+    name:'イヤーナンバー(ボールド)',
+    draw(ctx,W,H,d,c){
+      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+
+      ctx.fillStyle=c.fg;
+      ctx.font=`700 ${H*0.026}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.13,H*0.013);
+
+      ctx.fillStyle=c.accent;
+      ctx.textBaseline='middle';
+      const fs=dlFitFont(ctx,String(d.day),W*0.7,H*0.5,DL_FONT,'900');
+      ctx.font=`900 ${fs}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.5);
+
+      ctx.fillStyle=c.fg;
+      ctx.textBaseline='alphabetic';
+      ctx.font=`700 ${H*0.026}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.88,H*0.013);
+
+      if(d.label){
+        ctx.font=`700 ${H*0.02}px ${DL_FONT}`;
+        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.94,H*0.01);
+      }
+    }
+  },
+  { // 14. ディバイダータブ
+    name:'ディバイダータブ',
     draw(ctx,W,H,d,c){
       ctx.textAlign='center';ctx.textBaseline='alphabetic';
 
       ctx.fillStyle=c.fg;
       const fs1=dlFitFont(ctx,d.monthName,W*0.6,H*0.07,DL_FONT,'400');
       ctx.font=`400 ${fs1}px ${DL_FONT}`;
-      ctx.fillText(d.monthName,W*0.5,H*0.32);
+      ctx.fillText(d.monthName,W*0.5,H*0.28);
 
-      ctx.strokeStyle=c.fg;ctx.lineWidth=H*0.0025;
+      ctx.strokeStyle=c.accent;ctx.lineWidth=H*0.0025;
       ctx.beginPath();
-      ctx.moveTo(W*0.35,H*0.37);
-      ctx.lineTo(W*0.65,H*0.37);
+      ctx.moveTo(W*0.32,H*0.34);
+      ctx.lineTo(W*0.68,H*0.34);
       ctx.stroke();
 
       ctx.fillStyle=c.accent;
-      ctx.font=`700 ${H*0.2}px ${DL_FONT}`;
-      ctx.fillText(String(d.day),W*0.5,H*0.55);
+      const fs2=dlFitFont(ctx,String(d.day),W*0.7,H*0.22,DL_FONT,'400');
+      ctx.font=`400 ${fs2}px ${DL_FONT}`;
+      ctx.fillText(String(d.day),W*0.5,H*0.6);
 
       ctx.fillStyle=c.fg;
-      ctx.font=`400 ${H*0.03}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.year,W*0.5,H*0.64,H*0.018);
+      ctx.font=`400 ${H*0.026}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.7,H*0.014);
 
       if(d.label){
         ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
-        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.7);
+        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.78,H*0.01);
       }
     }
   },
-  { // 16. ジャンボセンター
-    name:'ジャンボセンター',
+  { // 15. ワンライン
+    name:'ワンライン',
     draw(ctx,W,H,d,c){
-      ctx.textAlign='center';ctx.textBaseline='alphabetic';
+      ctx.textAlign='center';ctx.textBaseline='middle';
 
       ctx.fillStyle=c.fg;
-      const fs1=dlFitFont(ctx,d.monthName,W*0.7,H*0.06,DL_FONT,'400');
-      ctx.font=`400 ${fs1}px ${DL_FONT}`;
-      ctx.fillText(d.monthName,W*0.5,H*0.2);
-
-      ctx.fillStyle=c.accent;
-      ctx.textBaseline='middle';
-      const fs2=dlFitFont(ctx,String(d.day),W*0.9,H*0.46,DL_FONT,'700');
-      ctx.font=`700 ${fs2}px ${DL_FONT}`;
-      ctx.fillText(String(d.day),W*0.5,H*0.5);
-
-      ctx.fillStyle=c.fg;
-      ctx.textBaseline='alphabetic';
-      ctx.font=`400 ${H*0.032}px ${DL_FONT}`;
-      ctx.fillText(d.year,W*0.5,H*0.84);
+      const text=`${d.monthName}.${d.day}.${d.year}`;
+      const fs=dlFitFont(ctx,text,W*0.86,H*0.055,DL_FONT,'700');
+      ctx.font=`700 ${fs}px ${DL_FONT}`;
+      ctx.fillText(text,W*0.5,H*0.5);
 
       if(d.label){
-        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
-        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.89);
-      }
-    }
-  },
-  { // 17. ドットセンター
-    name:'ドットセンター',
-    draw(ctx,W,H,d,c){
-      ctx.textAlign='center';ctx.textBaseline='alphabetic';
-
-      ctx.fillStyle=c.fg;
-      ctx.font=`400 ${H*0.028}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.16,H*0.015);
-
-      ctx.fillStyle=c.accent;
-      ctx.textBaseline='middle';
-      const fs2=dlFitFont(ctx,String(d.day),W*0.9,H*0.44,DL_FONT,'700');
-      ctx.font=`700 ${fs2}px ${DL_FONT}`;
-      ctx.fillText(String(d.day),W*0.5,H*0.46);
-
-      ctx.fillStyle=c.fg;
-      ctx.beginPath();
-      ctx.arc(W*0.5,H*0.62,H*0.008,0,Math.PI*2);
-      ctx.fill();
-
-      ctx.textBaseline='alphabetic';
-      ctx.font=`400 ${H*0.028}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.year,W*0.5,H*0.74,H*0.015);
-
-      if(d.label){
-        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
-        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.8,H*0.012);
-      }
-    }
-  },
-  { // 18. イヤー・デイ・マンス
-    name:'イヤー・デイ・マンス',
-    draw(ctx,W,H,d,c){
-      ctx.textAlign='center';ctx.textBaseline='alphabetic';
-
-      ctx.fillStyle=c.fg;
-      ctx.font=`400 ${H*0.028}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.year,W*0.5,H*0.16,H*0.015);
-
-      ctx.fillStyle=c.accent;
-      ctx.textBaseline='middle';
-      const fs3=dlFitFont(ctx,String(d.day),W*0.9,H*0.46,DL_FONT,'700');
-      ctx.font=`700 ${fs3}px ${DL_FONT}`;
-      ctx.fillText(String(d.day),W*0.5,H*0.5);
-
-      ctx.fillStyle=c.fg;
-      ctx.textBaseline='alphabetic';
-      ctx.font=`400 ${H*0.03}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.84,H*0.016);
-
-      if(d.label){
-        ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
-        dlDrawSpaced(ctx,d.label.toUpperCase(),W*0.5,H*0.9,H*0.012);
+        ctx.fillStyle=c.accent;
+        ctx.font=`600 ${H*0.022}px ${DL_FONT}`;
+        ctx.fillText(d.label.toUpperCase(),W*0.5,H*0.58);
       }
     }
   },
