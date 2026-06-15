@@ -1270,6 +1270,21 @@ function dlDrawSpacedLeft(ctx,text,x,y,spacing){
   });
   ctx.textAlign=prevAlign;
 }
+function dlFitFontSpaced(ctx,text,maxWidth,maxSize,family,weight,spacingRatio){
+  let size=maxSize;
+  const widthAt=s=>{
+    ctx.font=`${weight} ${s}px ${family}`;
+    const spacing=s*spacingRatio;
+    let w=0;
+    for(const ch of text) w+=ctx.measureText(ch).width+spacing;
+    return w;
+  };
+  while(widthAt(size)>maxWidth&&size>6){
+    size-=Math.max(1,size*0.01);
+  }
+  ctx.font=`${weight} ${size}px ${family}`;
+  return size;
+}
 function dlGetData(){
   let dateVal=document.getElementById('dl-date').value;
   if(!dateVal)dateVal=new Date().toISOString().slice(0,10);
@@ -1591,21 +1606,22 @@ const DL_LAYOUTS=[
       ctx.textAlign='left';ctx.textBaseline='alphabetic';
 
       ctx.fillStyle=c.fg;
-      ctx.font=`400 ${H*0.024}px ${DL_FONT}`;
-      dlDrawSpacedLeft(ctx,d.monthName.toLowerCase(),W*0.08,H*0.1,H*0.012);
+      const monthFs=dlFitFontSpaced(ctx,d.monthName.toLowerCase(),W*0.84,H*0.085,DL_FONT,'400',0.35);
+      dlDrawSpacedLeft(ctx,d.monthName.toLowerCase(),W*0.08,H*0.13,monthFs*0.35);
 
       ctx.fillStyle=c.accent;
       const fs=dlFitFont(ctx,String(d.day),W*0.86,H*0.4,DL_FONT,'400');
       ctx.font=`400 ${fs}px ${DL_FONT}`;
-      ctx.fillText(String(d.day),W*0.06,H*0.56);
+      const dayM=ctx.measureText(String(d.day));
+      ctx.fillText(String(d.day),W*0.08+(dayM.actualBoundingBoxLeft||0),H*0.56);
 
       ctx.fillStyle=c.fg;
       ctx.beginPath();
-      ctx.arc(W*0.09,H*0.66,H*0.007,0,Math.PI*2);
+      ctx.arc(W*0.09,H*0.66,H*0.019,0,Math.PI*2);
       ctx.fill();
 
-      ctx.font=`400 ${H*0.024}px ${DL_FONT}`;
-      dlDrawSpacedLeft(ctx,d.year,W*0.08,H*0.82,H*0.014);
+      const yearFs=dlFitFontSpaced(ctx,d.year,W*0.84,H*0.085,DL_FONT,'400',0.42);
+      dlDrawSpacedLeft(ctx,d.year,W*0.08,H*0.82,yearFs*0.42);
 
       if(d.label){
         ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
@@ -1619,8 +1635,8 @@ const DL_LAYOUTS=[
       ctx.textAlign='center';ctx.textBaseline='alphabetic';
 
       ctx.fillStyle=c.fg;
-      ctx.font=`400 ${H*0.026}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.year,W*0.5,H*0.13,H*0.013);
+      ctx.font=`400 ${H*0.08}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.16,H*0.01);
 
       ctx.fillStyle=c.accent;
       ctx.textBaseline='middle';
@@ -1630,8 +1646,8 @@ const DL_LAYOUTS=[
 
       ctx.fillStyle=c.fg;
       ctx.textBaseline='alphabetic';
-      ctx.font=`400 ${H*0.026}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.88,H*0.013);
+      ctx.font=`400 ${H*0.08}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.88,H*0.01);
 
       if(d.label){
         ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
@@ -1645,8 +1661,8 @@ const DL_LAYOUTS=[
       ctx.textAlign='center';ctx.textBaseline='alphabetic';
 
       ctx.fillStyle=c.fg;
-      ctx.font=`700 ${H*0.026}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.year,W*0.5,H*0.13,H*0.013);
+      ctx.font=`700 ${H*0.08}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.16,H*0.01);
 
       ctx.fillStyle=c.accent;
       ctx.textBaseline='middle';
@@ -1656,8 +1672,8 @@ const DL_LAYOUTS=[
 
       ctx.fillStyle=c.fg;
       ctx.textBaseline='alphabetic';
-      ctx.font=`700 ${H*0.026}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.88,H*0.013);
+      ctx.font=`700 ${H*0.08}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.monthName.toLowerCase(),W*0.5,H*0.88,H*0.01);
 
       if(d.label){
         ctx.font=`700 ${H*0.02}px ${DL_FONT}`;
@@ -1671,7 +1687,7 @@ const DL_LAYOUTS=[
       ctx.textAlign='center';ctx.textBaseline='alphabetic';
 
       ctx.fillStyle=c.fg;
-      const fs1=dlFitFont(ctx,d.monthName,W*0.6,H*0.07,DL_FONT,'400');
+      const fs1=dlFitFont(ctx,d.monthName,W*0.6,H*0.2,DL_FONT,'400');
       ctx.font=`400 ${fs1}px ${DL_FONT}`;
       ctx.fillText(d.monthName,W*0.5,H*0.28);
 
@@ -1687,8 +1703,8 @@ const DL_LAYOUTS=[
       ctx.fillText(String(d.day),W*0.5,H*0.6);
 
       ctx.fillStyle=c.fg;
-      ctx.font=`400 ${H*0.026}px ${DL_FONT}`;
-      dlDrawSpaced(ctx,d.year,W*0.5,H*0.7,H*0.014);
+      ctx.font=`400 ${H*0.075}px ${DL_FONT}`;
+      dlDrawSpaced(ctx,d.year,W*0.5,H*0.7,H*0.012);
 
       if(d.label){
         ctx.font=`600 ${H*0.02}px ${DL_FONT}`;
@@ -1703,7 +1719,7 @@ const DL_LAYOUTS=[
 
       ctx.fillStyle=c.fg;
       const text=`${d.monthName}.${d.day}.${d.year}`;
-      const fs=dlFitFont(ctx,text,W*0.86,H*0.055,DL_FONT,'700');
+      const fs=dlFitFont(ctx,text,W*0.86,H*0.14,DL_FONT,'700');
       ctx.font=`700 ${fs}px ${DL_FONT}`;
       ctx.fillText(text,W*0.5,H*0.5);
 
