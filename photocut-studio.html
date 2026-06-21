@@ -898,7 +898,21 @@ function rotateShape(){
 function render(){
   if(!userImg)return;
   try{
-    renderToCanvas(document.getElementById('preview'),previewBaseSize||240);
+    const canvas=document.getElementById('preview');
+    const size=previewBaseSize||240;
+    renderToCanvas(canvas,size);
+    // プレビューのみ：シェイプ外側を半透明で暗くして境界を分かりやすくする
+    const ctx=canvas.getContext('2d');
+    const pad=(canvas.width-size)/2;
+    const ov=document.createElement('canvas'); ov.width=canvas.width; ov.height=canvas.height;
+    const oCtx=ov.getContext('2d');
+    oCtx.fillStyle='rgba(0,0,0,0.4)';
+    oCtx.fillRect(0,0,ov.width,ov.height);
+    oCtx.globalCompositeOperation='destination-out';
+    oCtx.save(); oCtx.translate(pad,pad);
+    drawShapeElements(oCtx,size,'fill',0);
+    oCtx.restore();
+    ctx.drawImage(ov,0,0);
   }catch(e){
     console.warn('render error:',e);
   }
