@@ -47,7 +47,7 @@ html,body{height:100%;width:100%;background:var(--bg);font-family:'Zen Kaku Goth
   flex:1;min-height:0;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.3);padding:8px;gap:6px;
+  background:rgba(0,0,0,0.55);padding:8px;gap:6px;
   position:relative;
 }
 #preview{display:block;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
@@ -898,21 +898,7 @@ function rotateShape(){
 function render(){
   if(!userImg)return;
   try{
-    const canvas=document.getElementById('preview');
-    const size=previewBaseSize||240;
-    renderToCanvas(canvas,size);
-    // プレビューのみ：シェイプ外側を半透明で暗くして境界を分かりやすくする
-    const ctx=canvas.getContext('2d');
-    const pad=(canvas.width-size)/2;
-    const ov=document.createElement('canvas'); ov.width=canvas.width; ov.height=canvas.height;
-    const oCtx=ov.getContext('2d');
-    oCtx.fillStyle='rgba(0,0,0,0.4)';
-    oCtx.fillRect(0,0,ov.width,ov.height);
-    oCtx.globalCompositeOperation='destination-out';
-    oCtx.save(); oCtx.translate(pad,pad);
-    drawShapeElements(oCtx,size,'fill',0);
-    oCtx.restore();
-    ctx.drawImage(ov,0,0);
+    renderToCanvas(document.getElementById('preview'),previewBaseSize||240);
   }catch(e){
     console.warn('render error:',e);
   }
