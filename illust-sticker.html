@@ -93,6 +93,23 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:8px 20px;font-size:12px;letter-spacing:.1em;opacity:0;transition:all .3s;pointer-events:none;z-index:200;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* PHRASE PANEL */
+#panel.phrase-mode{max-height:380px;}
+.panel-sec#sec-phrase{padding:10px 12px;display:none;flex-direction:column;}
+.panel-sec#sec-phrase.active{display:flex;}
+#ph-search{width:100%;padding:9px 14px;border:1.5px solid var(--bdl);background:var(--bg);font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:8px;flex-shrink:0;}
+#ph-search:focus{border-color:var(--acc);}
+#ph-cats{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:8px;flex-shrink:0;padding-bottom:2px;}
+#ph-cats::-webkit-scrollbar{display:none;}
+.ph-chip{padding:4px 10px;border-radius:20px;border:1px solid var(--bdl);background:transparent;font-size:10px;cursor:pointer;color:var(--faint);white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0;}
+.ph-chip.active{background:var(--acc);border-color:var(--acc);color:var(--bg);}
+#ph-list{overflow-y:auto;flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;}
+.ph-card{padding:8px 10px;border:1px solid var(--bdl);background:var(--bg);cursor:pointer;transition:all .15s;}
+.ph-card:hover{border-color:var(--acc);background:var(--hover);}
+.ph-card .ph-en{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--text);line-height:1.4;}
+.ph-card .ph-en.ph-msg{font-size:10px;font-weight:400;font-style:italic;color:var(--muted);}
+.ph-card .ph-ja{font-size:9px;color:var(--faint);margin-top:3px;line-height:1.4;}
+
 /* ─── ADMIN SCREEN ─── */
 #admin-screen{display:none;position:fixed;inset:0;z-index:100;flex-direction:column;background:var(--bg);}
 #admin-screen.open{display:flex;}
@@ -236,6 +253,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <button class="tool-tab active" id="tab-color" onclick="switchTab('color')">カラー</button>
     <button class="tool-tab" id="tab-photo" onclick="switchTab('photo')">写真・素材</button>
     <button class="tool-tab" id="tab-date" onclick="switchTab('date')">日付</button>
+    <button class="tool-tab" id="tab-phrase" onclick="switchTab('phrase')">フレーズ</button>
   </div>
   <div id="panel">
     <div class="panel-sec active" id="sec-color">
@@ -296,6 +314,11 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
         <button id="dl-next" type="button">次へ ›</button>
       </div>
       <button id="dl-copy-btn" type="button">コピー</button>
+    </div>
+    <div class="panel-sec" id="sec-phrase">
+      <input type="text" id="ph-search" placeholder="日本語で検索…（例：公園・おやつ・イヤイヤ）" oninput="phRender()">
+      <div id="ph-cats"></div>
+      <div id="ph-list"></div>
     </div>
   </div>
   <div id="zoom-row" style="display:none;">
@@ -557,7 +580,7 @@ function switchTab(tab){
     document.getElementById('tab-photo').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-photo').classList.add('active');
-    panel.classList.add('open');panelOpen=true;
+    panel.classList.add('open');panel.classList.remove('phrase-mode');panelOpen=true;
     app.classList.remove('date-mode');
     app.classList.add('photo-mode');
     return;
@@ -568,10 +591,21 @@ function switchTab(tab){
     document.getElementById('tab-date').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-date').classList.add('active');
-    panel.classList.add('open');panelOpen=true;
+    panel.classList.add('open');panel.classList.remove('phrase-mode');panelOpen=true;
     app.classList.remove('photo-mode');
     app.classList.add('date-mode');
     if(!dlInitialized){dlInit();dlInitialized=true;}
+    return;
+  }
+  if(tab==='phrase'){
+    activeTab=tab;
+    document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-phrase').classList.add('active');
+    document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
+    document.getElementById('sec-phrase').classList.add('active');
+    panel.classList.add('open','phrase-mode');panelOpen=true;
+    app.classList.remove('photo-mode');app.classList.remove('date-mode');
+    if(!phInitDone){phSetup();phInitDone=true;}
     return;
   }
   app.classList.remove('photo-mode');
@@ -582,7 +616,7 @@ function switchTab(tab){
   document.getElementById('tab-color').classList.add('active');
   document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-color').classList.add('active');
-  panel.classList.add('open');panelOpen=true;
+  panel.classList.add('open');panel.classList.remove('phrase-mode');panelOpen=true;
   document.getElementById('zoom-row').style.display='none';
 }
 
@@ -714,6 +748,365 @@ async function loadMaterials(){
 }
 
 // ── Toast ──
+// ── Phrase Search ──
+const PH_CATS=["すべて","タイトル","日常・時間","お出かけ","食べ物","季節","オノマトペ","やんちゃ","帰りたくない","おしゃれ単語","短いフレーズ","長文メッセージ"];
+const PH_DATA=[
+{en:"GOOD DAY",ja:"すてきな一日",c:"タイトル",t:"タイトル 見出し 今日 いい日"},
+{en:"LITTLE DAYS",ja:"小さな毎日",c:"タイトル",t:"タイトル 見出し 毎日 日常"},
+{en:"OUR STORY",ja:"わたしたちの物語",c:"タイトル",t:"タイトル 見出し 家族 物語"},
+{en:"HAPPY TIME",ja:"楽しい時間",c:"タイトル",t:"タイトル 楽しい 時間 幸せ"},
+{en:"SWEET MEMORY",ja:"甘い思い出",c:"タイトル",t:"タイトル 思い出 記念"},
+{en:"MAKING MEMORIES",ja:"思い出づくり",c:"タイトル",t:"タイトル 思い出 記念"},
+{en:"MEMORY MAKER",ja:"思い出製作中",c:"タイトル",t:"タイトル 思い出"},
+{en:"BEAUTIFUL DAYS",ja:"美しい日々",c:"タイトル",t:"タイトル 見出し 美しい 日々"},
+{en:"PURE JOY",ja:"純粋な喜び",c:"タイトル",t:"タイトル 喜び 幸せ"},
+{en:"LITTLE MIRACLE",ja:"小さな奇跡",c:"タイトル",t:"タイトル 奇跡 感謝"},
+{en:"FOREVER YOUNG",ja:"いつまでも無邪気に",c:"タイトル",t:"タイトル 成長 子ども 無邪気"},
+{en:"CHILDHOOD MAGIC",ja:"子ども時代の魔法",c:"タイトル",t:"タイトル 子ども 魔法 成長"},
+{en:"SIMPLE JOYS",ja:"小さな幸せ",c:"タイトル",t:"タイトル 幸せ 日常"},
+{en:"THE GOOD STUFF",ja:"かけがえのない時間",c:"タイトル",t:"タイトル 思い出 時間"},
+{en:"EVERYDAY MAGIC",ja:"毎日の魔法",c:"タイトル",t:"タイトル 毎日 魔法"},
+{en:"LOVE GROWS HERE",ja:"愛が育つ場所",c:"タイトル",t:"タイトル 愛 家族 成長"},
+{en:"THIS IS US",ja:"わたしたちらしく",c:"タイトル",t:"タイトル 家族 わたしたち"},
+{en:"TODAY",ja:"今日",c:"タイトル",t:"タイトル 今日 見出し"},
+{en:"TODAY'S MOOD",ja:"今日の気分",c:"タイトル",t:"タイトル 今日 気分"},
+{en:"OUR DAY",ja:"わたしたちの一日",c:"タイトル",t:"タイトル 家族 今日"},
+{en:"HAPPY DAY",ja:"幸せな一日",c:"タイトル",t:"タイトル 幸せ 今日"},
+{en:"HAPPY HEART",ja:"幸せな気持ち",c:"タイトル",t:"タイトル 幸せ 気持ち"},
+{en:"SWEET MOMENTS",ja:"甘いひととき",c:"タイトル",t:"タイトル 思い出 瞬間"},
+{en:"PRECIOUS TIME",ja:"大切な時間",c:"タイトル",t:"タイトル 時間 大切"},
+{en:"LITTLE MOMENTS",ja:"小さな瞬間",c:"タイトル",t:"タイトル 瞬間 日常"},
+{en:"DAILY MOMENTS",ja:"日々のひとこま",c:"タイトル",t:"タイトル 毎日 日常"},
+{en:"EVERYDAY LIFE",ja:"いつもの毎日",c:"タイトル",t:"タイトル 毎日 日常"},
+{en:"JUST TODAY",ja:"なんでもない今日",c:"タイトル",t:"タイトル 今日 日常"},
+{en:"RIGHT NOW",ja:"いま、この瞬間",c:"タイトル",t:"タイトル 今 瞬間"},
+{en:"IN THIS MOMENT",ja:"この瞬間",c:"タイトル",t:"タイトル 瞬間 今"},
+{en:"CURRENTLY",ja:"ただいま成長中",c:"タイトル",t:"タイトル 成長 今"},
+{en:"THESE DAYS",ja:"最近の日々",c:"タイトル",t:"タイトル 最近 日々"},
+{en:"THIS SEASON",ja:"この季節",c:"タイトル",t:"タイトル 季節"},
+{en:"ORDINARY DAY",ja:"いつもの一日",c:"タイトル",t:"タイトル 日常 今日"},
+{en:"COZY DAY",ja:"心地よい一日",c:"タイトル",t:"タイトル 今日 のんびり ゆっくり"},
+{en:"SLOW MORNING",ja:"ゆっくりな朝",c:"タイトル",t:"タイトル 朝 ゆっくり のんびり"},
+{en:"SWEET HOME",ja:"だいすきなおうち",c:"タイトル",t:"タイトル おうち 家"},
+{en:"HAPPY PLACE",ja:"お気に入りの場所",c:"タイトル",t:"タイトル 場所 お気に入り"},
+{en:"LITTLE LIFE",ja:"愛おしい毎日",c:"タイトル",t:"タイトル 毎日 愛おしい"},
+{en:"SMALL JOYS",ja:"小さな幸せ",c:"タイトル",t:"タイトル 幸せ 日常"},
+{en:"BEST DAY EVER",ja:"最高の一日",c:"タイトル",t:"タイトル 最高 今日"},
+{en:"SO MUCH FUN",ja:"とっても楽しかった",c:"タイトル",t:"タイトル 楽しい 遊び"},
+{en:"OH HAPPY DAY",ja:"幸せな一日",c:"タイトル",t:"タイトル 幸せ 今日"},
+{en:"WHAT A DAY",ja:"素敵な一日だった",c:"タイトル",t:"タイトル 今日 素敵"},
+{en:"ENDLESS WONDER",ja:"終わらない感動",c:"タイトル",t:"タイトル 感動 子ども"},
+{en:"LOVE & LAUGHTER",ja:"愛と笑顔",c:"タイトル",t:"タイトル 愛 笑顔 家族"},
+{en:"JOYFUL DAYS",ja:"喜びの日々",c:"タイトル",t:"タイトル 喜び 日々"},
+{en:"LITTLE BLESSING",ja:"小さな幸せ",c:"タイトル",t:"タイトル 幸せ 感謝"},
+{en:"LITTLE STAR",ja:"小さな星",c:"タイトル",t:"タイトル 子ども 星"},
+{en:"LITTLE DREAMER",ja:"夢見る子",c:"タイトル",t:"タイトル 子ども 夢"},
+{en:"LITTLE WONDER",ja:"小さな感動",c:"タイトル",t:"タイトル 感動 子ども"},
+{en:"SHINE BRIGHT",ja:"明るく輝いて",c:"タイトル",t:"タイトル 輝く 元気 明るい"},
+{en:"SHINE ON",ja:"輝き続けて",c:"タイトル",t:"タイトル 輝く"},
+{en:"GOLDEN SMILE",ja:"輝く笑顔",c:"タイトル",t:"タイトル 笑顔 輝く"},
+{en:"SUNNY MOMENTS",ja:"晴れやかな瞬間",c:"タイトル",t:"タイトル 晴れ 瞬間"},
+{en:"BRIGHT FUTURE",ja:"明るい未来",c:"タイトル",t:"タイトル 未来 成長 明るい"},
+{en:"GROWING UP",ja:"成長中",c:"タイトル",t:"タイトル 成長"},
+{en:"GROWING SMILES",ja:"育つ笑顔",c:"タイトル",t:"タイトル 成長 笑顔"},
+{en:"GROWING WITH LOVE",ja:"愛に包まれて成長中",c:"タイトル",t:"タイトル 成長 愛 家族"},
+{en:"PURE HAPPINESS",ja:"純粋な幸せ",c:"タイトル",t:"タイトル 幸せ"},
+{en:"HELLO SUNSHINE",ja:"こんにちは太陽",c:"タイトル",t:"タイトル 朝 挨拶 太陽 おはよう"},
+{en:"SUNSHINE DAY",ja:"おひさまの日",c:"タイトル",t:"タイトル 晴れ 太陽 おひさま"},
+{en:"HELLO WORLD",ja:"こんにちは世界",c:"タイトル",t:"タイトル 挨拶 誕生"},
+{en:"LITTLE THINGS",ja:"なんでもない幸せ",c:"タイトル",t:"タイトル 幸せ 日常"},
+{en:"HAPPY MEMORIES",ja:"幸せな思い出",c:"タイトル",t:"タイトル 思い出 幸せ"},
+{en:"GOOD MORNING",ja:"おはよう",c:"日常・時間",t:"日常 朝 挨拶 おはよう"},
+{en:"GOOD NIGHT",ja:"おやすみ",c:"日常・時間",t:"日常 夜 挨拶 おやすみ 寝る"},
+{en:"FAMILY DAY",ja:"家族の日",c:"日常・時間",t:"日常 家族 一緒"},
+{en:"PLAY DAY",ja:"遊んだ日",c:"日常・時間",t:"日常 遊び 公園"},
+{en:"WEEKEND",ja:"週末",c:"日常・時間",t:"日常 週末 土日 休み"},
+{en:"WEEKEND FUN",ja:"週末の楽しみ",c:"日常・時間",t:"日常 週末 楽しい"},
+{en:"SUNDAY FUN",ja:"楽しい日曜日",c:"日常・時間",t:"日常 日曜日 週末 楽しい"},
+{en:"MONDAY MOOD",ja:"月曜日の気分",c:"日常・時間",t:"日常 月曜日 気分"},
+{en:"HOLIDAY",ja:"お休みの日",c:"日常・時間",t:"日常 休み お休み"},
+{en:"HOME TIME",ja:"おうち時間",c:"日常・時間",t:"日常 おうち 家 おうち時間"},
+{en:"STORY TIME",ja:"絵本タイム",c:"日常・時間",t:"日常 絵本 読書 よみきかせ"},
+{en:"NAP TIME",ja:"お昼寝タイム",c:"日常・時間",t:"日常 お昼寝 昼寝 ねんね"},
+{en:"SNACK TIME",ja:"おやつタイム",c:"日常・時間",t:"日常 おやつ 食べ物"},
+{en:"BATH TIME",ja:"お風呂タイム",c:"日常・時間",t:"日常 お風呂 入浴"},
+{en:"BREAKFAST TIME",ja:"朝ごはんの時間",c:"日常・時間",t:"日常 朝ごはん 朝食 食事"},
+{en:"LUNCH TIME",ja:"お昼ごはんの時間",c:"日常・時間",t:"日常 お昼ごはん 昼食 食事"},
+{en:"DINNER TIME",ja:"晩ごはんの時間",c:"日常・時間",t:"日常 晩ごはん 夕食 食事"},
+{en:"RAINY DAY",ja:"雨の日",c:"日常・時間",t:"日常 雨 天気 梅雨"},
+{en:"SUNNY DAY",ja:"おひさま日和",c:"日常・時間",t:"日常 晴れ 天気 太陽 おひさま"},
+{en:"BIG SMILE",ja:"とびきりの笑顔",c:"日常・時間",t:"日常 笑顔 笑い 写真"},
+{en:"SILLY FACE",ja:"おちゃめな顔",c:"日常・時間",t:"日常 顔 おちゃめ 表情"},
+{en:"HAPPY KID",ja:"ごきげんキッズ",c:"日常・時間",t:"日常 機嫌 子ども ごきげん"},
+{en:"CURIOUS MIND",ja:"好奇心いっぱい",c:"日常・時間",t:"日常 好奇心 探索 子ども"},
+{en:"WILD & FREE",ja:"のびのび自由に",c:"日常・時間",t:"日常 のびのび 自由 元気"},
+{en:"FULL OF ENERGY",ja:"元気いっぱい",c:"日常・時間",t:"日常 元気 やんちゃ 子ども"},
+{en:"ALWAYS MOVING",ja:"いつも全力",c:"日常・時間",t:"日常 元気 全力 子ども"},
+{en:"JUST PLAYING",ja:"遊びに夢中",c:"日常・時間",t:"日常 遊び 夢中 子ども"},
+{en:"BUSY BEING ME",ja:"わたしらしく過ごす",c:"日常・時間",t:"日常 自分らしく 過ごす"},
+{en:"PARK DAY",ja:"公園の日",c:"お出かけ",t:"お出かけ 公園 外遊び 遊び"},
+{en:"PARK LIFE",ja:"公園あそび",c:"お出かけ",t:"お出かけ 公園 外遊び 遊び"},
+{en:"BEACH DAY",ja:"海の日",c:"お出かけ",t:"お出かけ 海 夏 砂浜"},
+{en:"POOL DAY",ja:"プールの日",c:"お出かけ",t:"お出かけ プール 水遊び 夏"},
+{en:"PICNIC DAY",ja:"ピクニックの日",c:"お出かけ",t:"お出かけ ピクニック 公園"},
+{en:"CAMP DAY",ja:"キャンプの日",c:"お出かけ",t:"お出かけ キャンプ 自然 アウトドア"},
+{en:"FARM DAY",ja:"牧場の日",c:"お出かけ",t:"お出かけ 牧場 動物 農場"},
+{en:"SCHOOL DAY",ja:"学校の日",c:"お出かけ",t:"お出かけ 学校 保育園 幼稚園"},
+{en:"AT THE ZOO",ja:"動物園にて",c:"お出かけ",t:"お出かけ 動物園 動物"},
+{en:"LET'S GO",ja:"しゅっぱつ！",c:"お出かけ",t:"お出かけ 出発 しゅっぱつ"},
+{en:"HERE WE GO",ja:"さあ行こう",c:"お出かけ",t:"お出かけ 出発 行こう"},
+{en:"ON THE WAY",ja:"おでかけ中",c:"お出かけ",t:"お出かけ 移動 おでかけ"},
+{en:"ROAD TRIP",ja:"ドライブ旅",c:"お出かけ",t:"お出かけ ドライブ 旅 車"},
+{en:"DAY OUT",ja:"おでかけの日",c:"お出かけ",t:"お出かけ 外出 おでかけ"},
+{en:"CITY WALK",ja:"まち歩き",c:"お出かけ",t:"お出かけ まち 散歩 街"},
+{en:"LITTLE ADVENTURE",ja:"小さな冒険",c:"お出かけ",t:"お出かけ 冒険 探索 外遊び"},
+{en:"ADVENTURE AWAITS",ja:"冒険が待っている",c:"お出かけ",t:"お出かけ 冒険 わくわく"},
+{en:"YUMMY",ja:"おいしい！",c:"食べ物",t:"食べ物 おいしい おやつ ごはん"},
+{en:"SO GOOD",ja:"最高！",c:"食べ物",t:"食べ物 おいしい 最高"},
+{en:"HAPPY SNACK",ja:"しあわせおやつ",c:"食べ物",t:"食べ物 おやつ しあわせ"},
+{en:"SWEET TREAT",ja:"ごほうびおやつ",c:"食べ物",t:"食べ物 おやつ ごほうび"},
+{en:"ICE CREAM DAY",ja:"アイスの日",c:"食べ物",t:"食べ物 アイス 夏 おやつ"},
+{en:"COOKIE TIME",ja:"クッキータイム",c:"食べ物",t:"食べ物 クッキー おやつ"},
+{en:"YUM YUM",ja:"もぐもぐタイム",c:"食べ物",t:"食べ物 もぐもぐ おやつ ごはん"},
+{en:"SPRING DAYS",ja:"春の日々",c:"季節",t:"季節 春 桜 あたたかい"},
+{en:"SUMMER DAYS",ja:"夏の日々",c:"季節",t:"季節 夏 暑い プール 海"},
+{en:"AUTUMN WALK",ja:"秋のおさんぽ",c:"季節",t:"季節 秋 散歩 落ち葉 紅葉"},
+{en:"WINTER FUN",ja:"冬の楽しみ",c:"季節",t:"季節 冬 寒い 雪 クリスマス"},
+{en:"AHAHA",ja:"あはは",c:"オノマトペ",t:"オノマトペ 笑い 笑う"},
+{en:"HAHA",ja:"ははは",c:"オノマトペ",t:"オノマトペ 笑い"},
+{en:"HEHE",ja:"えへへ",c:"オノマトペ",t:"オノマトペ 笑い 照れ"},
+{en:"HOHO",ja:"ほほほ",c:"オノマトペ",t:"オノマトペ 笑い"},
+{en:"UHHH",ja:"うーん",c:"オノマトペ",t:"オノマトペ 考える 悩む"},
+{en:"HMM...",ja:"ふむふむ",c:"オノマトペ",t:"オノマトペ 考える"},
+{en:"WOW!",ja:"わあ！",c:"オノマトペ",t:"オノマトペ びっくり 驚き わあ"},
+{en:"OH WOW",ja:"わあすごい",c:"オノマトペ",t:"オノマトペ びっくり 驚き すごい"},
+{en:"OHHH",ja:"おお〜",c:"オノマトペ",t:"オノマトペ 驚き"},
+{en:"YAY!",ja:"やったー！",c:"オノマトペ",t:"オノマトペ 喜び やった 嬉しい"},
+{en:"YIPPEE!",ja:"やったー！",c:"オノマトペ",t:"オノマトペ 喜び やった"},
+{en:"WHEEE!",ja:"わーい♪",c:"オノマトペ",t:"オノマトペ 喜び わーい"},
+{en:"TADA!",ja:"じゃーん！",c:"オノマトペ",t:"オノマトペ じゃーん 発表"},
+{en:"TA-DAA",ja:"じゃじゃーん",c:"オノマトペ",t:"オノマトペ じゃーん 発表"},
+{en:"BOO!",ja:"ばあ！",c:"オノマトペ",t:"オノマトペ いないいないばあ びっくり"},
+{en:"PEEK!",ja:"ちらっ",c:"オノマトペ",t:"オノマトペ ちらっ いないいないばあ"},
+{en:"PEEKABOO!",ja:"いないいないばあ",c:"オノマトペ",t:"オノマトペ いないいないばあ 赤ちゃん"},
+{en:"OOPS!",ja:"あっ！",c:"オノマトペ",t:"オノマトペ あっ 失敗 しまった"},
+{en:"WHOOPS!",ja:"おっと！",c:"オノマトペ",t:"オノマトペ おっと 失敗"},
+{en:"UH-OH",ja:"あらら",c:"オノマトペ",t:"オノマトペ あらら 失敗"},
+{en:"EEEK!",ja:"きゃー！",c:"オノマトペ",t:"オノマトペ きゃー 驚き"},
+{en:"YUM!",ja:"おいしい！",c:"オノマトペ",t:"オノマトペ おいしい 食べ物"},
+{en:"MMMM",ja:"ん〜♡",c:"オノマトペ",t:"オノマトペ おいしい もぐもぐ"},
+{en:"AWW",ja:"かわいい〜",c:"オノマトペ",t:"オノマトペ かわいい 感動"},
+{en:"OH BOY!",ja:"やれやれ〜",c:"オノマトペ",t:"オノマトペ やれやれ 困る"},
+{en:"OH DEAR",ja:"あらまあ",c:"オノマトペ",t:"オノマトペ あらまあ 困る"},
+{en:"OH MY!",ja:"わあ！",c:"オノマトペ",t:"オノマトペ 驚き びっくり"},
+{en:"NO WAY!",ja:"まさか！",c:"オノマトペ",t:"オノマトペ まさか 驚き"},
+{en:"REALLY?",ja:"本当に？",c:"オノマトペ",t:"オノマトペ 本当 驚き"},
+{en:"OHH LA LA",ja:"わあ素敵",c:"オノマトペ",t:"オノマトペ 素敵 驚き"},
+{en:"YEP",ja:"うん",c:"オノマトペ",t:"オノマトペ うん 返事"},
+{en:"NOPE",ja:"いや",c:"オノマトペ",t:"オノマトペ いや 拒否"},
+{en:"OKAY!",ja:"よし！",c:"オノマトペ",t:"オノマトペ よし やる気"},
+{en:"GOT IT",ja:"了解",c:"オノマトペ",t:"オノマトペ 了解 わかった"},
+{en:"HERE WE ARE",ja:"着いたよ",c:"オノマトペ",t:"オノマトペ 到着 ついた"},
+{en:"LET'S SEE",ja:"どれどれ",c:"オノマトペ",t:"オノマトペ どれどれ"},
+{en:"COME ON",ja:"さあさあ",c:"オノマトペ",t:"オノマトペ さあさあ 急いで"},
+{en:"OH YES",ja:"やった",c:"オノマトペ",t:"オノマトペ やった 喜び"},
+{en:"OH NO",ja:"しまった",c:"オノマトペ",t:"オノマトペ しまった 失敗"},
+{en:"AHEM",ja:"えーっと",c:"オノマトペ",t:"オノマトペ えーっと 考える"},
+{en:"SHHH",ja:"しーっ",c:"オノマトペ",t:"オノマトペ しーっ 静かに"},
+{en:"TEEHEE",ja:"うふふ",c:"オノマトペ",t:"オノマトペ うふふ 笑い"},
+{en:"GIGGLE",ja:"くすくす",c:"オノマトペ",t:"オノマトペ くすくす 笑い"},
+{en:"SNORT",ja:"ぶはっ",c:"オノマトペ",t:"オノマトペ ぶはっ 笑い"},
+{en:"WOOHOO",ja:"やったー",c:"オノマトペ",t:"オノマトペ やったー 喜び"},
+{en:"HURRAY",ja:"万歳",c:"オノマトペ",t:"オノマトペ 万歳 喜び"},
+{en:"YIKES",ja:"ひえー",c:"オノマトペ",t:"オノマトペ ひえー 驚き"},
+{en:"PHEW",ja:"ふぅ",c:"オノマトペ",t:"オノマトペ ふぅ 安堵"},
+{en:"OKEY-DOKEY",ja:"はーい",c:"オノマトペ",t:"オノマトペ はーい 返事"},
+{en:"HA!",ja:"はっ！",c:"オノマトペ",t:"オノマトペ はっ 笑い"},
+{en:"MELTDOWN",ja:"大泣き発動",c:"やんちゃ",t:"やんちゃ イヤイヤ 泣く 大泣き 癇癪"},
+{en:"TANTRUM MODE",ja:"駄々っ子モード",c:"やんちゃ",t:"やんちゃ イヤイヤ 駄々 癇癪 ぐずる"},
+{en:"BIG FEELINGS",ja:"感情爆発中",c:"やんちゃ",t:"やんちゃ イヤイヤ 感情 泣く"},
+{en:"LITTLE STORM",ja:"小さな嵐",c:"やんちゃ",t:"やんちゃ イヤイヤ 嵐 大変"},
+{en:"DRAMA TIME",ja:"ドラマ開演",c:"やんちゃ",t:"やんちゃ イヤイヤ 泣く ドラマ"},
+{en:"GRUMPY DAY",ja:"ご機嫌ななめの日",c:"やんちゃ",t:"やんちゃ 不機嫌 機嫌 ぐずる"},
+{en:"MOODY",ja:"不機嫌",c:"やんちゃ",t:"やんちゃ 不機嫌 機嫌"},
+{en:"CHAOS",ja:"カオス",c:"やんちゃ",t:"やんちゃ カオス 大変"},
+{en:"SEND HELP",ja:"助けて",c:"やんちゃ",t:"やんちゃ 助けて 大変 SOS"},
+{en:"SOS MOM",ja:"ママ助けて",c:"やんちゃ",t:"やんちゃ ママ 助けて SOS"},
+{en:"SOS DAD",ja:"パパ助けて",c:"やんちゃ",t:"やんちゃ パパ 助けて SOS"},
+{en:"TROUBLE MAKER",ja:"いたずらっ子",c:"やんちゃ",t:"やんちゃ いたずら"},
+{en:"LITTLE MONSTER",ja:"小さな怪獣",c:"やんちゃ",t:"やんちゃ 怪獣 いたずら"},
+{en:"WILD CHILD",ja:"やんちゃっ子",c:"やんちゃ",t:"やんちゃ やんちゃっ子 いたずら 元気"},
+{en:"MISCHIEF MANAGED",ja:"いたずら完了",c:"やんちゃ",t:"やんちゃ いたずら"},
+{en:"CAUGHT IN THE ACT",ja:"現行犯",c:"やんちゃ",t:"やんちゃ 現行犯 いたずら"},
+{en:"CAUGHT RED-HANDED",ja:"現行犯逮捕",c:"やんちゃ",t:"やんちゃ 現行犯 いたずら"},
+{en:"WHO DID THIS?",ja:"誰がやったの？",c:"やんちゃ",t:"やんちゃ いたずら 誰"},
+{en:"TOO QUIET",ja:"静かすぎて危険",c:"やんちゃ",t:"やんちゃ 静か 危険 いたずら"},
+{en:"NEVER A DULL MOMENT",ja:"退屈する暇なし",c:"やんちゃ",t:"やんちゃ 退屈 暇なし"},
+{en:"ENERGY LEVEL:100",ja:"元気100％",c:"やんちゃ",t:"やんちゃ 元気 100"},
+{en:"RUNNING WILD",ja:"元気すぎる",c:"やんちゃ",t:"やんちゃ 元気 走る"},
+{en:"OOPS AGAIN",ja:"またやった",c:"やんちゃ",t:"やんちゃ またやった いたずら"},
+{en:"TROUBLE FOUND ME",ja:"トラブル発見",c:"やんちゃ",t:"やんちゃ トラブル いたずら"},
+{en:"SMALL BUT MIGHTY",ja:"小さいけど手強い",c:"やんちゃ",t:"やんちゃ 強い 手強い"},
+{en:"TINY BUT MIGHTY",ja:"小さいけど手強い",c:"やんちゃ",t:"やんちゃ 強い 手強い"},
+{en:"PROFESSIONAL BUTTON PUSHER",ja:"親泣かせのプロ",c:"やんちゃ",t:"やんちゃ 親 大変"},
+{en:"CUTE BUT EXHAUSTING",ja:"かわいいけど大変",c:"やんちゃ",t:"やんちゃ かわいい 大変"},
+{en:"TODDLERS ALWAYS WIN",ja:"幼児には勝てない",c:"やんちゃ",t:"やんちゃ 幼児 イヤイヤ"},
+{en:"MY WAY",ja:"自分のやり方",c:"やんちゃ",t:"やんちゃ 自分 イヤイヤ"},
+{en:"LITTLE BOSS",ja:"小さなボス",c:"やんちゃ",t:"やんちゃ ボス 仕切る"},
+{en:"STRONG OPINIONS",ja:"意思が強い",c:"やんちゃ",t:"やんちゃ 意思 強い イヤイヤ"},
+{en:"IN CHARGE",ja:"主導権はこちら",c:"やんちゃ",t:"やんちゃ 主導権"},
+{en:"DETERMINED",ja:"強い意志",c:"やんちゃ",t:"やんちゃ 意志 強い"},
+{en:"BORN TO NEGOTIATE",ja:"交渉上手",c:"やんちゃ",t:"やんちゃ 交渉"},
+{en:"FIVE MORE MINUTES",ja:"あと5分！",c:"帰りたくない",t:"帰りたくない 5分 あと イヤイヤ"},
+{en:"JUST ONE MORE",ja:"あと1回だけ！",c:"帰りたくない",t:"帰りたくない あと1回 もう1回"},
+{en:"CAN WE STAY?",ja:"まだいていい？",c:"帰りたくない",t:"帰りたくない まだ いたい"},
+{en:"NOT READY TO GO",ja:"まだ帰りたくない",c:"帰りたくない",t:"帰りたくない まだ 帰る"},
+{en:"HOME? NO THANKS",ja:"帰宅？お断り",c:"帰りたくない",t:"帰りたくない 帰る 拒否"},
+{en:"LEAVING IS HARD",ja:"帰るのって難しい",c:"帰りたくない",t:"帰りたくない 帰る 大変"},
+{en:"ONE LAST SLIDE",ja:"最後にもう1回すべり台",c:"帰りたくない",t:"帰りたくない すべり台 公園 もう1回"},
+{en:"TOO MUCH FUN",ja:"楽しすぎて帰れない",c:"帰りたくない",t:"帰りたくない 楽しい 帰れない"},
+{en:"END OF THE FUN",ja:"楽しい時間終了",c:"帰りたくない",t:"帰りたくない 終了 楽しい"},
+{en:"THE STRUGGLE WAS REAL",ja:"本当に大変だった",c:"帰りたくない",t:"帰りたくない 大変 本当に"},
+{en:"DREAM",ja:"夢",c:"おしゃれ単語",t:"単語 夢 おしゃれ"},
+{en:"SMILE",ja:"笑顔",c:"おしゃれ単語",t:"単語 笑顔 笑い おしゃれ"},
+{en:"WONDER",ja:"感動・驚き",c:"おしゃれ単語",t:"単語 感動 驚き おしゃれ"},
+{en:"TREASURE",ja:"宝物",c:"おしゃれ単語",t:"単語 宝物 大切 おしゃれ"},
+{en:"MEMORY",ja:"思い出",c:"おしゃれ単語",t:"単語 思い出 おしゃれ"},
+{en:"HAPPINESS",ja:"幸せ",c:"おしゃれ単語",t:"単語 幸せ おしゃれ"},
+{en:"JOY",ja:"喜び",c:"おしゃれ単語",t:"単語 喜び おしゃれ"},
+{en:"ADVENTURE",ja:"冒険",c:"おしゃれ単語",t:"単語 冒険 おしゃれ"},
+{en:"MAGIC",ja:"魔法",c:"おしゃれ単語",t:"単語 魔法 おしゃれ"},
+{en:"BLOOM",ja:"咲く",c:"おしゃれ単語",t:"単語 咲く 花 おしゃれ 春"},
+{en:"BLOSSOM",ja:"花開く",c:"おしゃれ単語",t:"単語 花開く 花 おしゃれ 春"},
+{en:"RAINBOW",ja:"虹",c:"おしゃれ単語",t:"単語 虹 おしゃれ"},
+{en:"STARLIGHT",ja:"星明かり",c:"おしゃれ単語",t:"単語 星 夜 おしゃれ"},
+{en:"MOONBEAM",ja:"月の光",c:"おしゃれ単語",t:"単語 月 夜 おしゃれ"},
+{en:"GIGGLES",ja:"くすくす笑い",c:"おしゃれ単語",t:"単語 くすくす 笑い おしゃれ"},
+{en:"SPARKLE",ja:"きらめき",c:"おしゃれ単語",t:"単語 きらめき 輝き おしゃれ"},
+{en:"PRECIOUS",ja:"大切なもの",c:"おしゃれ単語",t:"単語 大切 おしゃれ"},
+{en:"SWEETNESS",ja:"愛らしさ",c:"おしゃれ単語",t:"単語 愛らしい かわいい おしゃれ"},
+{en:"CHERISH",ja:"大切にする",c:"おしゃれ単語",t:"単語 大切 おしゃれ"},
+{en:"INNOCENCE",ja:"無邪気さ",c:"おしゃれ単語",t:"単語 無邪気 子ども おしゃれ"},
+{en:"JOYFUL",ja:"喜びに満ちた",c:"おしゃれ単語",t:"単語 喜び 幸せ おしゃれ"},
+{en:"DELIGHT",ja:"楽しみ",c:"おしゃれ単語",t:"単語 楽しみ 喜び おしゃれ"},
+{en:"TINY",ja:"小さな",c:"おしゃれ単語",t:"単語 小さな 赤ちゃん おしゃれ"},
+{en:"LITTLE",ja:"ちいさな",c:"おしゃれ単語",t:"単語 小さな おしゃれ"},
+{en:"COZY",ja:"心地よい",c:"おしゃれ単語",t:"単語 心地よい のんびり おしゃれ"},
+{en:"LOVELY",ja:"愛らしい",c:"おしゃれ単語",t:"単語 愛らしい かわいい おしゃれ"},
+{en:"BRIGHT",ja:"輝く",c:"おしゃれ単語",t:"単語 輝く 明るい おしゃれ"},
+{en:"GOLDEN",ja:"黄金色の",c:"おしゃれ単語",t:"単語 黄金 輝く おしゃれ"},
+{en:"DAISY",ja:"ひなぎく",c:"おしゃれ単語",t:"単語 ひなぎく 花 おしゃれ"},
+{en:"PETAL",ja:"花びら",c:"おしゃれ単語",t:"単語 花びら 花 おしゃれ"},
+{en:"BREEZE",ja:"そよ風",c:"おしゃれ単語",t:"単語 そよ風 風 おしゃれ"},
+{en:"GLOW",ja:"ほのかな輝き",c:"おしゃれ単語",t:"単語 輝き 光 おしゃれ"},
+{en:"LUCKY",ja:"幸運な",c:"おしゃれ単語",t:"単語 幸運 ラッキー おしゃれ"},
+{en:"SNUGGLE",ja:"ぎゅっと寄り添う",c:"おしゃれ単語",t:"単語 ぎゅっと 抱っこ おしゃれ"},
+{en:"CUDDLE",ja:"抱きしめる",c:"おしゃれ単語",t:"単語 抱きしめる 抱っこ おしゃれ"},
+{en:"HEARTBEAT",ja:"鼓動",c:"おしゃれ単語",t:"単語 鼓動 心 おしゃれ"},
+{en:"JOURNEY",ja:"旅",c:"おしゃれ単語",t:"単語 旅 成長 おしゃれ"},
+{en:"MIRACLE",ja:"奇跡",c:"おしゃれ単語",t:"単語 奇跡 おしゃれ"},
+{en:"FOREVER",ja:"いつまでも",c:"おしゃれ単語",t:"単語 いつまでも おしゃれ"},
+{en:"DAYDREAM",ja:"空想",c:"おしゃれ単語",t:"単語 空想 夢 おしゃれ"},
+{en:"WHIMSY",ja:"遊び心",c:"おしゃれ単語",t:"単語 遊び心 かわいい おしゃれ"},
+{en:"TWINKLE",ja:"きらきら輝く",c:"おしゃれ単語",t:"単語 きらきら 輝く おしゃれ 星"},
+{en:"KINDNESS",ja:"やさしさ",c:"おしゃれ単語",t:"単語 やさしさ おしゃれ"},
+{en:"HARMONY",ja:"調和",c:"おしゃれ単語",t:"単語 調和 おしゃれ"},
+{en:"SERENITY",ja:"穏やかさ",c:"おしゃれ単語",t:"単語 穏やか おしゃれ"},
+{en:"BELOVED",ja:"愛しい存在",c:"おしゃれ単語",t:"単語 愛しい 大切 おしゃれ"},
+{en:"SUNSHINE",ja:"陽だまり",c:"おしゃれ単語",t:"単語 陽だまり 太陽 おしゃれ"},
+{en:"GROWTH",ja:"成長",c:"おしゃれ単語",t:"単語 成長 おしゃれ"},
+{en:"LAUGHTER",ja:"笑い声",c:"おしゃれ単語",t:"単語 笑い声 笑い おしゃれ"},
+{en:"TINY ADVENTURE",ja:"小さな冒険",c:"短いフレーズ",t:"フレーズ 冒険 小さな おでかけ"},
+{en:"BEST MOMENT",ja:"最高の瞬間",c:"短いフレーズ",t:"フレーズ 最高 瞬間 思い出"},
+{en:"BLOOM TOGETHER",ja:"一緒に咲こう",c:"短いフレーズ",t:"フレーズ 一緒 咲く 花 春"},
+{en:"DREAM BIG",ja:"大きな夢を",c:"短いフレーズ",t:"フレーズ 夢 大きな"},
+{en:"STAY CURIOUS",ja:"好奇心いっぱいに",c:"短いフレーズ",t:"フレーズ 好奇心 子ども"},
+{en:"LOVELY DAY",ja:"愛らしい一日",c:"短いフレーズ",t:"フレーズ 今日 愛らしい 素敵"},
+{en:"TINY FEET",ja:"小さな足あと",c:"短いフレーズ",t:"フレーズ 小さな 足 赤ちゃん 成長"},
+{en:"SWEET SUNSHINE",ja:"やさしい日差し",c:"短いフレーズ",t:"フレーズ 太陽 日差し やさしい"},
+{en:"SMILE MORE",ja:"もっと笑おう",c:"短いフレーズ",t:"フレーズ 笑顔 笑い"},
+{en:"SWEET CHILDHOOD",ja:"すてきな子ども時代",c:"短いフレーズ",t:"フレーズ 子ども 成長 思い出"},
+{en:"TINY HAPPINESS",ja:"小さな幸せ",c:"短いフレーズ",t:"フレーズ 幸せ 小さな"},
+{en:"SWEET JOURNEY",ja:"素敵な成長の旅",c:"短いフレーズ",t:"フレーズ 成長 旅 素敵"},
+{en:"TINY DREAMS",ja:"小さな夢",c:"短いフレーズ",t:"フレーズ 夢 小さな"},
+{en:"A LOVELY LIFE",ja:"愛らしい毎日",c:"短いフレーズ",t:"フレーズ 毎日 愛らしい"},
+{en:"SUNSHINE & SMILES",ja:"太陽と笑顔",c:"短いフレーズ",t:"フレーズ 太陽 笑顔"},
+{en:"MY TREASURE",ja:"私の宝物",c:"短いフレーズ",t:"フレーズ 宝物 大切"},
+{en:"KEEP SHINING",ja:"そのまま輝いて",c:"短いフレーズ",t:"フレーズ 輝く 笑顔"},
+{en:"SMALL HANDS BIG DREAMS",ja:"小さな手に大きな夢",c:"短いフレーズ",t:"フレーズ 手 夢 成長 赤ちゃん"},
+{en:"FILLED WITH WONDER",ja:"感動でいっぱい",c:"短いフレーズ",t:"フレーズ 感動 いっぱい"},
+{en:"OUR LITTLE MASTERPIECE",ja:"私たちの小さな傑作",c:"短いフレーズ",t:"フレーズ 家族 宝物 子ども"},
+{en:"LOVE LIVES HERE",ja:"ここには愛がある",c:"短いフレーズ",t:"フレーズ 愛 家族 家"},
+{en:"CHILDHOOD IS PURE MAGIC",ja:"子ども時代は魔法そのもの",c:"短いフレーズ",t:"フレーズ 子ども 魔法 成長"},
+{en:"GROWING WITH LOVE",ja:"愛に包まれて成長",c:"短いフレーズ",t:"フレーズ 成長 愛 家族"},
+{en:"FOREVER OUR SUNSHINE",ja:"いつまでも我が家の太陽",c:"短いフレーズ",t:"フレーズ 太陽 家族 いつまでも"},
+{en:"Every day with you becomes a beautiful memory.",ja:"あなたと過ごすすべての日が、美しい思い出になっていく。",c:"長文メッセージ",t:"長文 毎日 思い出 美しい 感謝"},
+{en:"Watching you grow is the greatest joy of our lives.",ja:"あなたの成長を見守ることが、私たちにとって何よりの喜びです。",c:"長文メッセージ",t:"長文 成長 喜び 家族"},
+{en:"The little moments today will become the treasures of tomorrow.",ja:"今日の小さな瞬間は、明日の宝物になる。",c:"長文メッセージ",t:"長文 今日 瞬間 宝物 明日"},
+{en:"Your smile fills our hearts with happiness every single day.",ja:"あなたの笑顔は、毎日私たちの心を幸せで満たしてくれる。",c:"長文メッセージ",t:"長文 笑顔 幸せ 毎日"},
+{en:"No matter how much you grow, you will always be our little sunshine.",ja:"どんなに大きくなっても、あなたはずっと私たちの小さな太陽。",c:"長文メッセージ",t:"長文 成長 太陽 いつまでも"},
+{en:"Every photo tells a story, and every story begins with love.",ja:"一枚一枚の写真には物語があり、その物語は愛から始まる。",c:"長文メッセージ",t:"長文 写真 物語 愛"},
+{en:"Tiny hands, tiny feet, and a heart full of endless possibilities.",ja:"小さな手、小さな足、そして無限の可能性に満ちた心。",c:"長文メッセージ",t:"長文 手 足 赤ちゃん 可能性"},
+{en:"The days may be long, but the years are far too short.",ja:"一日は長く感じても、年月はあっという間に過ぎていく。",c:"長文メッセージ",t:"長文 時間 成長 あっという間"},
+{en:"You make ordinary days feel extraordinary.",ja:"あなたがいるだけで、何気ない毎日が特別になる。",c:"長文メッセージ",t:"長文 毎日 特別 あなた"},
+{en:"Our favorite adventure will always be watching you grow.",ja:"私たちの一番大好きな冒険は、あなたの成長を見守ること。",c:"長文メッセージ",t:"長文 成長 冒険 家族"},
+{en:"A thousand memories, a million smiles, and one precious childhood.",ja:"たくさんの思い出と笑顔に包まれた、かけがえのない子ども時代。",c:"長文メッセージ",t:"長文 思い出 笑顔 子ども"},
+{en:"May your life always be filled with wonder, laughter, and love.",ja:"あなたの人生が、驚きと笑顔と愛で満たされますように。",c:"長文メッセージ",t:"長文 未来 愛 笑顔 願い"},
+{en:"The smallest moments often leave the biggest memories.",ja:"何気ない小さな瞬間こそ、心に残る大きな思い出になる。",c:"長文メッセージ",t:"長文 瞬間 思い出"},
+{en:"Growing up is a journey, and we are grateful for every step.",ja:"成長は旅のようなもの。その一歩一歩に感謝している。",c:"長文メッセージ",t:"長文 成長 旅 感謝"},
+{en:"You are the reason our world became brighter and warmer.",ja:"あなたが生まれて、私たちの世界はもっと明るく、温かくなった。",c:"長文メッセージ",t:"長文 誕生 明るい 家族"},
+{en:"May you always find magic in the little things.",ja:"いつまでも小さな幸せの中に魔法を見つけられますように。",c:"長文メッセージ",t:"長文 魔法 幸せ 願い"},
+{en:"These pages hold the moments we never want to forget.",ja:"このページには、決して忘れたくない瞬間が詰まっている。",c:"長文メッセージ",t:"長文 思い出 忘れたくない フォトブック"},
+{en:"One day you'll look back and see how deeply you were loved.",ja:"いつか振り返ったとき、どれほど愛されていたかがきっと伝わるはず。",c:"長文メッセージ",t:"長文 愛 将来 成長"},
+{en:"Childhood passes quickly, but the memories last forever.",ja:"子ども時代はあっという間だけれど、思い出は永遠に残る。",c:"長文メッセージ",t:"長文 子ども 思い出 永遠"},
+{en:"Every chapter of your story is worth remembering.",ja:"あなたの物語の一ページ一ページが、かけがえのない宝物。",c:"長文メッセージ",t:"長文 物語 宝物 思い出"},
+{en:"Little moments, big memories.",ja:"小さな瞬間、大きな思い出。",c:"長文メッセージ",t:"長文 瞬間 思い出"},
+{en:"Growing up, one beautiful day at a time.",ja:"美しい毎日を重ねながら成長していく。",c:"長文メッセージ",t:"長文 成長 毎日"},
+{en:"Collecting memories, one smile at a time.",ja:"ひとつひとつの笑顔を、思い出として集めていこう。",c:"長文メッセージ",t:"長文 笑顔 思い出"},
+{en:"The story of a childhood filled with love and laughter.",ja:"愛と笑顔に包まれた子ども時代の物語。",c:"長文メッセージ",t:"長文 子ども 愛 笑顔 物語"},
+{en:"Forever grateful for these little days.",ja:"この愛おしい日々に、いつまでも感謝を。",c:"長文メッセージ",t:"長文 感謝 日々 愛おしい"},
+{en:"You make every day brighter.",ja:"あなたが毎日を明るくしてくれる。",c:"長文メッセージ",t:"長文 毎日 明るい"},
+{en:"A little smile goes a long way.",ja:"小さな笑顔が大きな幸せになる。",c:"長文メッセージ",t:"長文 笑顔 幸せ"},
+{en:"Every moment is a treasure.",ja:"すべての瞬間が宝物。",c:"長文メッセージ",t:"長文 瞬間 宝物"},
+{en:"The world looks brighter with you.",ja:"あなたがいると世界が輝く。",c:"長文メッセージ",t:"長文 世界 輝く"},
+{en:"You are loved beyond words.",ja:"言葉にできないほど愛している。",c:"長文メッセージ",t:"長文 愛 言葉 大切"},
+{en:"Tiny steps, big journey.",ja:"小さな一歩が大きな旅になる。",c:"長文メッセージ",t:"長文 一歩 旅 成長"},
+{en:"You are our greatest gift.",ja:"あなたは最高の贈り物。",c:"長文メッセージ",t:"長文 贈り物 感謝 誕生"},
+{en:"Just being you is enough.",ja:"あなたらしいだけで素晴らしい。",c:"長文メッセージ",t:"長文 あなたらしい 素晴らしい"},
+{en:"You make life magical.",ja:"あなたが人生を魔法のようにしてくれる。",c:"長文メッセージ",t:"長文 魔法 人生"},
+{en:"Love grows every day.",ja:"愛は毎日育っていく。",c:"長文メッセージ",t:"長文 愛 毎日 育つ"},
+];
+let phInitDone=false,phActiveCat='すべて';
+function phSetup(){
+  const cEl=document.getElementById('ph-cats');
+  PH_CATS.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='ph-chip'+(c==='すべて'?' active':'');
+    b.textContent=c;
+    b.onclick=()=>{phActiveCat=c;cEl.querySelectorAll('.ph-chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');phRender();};
+    cEl.appendChild(b);
+  });
+  phRender();
+}
+function phRender(){
+  const q=(document.getElementById('ph-search')||{value:''}).value.trim();
+  const list=document.getElementById('ph-list');
+  const filtered=PH_DATA.filter(d=>{
+    const cOk=phActiveCat==='すべて'||d.c===phActiveCat;
+    if(!cOk)return false;
+    if(!q)return true;
+    return d.t.includes(q)||d.ja.includes(q)||d.en.toLowerCase().includes(q.toLowerCase());
+  });
+  if(!filtered.length){list.innerHTML='<div style="padding:20px;text-align:center;font-size:11px;color:var(--faint);">見つかりませんでした</div>';return;}
+  list.innerHTML=filtered.map(d=>`<div class="ph-card" onclick="phCopy('${d.en.replace(/'/g,"\\'").replace(/\\/g,'\\\\')}')">`+
+    `<div class="ph-en${d.c==='長文メッセージ'?' ph-msg':''}">${d.en}</div>`+
+    `<div class="ph-ja">${d.ja}</div></div>`).join('');
+}
+function phCopy(text){
+  navigator.clipboard.writeText(text).catch(()=>{});
+  showToast('コピー: '+text.slice(0,18)+(text.length>18?'…':''));
+}
+
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
 // ════════════════════════════════════════════
