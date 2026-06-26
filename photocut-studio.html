@@ -245,10 +245,8 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   gap: 3px;
 }
 .mat-card {
-  background-color: #fff;
-  background-image: linear-gradient(45deg,#e8e8e8 25%,transparent 25%),linear-gradient(-45deg,#e8e8e8 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e8e8e8 75%),linear-gradient(-45deg,transparent 75%,#e8e8e8 75%);
-  background-size: 8px 8px;
-  background-position: 0 0,0 4px,4px -4px,-4px 0;
+  background-color: #f5ede0;
+  background-image: none;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
   border: 1.5px solid #000;
@@ -1077,33 +1075,29 @@ function hideMaterialScreen() {
   setTimeout(()=>{ resizePreview(); if(userImg) render(); }, 100);
 }
 function selectMaterial(src) {
-  // 透過PNGをfetchしてClipboard APIでコピー
-  fetch(src)
+  const pngBlobPromise = fetch(src)
     .then(r => r.blob())
     .then(blob => {
-      // blobがpngでない場合はpngに変換
       if (blob.type === 'image/png') return blob;
       return new Promise(resolve => {
         const img = new Image();
         img.onload = () => {
           const cv = document.createElement('canvas');
           cv.width = img.naturalWidth; cv.height = img.naturalHeight;
-          const ctx = cv.getContext('2d');
-          ctx.clearRect(0, 0, cv.width, cv.height); // 透過を保持
-          ctx.drawImage(img, 0, 0);
+          cv.getContext('2d').drawImage(img, 0, 0);
           cv.toBlob(resolve, 'image/png');
         };
         img.src = URL.createObjectURL(blob);
       });
-    })
-    .then(pngBlob => navigator.clipboard.write([
-      new ClipboardItem({ 'image/png': pngBlob })
-    ]))
+    });
+
+  navigator.clipboard.write([
+    new ClipboardItem({ 'image/png': pngBlobPromise })
+  ])
     .then(() => {
       showMatToast('コピーしました ✓');
     })
     .catch(() => {
-      // フォールバック：モーダルで長押しコピーを促す
       document.getElementById('copy-modal-img').src = src;
       document.getElementById('copy-modal').classList.add('show');
     });
