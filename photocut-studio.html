@@ -196,6 +196,8 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   font-family: 'Zen Kaku Gothic New', sans-serif;
 }
 .mat-back:hover { background: var(--blush); }
+.mat-size-row { display:flex; align-items:center; gap:8px; padding:6px 16px; border-bottom:1px solid rgba(180,130,120,0.15); flex-shrink:0; }
+.mat-size-label { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
 .mat-filter {
   display: flex;
   gap: 6px;
@@ -373,6 +375,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   <div class="mat-header">
     <h2>素材を選ぶ</h2>
     <button class="mat-back" onclick="hideMaterialScreen()">← もどる</button>
+  </div>
+  <div class="mat-size-row">
+    <span class="mat-size-label">SIZE</span>
+    <div class="sz-btns" id="mat-size-btns"></div>
   </div>
   <div class="mat-grid" id="mat-grid"></div>
 
@@ -640,11 +646,13 @@ function initUI(){
 
   // Sizes
   [{l:'S',p:700},{l:'M',p:1000},{l:'L',p:1500}].forEach(s=>{
-    const b=document.createElement('div');
-    b.className='szbtn'+(s.p===selSize?' selected':'');
-    b.textContent=s.l;
-    b.onclick=()=>{ document.querySelectorAll('.szbtn').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); selSize=s.p; render(); };
-    document.getElementById('size-row').appendChild(b);
+    ['size-row','mat-size-btns'].forEach(containerId=>{
+      const b=document.createElement('div');
+      b.className='szbtn'+(s.p===selSize?' selected':'');
+      b.textContent=s.l;
+      b.onclick=()=>{ document.querySelectorAll('.szbtn').forEach(x=>x.classList.remove('selected')); document.querySelectorAll('.szbtn').forEach(x=>{if(x.textContent===s.l)x.classList.add('selected');}); selSize=s.p; render(); };
+      document.getElementById(containerId).appendChild(b);
+    });
   });
 }
 
