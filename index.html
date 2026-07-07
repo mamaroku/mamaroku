@@ -651,6 +651,8 @@
       .sidebar {
         width: 100%;
         height: auto;
+        max-height: none;   /* 縦積み時は高さ制限を外す（ロゴが隠れるのを防ぐ） */
+        overflow-y: visible;
         position: relative;
         padding: 40px 24px;
       }
@@ -659,7 +661,7 @@
       .sidebar-logo { margin-top: 28px; text-align: center; }
       .sidebar-logo img { margin: 0 auto; }
       .sidebar-instagram { margin: 16px auto 0; }
-      .main-teal { max-width: none; overflow: hidden; }
+      .main-teal { flex: none; max-width: none; overflow: hidden; } /* flex:noneが無いと縦積み時に高さ480pxに固定される */
       .section { padding: 64px 20px; }
       .dekiru-img { width: 100%; margin-left: 0; max-width: 100%; }
     }
