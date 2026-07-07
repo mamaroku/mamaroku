@@ -88,6 +88,9 @@
 
     .sidebar-logo img { width: 140px; }
 
+    /* スマホ専用の表紙（デスクトップでは出さない） */
+    .sp-cover { display: none; }
+
     .main-teal {
       flex: 0 1 480px;
       max-width: 480px;
@@ -656,11 +659,19 @@
         position: relative;
         padding: 40px 24px;
       }
-      .sidebar-hero img { max-width: 340px; margin: 0 auto 28px; }
+      /* BEAMS参考の構成：サイドバーは下（裏表紙）へ、表紙はノート側の先頭に */
+      .sidebar { order: 2; }
+      .sidebar-hero { display: none; }
       .sidebar-nav { text-align: center; }
       .sidebar-logo { margin-top: 28px; text-align: center; }
       .sidebar-logo img { margin: 0 auto; }
       .sidebar-instagram { margin: 16px auto 0; }
+      .sp-cover {
+        display: block;
+        background: var(--cream);
+        padding: 48px 24px 52px;
+      }
+      .sp-cover img { max-width: 340px; margin: 0 auto; }
       .main-teal { flex: none; max-width: none; overflow: hidden; } /* flex:noneが無いと縦積み時に高さ480pxに固定される */
       .section { padding: 64px 20px; }
       .dekiru-img { width: 100%; margin-left: 0; max-width: 100%; }
@@ -700,6 +711,11 @@
 
     <!-- ── メイン（スクロールする側） ── -->
     <main class="main-teal">
+
+      <!-- スマホ専用の表紙（パソコンでは非表示。サイドバーのヒーローと同じ画像） -->
+      <div class="sp-cover">
+        <img src="images/redesign/hero.png" width="777" height="909" alt="小さな毎日、大きな思い出。iPadひとつで、おもいで記録。">
+      </div>
 
       <!-- できること -->
       <section class="section" id="dekiru">
@@ -1033,7 +1049,7 @@
 
       // 単体でふわっと出すもの（バッジ・パネル・ボタンなど）
       document.querySelectorAll(
-        '.sidebar-hero img, .section > img:not(.deco), .premium-lock, .premium-heading, .premium-divider, .premium-text, .lineup-intro, .lineup-price, .btn-black, .btn-outline'
+        '.sidebar-hero img, .sp-cover img, .section > img:not(.deco), .premium-lock, .premium-heading, .premium-divider, .premium-text, .lineup-intro, .lineup-price, .btn-black, .btn-outline'
       ).forEach(function (el) { targets.push(el); });
 
       // 商品カード：左→右の順に少し時間差
