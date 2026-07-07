@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Downloads 管理 | mamaroku</title>
+<style>
+  :root {
+    --cream: #f5f2ed;
+    --teal-dark: #517585;
+    --ink: #3a3735;
+    --line: #ddd6cc;
+    --ok: #4b8a5f;
+    --err: #b25a52;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    padding: 32px 20px 80px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  .lead { font-size: 0.8rem; color: #777; margin-bottom: 28px; }
+  a.back { font-size: 0.78rem; color: var(--teal-dark); text-decoration: none; }
+
+  section {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section h2 {
+    font-size: 0.85rem;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  details.gh-settings { margin-bottom: 20px; }
+  details.gh-settings summary {
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--teal-dark);
+    padding: 4px 0;
+  }
+  label { display: block; font-size: 0.76rem; color: #555; margin: 12px 0 4px; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=password], textarea {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    background: #fbfaf8;
+  }
+  textarea { resize: vertical; min-height: 54px; }
+  input[type=file] { font-size: 0.8rem; margin-top: 4px; }
+
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--teal-dark); }
+  .btn.small { padding: 6px 14px; font-size: 0.72rem; }
+  .btn.danger { background: var(--err); }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--ink); }
+
+  .status { font-size: 0.75rem; margin-top: 8px; min-height: 1.2em; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); }
+
+  .item-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .item-card {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .item-card .thumb {
+    width: 52px; height: 52px; flex-shrink: 0;
+    border-radius: 6px;
+    background: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-size: 0.65rem;
+    color: #999;
+    text-align: center;
+  }
+  .item-card .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .item-card .meta { flex: 1; min-width: 0; }
+  .item-card .meta .title { font-size: 0.82rem; font-weight: bold; }
+  .item-card .meta .desc { font-size: 0.72rem; color: #777; margin-top: 2px; }
+  .item-card .meta .size { font-size: 0.68rem; color: #aaa; margin-top: 2px; }
+  .item-card .actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .empty { font-size: 0.78rem; color: #999; text-align: center; padding: 20px 0; }
+  .footer-actions { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
+  .total-size { font-size: 0.72rem; color: #999; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="downloads.html">← ダウンロードページを見る</a>
+  <h1 style="margin-top:14px;">Downloads 管理</h1>
+  <p class="lead">ダウンロードページに載せる素材を追加・削除して、GitHubに公開できます。</p>
+
+  <details class="gh-settings">
+    <summary>GitHub連携設定</summary>
+    <div style="margin-top:12px;">
+      <label>Personal Access Token（illust-sticker管理画面と共通）</label>
+      <input type="password" id="gh-token" placeholder="ghp_...">
+      <label>リポジトリ（owner/repo）</label>
+      <input type="text" id="gh-repo" placeholder="mamaroku/mamaroku">
+      <label>保存先ファイル名</label>
+      <input type="text" id="gh-filepath" placeholder="downloads.json">
+      <div class="footer-actions">
+        <button class="btn small" id="gh-save">設定を保存</button>
+        <span class="status" id="gh-save-status"></span>
+      </div>
+    </div>
+  </details>
+
+  <section>
+    <h2>素材を追加</h2>
+    <label>タイトル</label>
+    <input type="text" id="new-title" placeholder="例：無料お試し用テンプレート">
+    <label>説明（任意）</label>
+    <textarea id="new-desc" placeholder="例：まずはこちらでお試しください"></textarea>
+    <label>ファイル</label>
+    <input type="file" id="new-file">
+    <div class="footer-actions">
+      <button class="btn primary" id="add-btn">リストに追加</button>
+      <span class="status" id="add-status"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>読み込み・公開</h2>
+    <div class="footer-actions">
+      <button class="btn ghost" id="load-btn">GitHubから現在の内容を読み込む</button>
+      <span class="status" id="load-status"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="justify-content:space-between;">
+      <span>素材リスト（<span id="item-count">0</span>件）</span>
+    </h2>
+    <div class="item-list" id="item-list"></div>
+    <p class="empty" id="empty-msg">まだ素材がありません。上のフォームから追加するか、GitHubから読み込んでください。</p>
+
+    <div class="footer-actions">
+      <button class="btn primary" id="publish-btn">この内容をGitHubに公開する</button>
+      <span class="status" id="publish-status"></span>
+      <span class="total-size" id="total-size"></span>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var items = []; // {id, title, desc, filename, mime, size, data}
+
+  function $(id) { return document.getElementById(id); }
+
+  function loadGhSettings() {
+    $('gh-token').value = localStorage.getItem('mamaroku_gh_token') || '';
+    $('gh-repo').value = localStorage.getItem('mamaroku_gh_repo') || 'mamaroku/mamaroku';
+    $('gh-filepath').value = localStorage.getItem('mamaroku_dl_filepath') || 'downloads.json';
+  }
+  loadGhSettings();
+
+  $('gh-save').onclick = function () {
+    localStorage.setItem('mamaroku_gh_token', $('gh-token').value.trim());
+    localStorage.setItem('mamaroku_gh_repo', $('gh-repo').value.trim());
+    localStorage.setItem('mamaroku_dl_filepath', $('gh-filepath').value.trim());
+    var st = $('gh-save-status');
+    st.className = 'status ok';
+    st.textContent = '保存しました';
+    setTimeout(function () { st.textContent = ''; }, 2000);
+  };
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function render() {
+    var list = $('item-list');
+    list.innerHTML = '';
+    $('item-count').textContent = items.length;
+    $('empty-msg').style.display = items.length ? 'none' : 'block';
+    var total = 0;
+    items.forEach(function (item, idx) {
+      total += item.size || 0;
+      var card = document.createElement('div');
+      card.className = 'item-card';
+      var thumbHtml = item.mime && item.mime.indexOf('image/') === 0
+        ? '<img src="' + item.data + '" alt="">'
+        : (item.filename ? item.filename.split('.').pop().toUpperCase() : 'FILE');
+      card.innerHTML =
+        '<div class="thumb">' + thumbHtml + '</div>' +
+        '<div class="meta">' +
+          '<div class="title"></div>' +
+          '<div class="desc"></div>' +
+          '<div class="size">' + fmtSize(item.size || 0) + '</div>' +
+        '</div>' +
+        '<div class="actions"><button class="btn danger small">削除</button></div>';
+      card.querySelector('.title').textContent = item.title;
+      card.querySelector('.desc').textContent = item.desc || '';
+      card.querySelector('.danger').onclick = function () {
+        if (!confirm('「' + item.title + '」を削除しますか？')) return;
+        items.splice(idx, 1);
+        render();
+      };
+      list.appendChild(card);
+    });
+    $('total-size').textContent = items.length ? ('合計 ' + fmtSize(total)) : '';
+  }
+
+  $('add-btn').onclick = function () {
+    var title = $('new-title').value.trim();
+    var desc = $('new-desc').value.trim();
+    var fileInput = $('new-file');
+    var file = fileInput.files[0];
+    var st = $('add-status');
+    if (!title) { st.className = 'status err'; st.textContent = 'タイトルを入力してください'; return; }
+    if (!file) { st.className = 'status err'; st.textContent = 'ファイルを選択してください'; return; }
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      items.push({
+        id: Date.now() + Math.random(),
+        title: title,
+        desc: desc,
+        filename: file.name,
+        mime: file.type,
+        size: file.size,
+        data: reader.result
+      });
+      render();
+      $('new-title').value = '';
+      $('new-desc').value = '';
+      fileInput.value = '';
+      st.className = 'status ok';
+      st.textContent = '追加しました（下の「GitHubに公開する」を押すまでは反映されません）';
+      setTimeout(function () { st.textContent = ''; }, 4000);
+    };
+    reader.onerror = function () {
+      st.className = 'status err';
+      st.textContent = '読み込みに失敗しました';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  function ghConf() {
+    return {
+      token: localStorage.getItem('mamaroku_gh_token'),
+      repo: localStorage.getItem('mamaroku_gh_repo') || 'mamaroku/mamaroku',
+      path: localStorage.getItem('mamaroku_dl_filepath') || 'downloads.json'
+    };
+  }
+
+  $('load-btn').onclick = async function () {
+    var st = $('load-status');
+    var conf = ghConf();
+    if (!conf.token) { st.className = 'status err'; st.textContent = 'トークンを設定してください'; return; }
+    st.className = 'status'; st.textContent = '読み込み中...';
+    try {
+      var mr = await fetch('https://api.github.com/repos/' + conf.repo + '/contents/' + conf.path, {
+        headers: { Authorization: 'token ' + conf.token, Accept: 'application/vnd.github.v3+json' }
+      });
+      if (!mr.ok) {
+        if (mr.status === 404) {
+          items = [];
+          render();
+          st.className = 'status ok';
+          st.textContent = 'まだファイルが存在しません（新規作成になります）';
+          return;
+        }
+        throw new Error('HTTP ' + mr.status);
+      }
+      var meta = await mr.json();
+      var br = await fetch('https://api.github.com/repos/' + conf.repo + '/git/blobs/' + meta.sha, {
+        headers: { Authorization: 'token ' + conf.token, Accept: 'application/vnd.github.v3.raw' }
+      });
+      if (!br.ok) throw new Error('Blob HTTP ' + br.status);
+      var data = await br.json();
+      items = (data.items || []).map(function (it) {
+        return { id: it.id, title: it.title, desc: it.desc, filename: it.filename, mime: it.mime, size: it.size, data: it.data };
+      });
+      render();
+      st.className = 'status ok';
+      st.textContent = '読み込み完了（' + items.length + '件）';
+    } catch (e) {
+      st.className = 'status err';
+      st.textContent = 'エラー: ' + e.message;
+    }
+  };
+
+  $('publish-btn').onclick = async function () {
+    var st = $('publish-status');
+    var conf = ghConf();
+    if (!conf.token) { st.className = 'status err'; st.textContent = 'トークンを設定してください'; return; }
+    st.className = 'status'; st.textContent = '公開中...';
+    try {
+      var jsonStr = JSON.stringify({ updatedAt: new Date().toISOString(), items: items }, null, 2);
+      var url = 'https://api.github.com/repos/' + conf.repo + '/contents/' + conf.path;
+      var headers = { Authorization: 'token ' + conf.token, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' };
+      var sha;
+      try {
+        var r = await fetch(url, { headers: headers });
+        if (r.ok) { var d = await r.json(); sha = d.sha; }
+      } catch (e) {}
+      var content = btoa(unescape(encodeURIComponent(jsonStr)));
+      var body = { message: 'Update downloads.json', content: content };
+      if (sha) body.sha = sha;
+      var res = await fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        throw new Error('HTTP ' + res.status + ': ' + (err.message || '不明なエラー'));
+      }
+      st.className = 'status ok';
+      st.textContent = '公開しました ✓（数分後にサイトへ反映されます）';
+    } catch (e) {
+      st.className = 'status err';
+      st.textContent = 'エラー: ' + e.message;
+    }
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>

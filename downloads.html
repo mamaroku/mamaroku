@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downloads | mamaroku design</title>
+  <meta name="description" content="mamarokuの無料素材・お試しテンプレートのダウンロードページです。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Tsunagi Gothic Black';
+      src: url('fonts/TsunagiGothic.ttf') format('truetype');
+      font-weight: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f5f2ed;
+      --teal-dark: #517585;
+      --teal-mid: #92aab7;
+      --yellow: #e2da2a;
+      --ink: #3a3735;
+    }
+
+    body {
+      font-family: 'Tsunagi Gothic Black', 'Noto Sans JP', sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+    img { max-width: 100%; display: block; }
+
+    .dl-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 24px 100px;
+    }
+
+    .back-link {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 0.78rem;
+      color: var(--teal-dark);
+      margin-bottom: 32px;
+      transition: opacity 0.2s;
+    }
+    .back-link:hover { opacity: 0.6; }
+
+    .dl-header { text-align: center; margin-bottom: 48px; }
+
+    .dl-title {
+      font-size: 2.2rem;
+      letter-spacing: 0.02em;
+    }
+
+    .dl-sub {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #6b6b6b;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    .dl-notice {
+      margin: 0 auto 40px;
+      max-width: 520px;
+      background: #fdf6d8;
+      border: 1px solid #e8dd9a;
+      color: #7a6a1f;
+      font-size: 0.76rem;
+      line-height: 1.7;
+      border-radius: 10px;
+      padding: 14px 18px;
+      text-align: center;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    .dl-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 20px;
+    }
+
+    .dl-card {
+      background: var(--teal-dark);
+      color: var(--cream);
+      border-radius: 16px;
+      padding: 28px 20px 22px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dl-card .thumb {
+      width: 100%;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .dl-card .thumb img {
+      max-width: 130px;
+      max-height: 100px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .dl-card h3 {
+      font-size: 0.92rem;
+      margin-bottom: 6px;
+    }
+
+    .dl-card p {
+      font-size: 0.7rem;
+      line-height: 1.6;
+      opacity: 0.75;
+      margin-bottom: 18px;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    .dl-btn {
+      display: inline-block;
+      background: var(--ink);
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 0.76rem;
+      letter-spacing: 0.05em;
+      padding: 10px 24px;
+      border-radius: 999px;
+      transition: opacity 0.2s;
+    }
+    .dl-btn:hover { opacity: 0.85; }
+
+    footer {
+      text-align: center;
+      padding: 32px 16px 48px;
+      font-size: 0.72rem;
+      color: #8a8a8a;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    @media (max-width: 480px) {
+      .dl-title { font-size: 1.7rem; }
+      .dl-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dl-wrap">
+    <a class="back-link" href="index.html">← mamarokuのサイトへ戻る</a>
+
+    <div class="dl-header">
+      <h1 class="dl-title">Downloads</h1>
+      <p class="dl-sub">無料でお使いいただける素材・お試しテンプレートです</p>
+    </div>
+
+    <p class="dl-notice" id="dl-status" style="display:none;"></p>
+
+    <div class="dl-grid" id="dl-grid"></div>
+  </div>
+
+  <footer>
+    <p>© mamaroku design</p>
+  </footer>
+
+  <script>
+    (function () {
+      var grid = document.getElementById('dl-grid');
+      var statusEl = document.getElementById('dl-status');
+
+      function showStatus(msg) {
+        statusEl.textContent = msg;
+        statusEl.style.display = 'block';
+      }
+
+      function esc(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      fetch('downloads.json', { cache: 'no-store' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('not found');
+          return res.json();
+        })
+        .then(function (data) {
+          var items = data.items || [];
+          if (!items.length) {
+            showStatus('現在ダウンロードできる素材はありません。');
+            return;
+          }
+          items.forEach(function (item) {
+            var card = document.createElement('div');
+            card.className = 'dl-card';
+            var thumbHtml = item.mime && item.mime.indexOf('image/') === 0
+              ? '<img src="' + item.data + '" alt="">'
+              : '<span style="font-size:0.7rem;opacity:0.7;">' + esc((item.filename || '').split('.').pop().toUpperCase()) + '</span>';
+            card.innerHTML =
+              '<div class="thumb">' + thumbHtml + '</div>' +
+              '<h3></h3>' +
+              '<p></p>' +
+              '<a class="dl-btn" download></a>';
+            card.querySelector('h3').textContent = item.title || '';
+            card.querySelector('p').textContent = item.desc || '';
+            var a = card.querySelector('a');
+            a.href = item.data;
+            a.download = item.filename || '';
+            a.textContent = 'ダウンロード';
+            grid.appendChild(card);
+          });
+        })
+        .catch(function () {
+          showStatus('素材の読み込みに準備中です。しばらくしてからもう一度お試しください。');
+        });
+    })();
+  </script>
+
+</body>
+</html>
