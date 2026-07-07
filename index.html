@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mamaroku design</title>
+  <meta name="description" content="GoodNotesで使えるデジタル手帳テンプレート。育児記録もスケジュールも、iPad1台で。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Tsunagi Gothic Black';
+      src: url('fonts/TsunagiGothic.ttf') format('truetype');
+      font-weight: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f5f2ed;
+      --teal-dark: #517585;
+      --teal-mid: #92aab7;
+      --pink: #cc97a4;
+      --yellow: #e2da2a;
+      --ink: #3a3735;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Tsunagi Gothic Black', 'Noto Sans JP', sans-serif;
+      color: #333;
+      background: var(--cream);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* ── Layout: sticky sidebar + scrolling teal column ── */
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--cream);
+      padding: 155px 32px 48px;
+      position: sticky;
+      top: 0;
+      z-index: 0;
+      align-self: flex-start;
+      max-height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-hero img { width: 100%; margin-bottom: 36px; }
+
+    .sidebar-nav ul { list-style: none; }
+
+    .sidebar-nav li a {
+      display: block;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 0.82rem;
+      letter-spacing: 0.03em;
+      padding: 9px 0;
+      transition: opacity 0.2s;
+    }
+
+    .sidebar-nav li a:hover { opacity: 0.6; }
+
+    .sidebar-logo {
+      margin-top: auto;
+      padding-top: 40px;
+    }
+
+    .sidebar-logo img { width: 140px; }
+
+    .main-teal {
+      flex: 0 1 480px;
+      max-width: 480px;
+      min-width: 0;
+      background: var(--teal-dark);
+      color: var(--cream);
+      overflow: visible;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 88px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .section + .section { padding-top: 0; }
+
+    /* ── 散らし装飾（ドット・斜線イラスト） ── */
+    .deco {
+      position: absolute;
+      max-width: none;
+      opacity: 0.85;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    #dekiru { padding-top: 48px; }
+
+    /* ── できること ── */
+    .dekiru-img {
+      width: calc(100% + 110px);
+      margin-left: -74px;
+      max-width: none;
+    }
+
+    /* ── サンプルページ ギャラリー ── */
+    .sample-badge {
+      width: min(220px, 55vw);
+      margin: 0 auto 24px;
+    }
+
+    .sample-gallery-wrap { position: relative; }
+
+    .sample-gallery {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 24px 14px;
+      margin: 0 -24px;
+      scrollbar-width: none;
+      cursor: grab;
+    }
+
+    .sample-gallery::-webkit-scrollbar { display: none; }
+    .sample-gallery.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+
+    .sample-gallery img {
+      flex: 0 0 auto;
+      width: min(210px, 56vw);
+      border-radius: 14px;
+      scroll-snap-align: center;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      top: 0;
+      right: -24px;
+      bottom: 14px;
+      width: 72px;
+      cursor: pointer;
+      border: none;
+      background: linear-gradient(to right, transparent, var(--teal-dark) 75%);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      transition: opacity 0.3s ease;
+    }
+
+    .scroll-hint svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--cream);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: scroll-hint-nudge 1.4s ease-in-out infinite;
+    }
+
+    .scroll-hint.is-hidden { opacity: 0; pointer-events: none; }
+
+    .scroll-hint--left {
+      right: auto;
+      left: -24px;
+      background: linear-gradient(to left, transparent, var(--teal-dark) 75%);
+      justify-content: flex-start;
+      padding-right: 0;
+      padding-left: 10px;
+    }
+
+    .scroll-hint--left svg { animation-name: scroll-hint-nudge-left; }
+
+    @keyframes scroll-hint-nudge-left {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-5px); }
+    }
+
+    @keyframes scroll-hint-nudge {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    /* ── PARK DAY ── */
+    .parkday-img { width: 100%; max-width: 340px; margin: 40px auto 0; }
+
+    /* ── How to Start ── */
+    .howto-badge { width: min(280px, 70vw); margin: 0 auto 40px; }
+
+    .howto-panel {
+      background: transparent;
+      color: var(--cream);
+      border-radius: 20px;
+      padding: 12px 28px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .howto-step {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 28px 0;
+      text-align: left;
+      border-top: 1px dotted rgba(245,242,237,0.3);
+    }
+
+    .howto-step:first-child { border-top: none; }
+
+    .howto-step .num {
+      font-family: 'Tsunagi Gothic Black', 'Noto Serif JP', serif;
+      font-weight: 300;
+      font-size: 1.5rem;
+      color: rgba(245,242,237,0.7);
+      flex-shrink: 0;
+      width: 32px;
+    }
+
+    .howto-step svg {
+      width: 30px;
+      height: 30px;
+      stroke: var(--cream);
+      flex-shrink: 0;
+    }
+
+    .howto-step .text { min-width: 0; }
+
+    .howto-step .title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 6px;
+    }
+
+    .howto-step .desc {
+      font-size: 0.72rem;
+      line-height: 1.6;
+      color: rgba(245,242,237,0.85);
+    }
+
+    /* ── Line up ── */
+    .lineup-badge { width: min(260px, 68vw); margin: 0 auto 32px; }
+
+    .lineup-intro {
+      font-size: 0.82rem;
+      color: rgba(245,242,237,0.85);
+      margin-bottom: 12px;
+    }
+
+    .lineup-price {
+      font-size: 0.75rem;
+      color: rgba(245,242,237,0.6);
+      margin-bottom: 32px;
+      letter-spacing: 0.04em;
+    }
+
+    .sidebar-instagram {
+      margin-top: 16px;
+      width: 140px;
+      text-align: center;
+    }
+
+    .sidebar-instagram a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .sidebar-instagram a:hover { opacity: 0.55; }
+
+    .sidebar-instagram svg {
+      width: 34px;
+      height: 34px;
+      stroke: var(--ink);
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .footer-sns {
+      margin-top: 10px;
+    }
+
+    .footer-sns a {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+    }
+
+    .footer-sns a:hover { opacity: 0.7; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .product-grid a {
+      display: block;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .product-grid a:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.24);
+    }
+
+    .btn-black {
+      display: inline-block;
+      background: var(--ink);
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      padding: 16px 36px;
+      border-radius: 999px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-black:hover { opacity: 0.85; }
+
+    .btn-outline {
+      display: inline-block;
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid rgba(245,242,237,0.6);
+      text-decoration: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      padding: 15px 36px;
+      border-radius: 999px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-outline:hover { background: var(--cream); color: var(--teal-dark); }
+
+    /* ── Photocut Studio ── */
+    .photocut-panel { width: min(360px, 82vw); margin: 0 auto 32px; }
+
+    /* ── プレミアについて ── */
+    .premium-lock {
+      width: 38px;
+      height: 38px;
+      stroke: var(--cream);
+      fill: none;
+      stroke-width: 1.6;
+      margin: 0 auto 24px;
+    }
+
+    .premium-heading {
+      font-size: 0.9rem;
+      color: rgba(245,242,237,0.75);
+      margin-bottom: 6px;
+    }
+
+    .premium-heading strong {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-top: 4px;
+    }
+
+    .premium-divider {
+      width: 100%;
+      max-width: 380px;
+      margin: 20px auto;
+      border-top: 1px dotted rgba(245,242,237,0.4);
+    }
+
+    .premium-text {
+      font-size: 0.85rem;
+      line-height: 2;
+      color: rgba(245,242,237,0.9);
+    }
+
+    .premium-text .highlight {
+      color: var(--pink);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    /* ── Our Story ── */
+    .our-story-img {
+      width: min(580px, 108vw);
+      max-width: none;
+      display: block;
+      margin-left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .our-story-text {
+      font-size: clamp(0.8rem, 2.2vw, 0.88rem);
+      line-height: 2.2;
+      color: rgba(245,242,237,0.9);
+    }
+
+    .our-story-text p { margin-bottom: 1.6em; }
+
+    /* ── おすすめの使い方 / よくある質問 / ご利用にあたって ── */
+    .info-badge { width: min(260px, 66vw); margin: 0 auto 36px; }
+
+    /* icon list (Tips / Notes) */
+    .info-list { list-style: none; text-align: left; }
+
+    .info-list li {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 20px 0;
+      border-top: 1px dotted rgba(245,242,237,0.25);
+    }
+
+    .info-list li:first-child { border-top: none; }
+
+    .info-list .ico {
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(245,242,237,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .info-list .ico svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--cream);
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .info-list .body { min-width: 0; padding-top: 2px; }
+
+    .info-list .body strong {
+      display: block;
+      color: var(--cream);
+      font-weight: 700;
+      font-size: 0.82rem;
+      margin-bottom: 5px;
+    }
+
+    .info-list .body span {
+      font-size: 0.75rem;
+      line-height: 1.8;
+      color: rgba(245,242,237,0.8);
+    }
+
+    /* FAQ accordion */
+    .faq-list { text-align: left; }
+
+    .faq-item {
+      background: rgba(245,242,237,0.06);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 18px 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--cream);
+    }
+
+    .faq-item summary::-webkit-details-marker { display: none; }
+
+    .faq-item summary .q {
+      color: var(--pink);
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .faq-item summary .qtext { flex: 1; line-height: 1.5; }
+
+    .faq-item summary .plus {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      position: relative;
+      margin-top: 3px;
+      transition: transform 0.3s ease;
+    }
+
+    .faq-item summary .plus::before,
+    .faq-item summary .plus::after {
+      content: '';
+      position: absolute;
+      background: rgba(245,242,237,0.7);
+      border-radius: 2px;
+    }
+
+    .faq-item summary .plus::before {
+      top: 7px; left: 0; width: 16px; height: 2px;
+    }
+
+    .faq-item summary .plus::after {
+      left: 7px; top: 0; width: 2px; height: 16px;
+    }
+
+    .faq-item[open] summary .plus { transform: rotate(135deg); }
+
+    .faq-answer {
+      display: flex;
+      gap: 12px;
+      padding: 0 20px 20px;
+      font-size: 0.76rem;
+      line-height: 1.85;
+      color: rgba(245,242,237,0.85);
+    }
+
+    .faq-answer .a {
+      color: var(--yellow);
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 0.9rem;
+    }
+
+    .faq-answer a {
+      color: var(--yellow);
+      text-decoration: underline;
+    }
+
+    footer {
+      background: var(--teal-dark);
+      color: rgba(255, 255, 255, 0.85);
+      text-align: center;
+      padding: 28px 16px;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 880px) {
+      .layout { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 40px 24px;
+      }
+      .sidebar-hero img { max-width: 340px; margin: 0 auto 28px; }
+      .sidebar-nav { text-align: center; }
+      .sidebar-logo { margin-top: 28px; text-align: center; }
+      .sidebar-logo img { margin: 0 auto; }
+      .sidebar-instagram { margin: 16px auto 0; }
+      .main-teal { max-width: none; overflow: hidden; }
+      .section { padding: 64px 20px; }
+      .dekiru-img { width: 100%; margin-left: 0; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="layout">
+    <!-- ── サイドバー（固定） ── -->
+    <aside class="sidebar">
+      <div class="sidebar-hero">
+        <img src="images/redesign/hero.png" width="777" height="909" alt="小さな毎日、大きな思い出。iPadひとつで、おもいで記録。">
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="#dekiru">→ mamarokuで、できること</a></li>
+          <li><a href="#our-story">→ Our Story</a></li>
+          <li><a href="#lineup">→ LINE UP</a></li>
+          <li><a href="#howto">→ How to Start</a></li>
+          <li><a href="#photocut">→ Photocut Studio</a></li>
+          <li><a href="#howto-tips">→ おすすめの使い方</a></li>
+          <li><a href="#faq">→ よくある質問</a></li>
+          <li><a href="#terms">→ ご利用にあたって</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-logo">
+        <img src="images/redesign/wordmark.png" width="501" height="255" alt="Mamaroku design">
+      </div>
+      <div class="sidebar-instagram">
+        <a href="https://www.instagram.com/mamaroku_ipad/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @mamaroku_ipad">
+          <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4"/><line x1="17.6" y1="6.4" x2="17.6" y2="6.4"/></svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ── メイン（スクロールする側） ── -->
+    <main class="main-teal">
+
+      <!-- できること -->
+      <section class="section" id="dekiru">
+        <img class="dekiru-img" src="images/redesign/dekiru.png" width="1811" height="2323" alt="Mamarokuで、できること 育児記録もスケジュールも、iPad1台で。mamarokuでは、GoodNotesなどのノートアプリで使えるデジタル手帳テンプレートを販売しています。">
+      </section>
+
+      <!-- こんなページがつくれます -->
+      <section class="section" id="sample">
+        <img class="deco" src="images/redesign/deco-bird-dots.png" width="507" height="227" alt="" aria-hidden="true" style="width:120px; bottom:20px; right:24px;">
+        <img class="sample-badge" src="images/redesign/sample-badge.png" width="953" height="590" alt="こんなページがつくれます">
+        <div class="sample-gallery-wrap">
+          <div class="sample-gallery">
+            <img src="images/redesign/carousel-1.jpg" width="3960" height="4950" alt="育児記録テンプレートのサンプルページ（てっぺんまでのぼれた）">
+            <img src="images/redesign/carousel-2.jpg" width="2182" height="3086" alt="育児記録テンプレートのサンプルページ（PARK DAY）">
+            <img src="images/redesign/carousel-3.jpg" width="3960" height="4950" alt="育児記録テンプレートのサンプルページ（おふろはいりまーす）">
+            <img src="images/redesign/sample-04.jpg" width="2182" height="3086" alt="育児記録テンプレートのサンプルページ（ようちえんのなつまつり）">
+            <img src="images/redesign/sample-05.jpg" width="2182" height="3086" alt="育児記録テンプレートのサンプルページ（なつまつり ヨーヨー）">
+            <img src="images/redesign/sample-06.jpg" width="2182" height="3086" alt="育児記録テンプレートのサンプルページ（ハテナブロック）">
+          </div>
+          <button type="button" class="scroll-hint scroll-hint--left is-hidden" aria-label="前の作例を見る">
+            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button type="button" class="scroll-hint" aria-label="次の作例を見る">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- Our Story -->
+      <section class="section" id="our-story">
+        <img class="deco" src="images/redesign/deco-swirl.png" width="394" height="117" alt="" aria-hidden="true" style="width:110px; bottom:16px; left:40px;">
+        <img class="our-story-img" src="images/redesign/ourstory.png" width="1192" height="2012" alt="Our Story 大切にしていること。正直に言うと、育児記録って、めんどくさい。やらなくていいなら、やらない。寝かしつけが終わった後のひと息は、本当に貴重だから。それでも続けているのは、私の母が写真の裏に残してくれた、手書きの一言のおかげです。ほんの一行だけ。でもその一行が、あの頃の記憶をふっと立ち上がらせてくれる。母がしてくれたこと、自分の子どもにもしてあげたい。毎日じゃなくても、完璧じゃなくてもいい。ひとこと残しておくだけで、何十年後の子どもに届くものがある。mamarokuは、めんどくさい育児記録を、ちょっとだけ続けやすくするための道具です。">
+      </section>
+
+      <!-- How to Start -->
+      <section class="section" id="howto">
+        <img class="deco" src="images/redesign/deco-hatch-lines.png" width="498" height="63" alt="" aria-hidden="true" style="width:95px; top:6px; right:14px;">
+        <img class="deco" src="images/redesign/deco-scribble-01.png" width="421" height="102" alt="" aria-hidden="true" style="width:150px; bottom:20px; right:-30px; transform:rotate(-3deg);">
+        <img class="howto-badge" src="images/redesign/howto-badge.png" width="911" height="547" alt="How to Start はじめかた">
+        <div class="howto-panel">
+          <div class="howto-step">
+            <div class="num">01</div>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <div class="text">
+              <div class="title">テンプレートを選ぶ</div>
+              <div class="desc">STORESで好きなテンプレートを選びます</div>
+            </div>
+          </div>
+          <div class="howto-step">
+            <div class="num">02</div>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <div class="text">
+              <div class="title">ダウンロードする</div>
+              <div class="desc">購入後、ノートアプリで使えるテンプレートをダウンロード</div>
+            </div>
+          </div>
+          <div class="howto-step">
+            <div class="num">03</div>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div class="text">
+              <div class="title">写真を選ぶ</div>
+              <div class="desc">アプリで写真を選んでテンプレートの隣に貼り付けます</div>
+            </div>
+          </div>
+          <div class="howto-step">
+            <div class="num">04</div>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+            <div class="text">
+              <div class="title">貼り付ける</div>
+              <div class="desc">ノートアプリに貼り付けて文字やスタンプでアレンジ</div>
+            </div>
+          </div>
+          <div class="howto-step">
+            <div class="num">05</div>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <div class="text">
+              <div class="title">完成！</div>
+              <div class="desc">あなただけの特別な1ページのできあがり</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Line up -->
+      <section class="section" id="lineup">
+        <img class="deco" src="images/redesign/deco-arc-cluster.png" width="295" height="275" alt="" aria-hidden="true" style="width:100px; top:-10px; left:-20px;">
+        <img class="deco" src="images/redesign/deco-pill-dots.png" width="284" height="276" alt="" aria-hidden="true" style="width:65px; bottom:12px; right:20px; transform:rotate(6deg);">
+        <img class="lineup-badge" src="images/redesign/lineup-badge.png" width="1006" height="1070" alt="必要なのはこちら → 01 Line up 育児記録テンプレートをみる">
+        <p class="lineup-intro">それぞれ異なる世界観のテンプレートをご用意しています。</p>
+        <p class="lineup-price">¥1,280〜（税込）・無料テンプレートあり</p>
+        <div class="product-grid">
+          <a href="https://mamaroku-design.stores.jp/items/6a2d382213b903dbc9e5b6ad" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-01-merry.png" width="1276" height="1276" alt="くすみカラー メリーゴーランド">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d55b8b0a302ae7f68aab4" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-02-dino.png" width="1276" height="1276" alt="きょうりゅうテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d560051afd117aaa99dfa" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-03-candy.png" width="1276" height="1276" alt="キャンディテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d56692a10e4a4440edf1f" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-04-biscuit.png" width="1276" height="1276" alt="ビスケットテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d56c5b0a302b35d68aac2" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-05-whale.png" width="1276" height="1276" alt="くじらテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d570913b903bbfde5b693" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-06-ramune.png" width="1276" height="1276" alt="ラムネテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d574251afd11bb2a99eed" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-07-circus.png" width="1276" height="1276" alt="サーカステンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d577051afd12b4ca99db8" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-08-acorn.png" width="1276" height="1276" alt="どんぐりテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a2d57b513b903bff8e5b6ae" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-09-honey.png" width="1276" height="1276" alt="はちみつテンプレート">
+          </a>
+          <a href="https://mamaroku-design.stores.jp/items/6a3e2c1859739843bba2055e" target="_blank" rel="noopener noreferrer">
+            <img src="images/redesign/product-10-cover.png" width="1276" height="1276" alt="表紙・カレンダー（はちみつ）">
+          </a>
+        </div>
+        <a class="btn-black" href="https://mamaroku-design.stores.jp/items/6a47656ae37c5b95709475ca" target="_blank" rel="noopener noreferrer">無料のテンプレートからはじめてみる</a>
+      </section>
+
+      <!-- Photocut Studio -->
+      <section class="section" id="photocut">
+        <img class="deco" src="images/redesign/deco-triple-lines.png" width="517" height="141" alt="" aria-hidden="true" style="width:170px; bottom:16px; left:60px; transform:rotate(-3deg);">
+        <img class="photocut-panel" src="images/redesign/photocut-panel.png" width="1185" height="1769" alt="デジタルプランナーのための切り抜きアプリ Photocut Studio">
+        <a class="btn-outline" href="https://mamaroku.com/photocut-studio">Photocut Studioを開く</a>
+      </section>
+
+      <!-- プレミアについて -->
+      <section class="section" id="premium">
+        <img class="deco" src="images/redesign/deco-sparse-dots.png" width="216" height="408" alt="" aria-hidden="true" style="width:90px; bottom:16px; right:24px;">
+        <svg class="premium-lock" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <p class="premium-heading">photocut studio<strong>プレミア（有料）について</strong></p>
+        <div class="premium-divider"></div>
+        <p class="premium-text">
+          photocut studio には<br>
+          有料の形・素材があります。<br><br>
+          有料の素材をご利用いただくには<br>
+          解除コードを入力し<br>
+          解除する必要があります。<br><br>
+          テンプレートをご購入いただいた方には<br>
+          <span class="highlight">解除コードをプレゼント</span>していますので<br>
+          購入後に届くコードを入力するだけで<br>
+          すぐにプレミアムをお使いいただけます。<br><br>
+          解除コードのみの販売については<br>
+          現在準備中となっております。
+        </p>
+      </section>
+
+      <!-- おすすめの使い方 -->
+      <section class="section info-section" id="howto-tips">
+        <img class="deco" src="images/redesign/deco-branch.png" width="301" height="409" alt="" aria-hidden="true" style="width:65px; top:14px; left:14px;">
+        <img class="info-badge" src="images/redesign/tips-badge.png" width="608" height="365" alt="Tips おすすめの使い方">
+        <ul class="info-list">
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+            <span class="body">
+              <strong>ノートアプリはGoodNotesがおすすめ</strong>
+              <span>テンプレートはPDF形式なので、GoodNotes以外のノートアプリ（Notability・Noteshelfなど）でも使えます。まずはGoodNotesでの取り込みを推奨しています。</span>
+            </span>
+          </li>
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
+            <span class="body">
+              <strong>Apple Pencilがあるとより便利</strong>
+              <span>文字を書き込んだり、スタンプを配置したりする作業が指でも可能ですが、Apple Pencilがあるとより快適に記録できます。</span>
+            </span>
+          </li>
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/><path d="M14.47 14.48L20 20"/><path d="M8.12 8.12L12 12"/></svg></span>
+            <span class="body">
+              <strong>写真はPhotocut Studioで切り抜いてから貼る</strong>
+              <span>テンプレートの形にぴったり写真を切り抜けるので、貼り付けるだけできれいなページに仕上がります。</span>
+            </span>
+          </li>
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            <span class="body">
+              <strong>1日3分、こまめに残すのがコツ</strong>
+              <span>完璧に書こうとせず、ひとことメモ程度でOK。続けやすさを優先しています。</span>
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- よくある質問 -->
+      <section class="section info-section" id="faq">
+        <img class="info-badge" src="images/redesign/faq-badge.png" width="608" height="365" alt="FAQ よくある質問">
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary><span class="q">Q.</span><span class="qtext">GoodNotesは必須ですか？</span><span class="plus"></span></summary>
+            <div class="faq-answer"><span class="a">A.</span><span>GoodNotesを推奨していますが、NotabilityやNoteshelfなど、PDFに書き込み・画像貼り付けができるノートアプリであればご利用いただけます。</span></div>
+          </details>
+          <details class="faq-item">
+            <summary><span class="q">Q.</span><span class="qtext">iPadがないと使えませんか？</span><span class="plus"></span></summary>
+            <div class="faq-answer"><span class="a">A.</span><span>基本的にはiPadでの使用を想定しています。iPhone・Macでもノートアプリを使えばご利用いただけますが、iPadが最も快適です。</span></div>
+          </details>
+          <details class="faq-item">
+            <summary><span class="q">Q.</span><span class="qtext">無料テンプレートはありますか？</span><span class="plus"></span></summary>
+            <div class="faq-answer"><span class="a">A.</span><span>はい、無料でダウンロードできるテンプレートをご用意しています。まずは無料版でお試しください。</span></div>
+          </details>
+          <details class="faq-item">
+            <summary><span class="q">Q.</span><span class="qtext">購入後はどこからダウンロードできますか？</span><span class="plus"></span></summary>
+            <div class="faq-answer"><span class="a">A.</span><span>STORESのマイページから購入済み商品をダウンロードいただけます。詳しくは<a href="https://faq.stores.jp/hc/ja/articles/28209243647129--ダウンロード販売-デジタルアイテムのオーダーの流れ" target="_blank" rel="noopener noreferrer">STORES公式のご案内</a>をご確認ください。</span></div>
+          </details>
+          <details class="faq-item">
+            <summary><span class="q">Q.</span><span class="qtext">Photocut Studioとはなんですか？</span><span class="plus"></span></summary>
+            <div class="faq-answer"><span class="a">A.</span><span>写真をテンプレートの形に合わせて切り抜けるwebアプリです。このサイトから無料でお使いいただけます。なお、有料の形・素材をご利用いただくには解除コードの入力が必要ですが、テンプレートをご購入いただいた方には解除コードをプレゼントしています。購入後に届くコードを入力するだけで、すぐにプレミアムをお使いいただけます（解除コードのみの販売は現在準備中です）。</span></div>
+          </details>
+        </div>
+      </section>
+
+      <!-- ご利用にあたって -->
+      <section class="section info-section" id="terms">
+        <img class="deco" src="images/redesign/deco-flowers.png" width="297" height="417" alt="" aria-hidden="true" style="width:75px; top:8px; right:14px;">
+        <img class="info-badge" src="images/redesign/notes-badge.png" width="608" height="365" alt="Notes ご利用にあたって">
+        <ul class="info-list">
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg></span>
+            <span class="body">
+              <strong>データ商品について</strong>
+              <span>当店で販売しているテンプレートはすべてデジタルデータです。ご購入後、ダウンロードしてお使いいただきます。</span>
+            </span>
+          </li>
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></span>
+            <span class="body">
+              <strong>返品・返金について</strong>
+              <span>データの性質上、ダウンロード後の返品・返金はお受けできません。ご購入前に商品内容をよくご確認ください。</span>
+            </span>
+          </li>
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span class="body">
+              <strong>著作権について</strong>
+              <span>テンプレートの著作権はmamarokuに帰属します。個人利用の範囲でお楽しみください。データの再配布・転売・商用利用はご遠慮ください。</span>
+            </span>
+          </li>
+          <li>
+            <span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="10" y1="18" x2="14" y2="18"/></svg></span>
+            <span class="body">
+              <strong>動作環境について</strong>
+              <span>GoodNotesなど、PDFに手書き・画像貼り付けができるノートアプリでご利用いただけます。アプリの仕様により、表示が一部異なる場合があります。</span>
+            </span>
+          </li>
+        </ul>
+        <img class="deco" src="images/redesign/deco-scribble-02.png" width="421" height="102" alt="" aria-hidden="true" style="width:140px; bottom:20px; left:30px;">
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    <p>© mamaroku design</p>
+    <p class="footer-sns"><a href="https://www.instagram.com/mamaroku_ipad/" target="_blank" rel="noopener noreferrer">Instagram @mamaroku_ipad</a></p>
+  </footer>
+
+  <script>
+    (function () {
+      var gallery = document.querySelector('.sample-gallery');
+      if (!gallery) return;
+
+      gallery.addEventListener('wheel', function (e) {
+        var delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 18;
+        else if (e.deltaMode === 2) delta *= gallery.clientWidth;
+        if (Math.abs(delta) > Math.abs(e.deltaX)) {
+          gallery.scrollLeft += delta;
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      var isDown = false, startX, startScroll;
+      gallery.addEventListener('mousedown', function (e) {
+        isDown = true;
+        gallery.classList.add('dragging');
+        startX = e.pageX;
+        startScroll = gallery.scrollLeft;
+      });
+      window.addEventListener('mouseup', function () {
+        isDown = false;
+        gallery.classList.remove('dragging');
+      });
+      gallery.addEventListener('mouseleave', function () {
+        isDown = false;
+        gallery.classList.remove('dragging');
+      });
+      gallery.addEventListener('mousemove', function (e) {
+        if (!isDown) return;
+        e.preventDefault();
+        gallery.scrollLeft = startScroll - (e.pageX - startX);
+      });
+
+      var hintNext = document.querySelector('.scroll-hint:not(.scroll-hint--left)');
+      var hintPrev = document.querySelector('.scroll-hint--left');
+      if (hintNext && hintPrev) {
+        var itemAmount = function () {
+          var item = gallery.querySelector('img');
+          return item ? item.getBoundingClientRect().width + 16 : gallery.clientWidth * 0.8;
+        };
+        var updateHints = function () {
+          var atEnd = gallery.scrollLeft + gallery.clientWidth >= gallery.scrollWidth - 4;
+          var atStart = gallery.scrollLeft <= 4;
+          hintNext.classList.toggle('is-hidden', atEnd);
+          hintPrev.classList.toggle('is-hidden', atStart);
+        };
+        gallery.addEventListener('scroll', updateHints);
+        window.addEventListener('resize', updateHints);
+        updateHints();
+
+        hintNext.addEventListener('click', function () {
+          gallery.scrollBy({ left: itemAmount(), behavior: 'smooth' });
+        });
+        hintPrev.addEventListener('click', function () {
+          gallery.scrollBy({ left: -itemAmount(), behavior: 'smooth' });
+        });
+      }
+    })();
+  </script>
+
+
+</body>
+</html>
