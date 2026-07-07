@@ -135,6 +135,21 @@
   </details>
 
   <section>
+    <h2>🔒 アクセスコード</h2>
+    <p style="font-size:0.76rem;color:#777;line-height:1.7;margin:0 0 6px;">
+      このコードを知っている人だけがダウンロードページを開けます。<br>
+      お客さまにお伝えするコードです（8文字以上を推奨。例：<code>mama2026spring</code>）。<br>
+      コードを変えたいときは、ここを書き換えて「この内容をGitHubに公開する」を押すだけです。
+    </p>
+    <label>アクセスコード</label>
+    <input type="text" id="access-code" placeholder="例：mama2026spring" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="footer-actions">
+      <button class="btn small" id="code-save">コードを保存</button>
+      <span class="status" id="code-save-status"></span>
+    </div>
+  </section>
+
+  <section>
     <h2>素材を追加</h2>
     <label>タイトル</label>
     <input type="text" id="new-title" placeholder="例：無料お試し用テンプレート">
@@ -177,12 +192,53 @@
 
   function $(id) { return document.getElementById(id); }
 
+  // ---- 暗号化ヘルパー（AES-GCM + PBKDF2）----
+  function b64enc(buf) {
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function b64dec(str) {
+    var bin = atob(str), b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  }
+  async function deriveKey(code, salt) {
+    var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' },
+      base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function encryptPayload(code, obj) {
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var key = await deriveKey(code, salt);
+    var ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key,
+      new TextEncoder().encode(JSON.stringify(obj)));
+    return { v: 1, enc: 'aes-gcm', salt: b64enc(salt), iv: b64enc(iv), ct: b64enc(ct), updatedAt: new Date().toISOString() };
+  }
+  async function decryptPayload(code, env) {
+    var key = await deriveKey(code, b64dec(env.salt));
+    var pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64dec(env.iv) }, key, b64dec(env.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  function getCode() { return ($('access-code').value || '').trim(); }
+
   function loadGhSettings() {
     $('gh-token').value = localStorage.getItem('mamaroku_gh_token') || '';
     $('gh-repo').value = localStorage.getItem('mamaroku_gh_repo') || 'mamaroku/mamaroku';
     $('gh-filepath').value = localStorage.getItem('mamaroku_dl_filepath') || 'downloads.json';
+    $('access-code').value = localStorage.getItem('mamaroku_dl_access_code') || '';
   }
   loadGhSettings();
+
+  $('code-save').onclick = function () {
+    localStorage.setItem('mamaroku_dl_access_code', getCode());
+    var st = $('code-save-status');
+    st.className = 'status ok';
+    st.textContent = getCode() ? 'コードを保存しました' : 'コードを空にしました（保護なし）';
+    setTimeout(function () { st.textContent = ''; }, 2500);
+  };
 
   $('gh-save').onclick = function () {
     localStorage.setItem('mamaroku_gh_token', $('gh-token').value.trim());
@@ -301,6 +357,15 @@
       });
       if (!br.ok) throw new Error('Blob HTTP ' + br.status);
       var data = await br.json();
+      if (data && (data.enc || data.ct)) {
+        var code = getCode();
+        if (!code) throw new Error('暗号化されています。先に上の「アクセスコード」を入力してください');
+        try {
+          data = await decryptPayload(code, data);
+        } catch (e2) {
+          throw new Error('アクセスコードが違うため復号できませんでした');
+        }
+      }
       items = (data.items || []).map(function (it) {
         return { id: it.id, title: it.title, desc: it.desc, filename: it.filename, mime: it.mime, size: it.size, data: it.data };
       });
@@ -317,9 +382,27 @@
     var st = $('publish-status');
     var conf = ghConf();
     if (!conf.token) { st.className = 'status err'; st.textContent = 'トークンを設定してください'; return; }
-    st.className = 'status'; st.textContent = '公開中...';
+    var code = getCode();
+    if (code && !(window.crypto && crypto.subtle)) {
+      st.className = 'status err';
+      st.textContent = '暗号化機能が使えません。この管理画面を Safari か Chrome の最新版で開いてください';
+      return;
+    }
+    var fileObj;
+    if (code) {
+      st.className = 'status'; st.textContent = '暗号化して公開中...';
+      fileObj = await encryptPayload(code, { items: items });
+    } else {
+      if (!confirm('アクセスコードが未設定です。\nURLを知っていれば誰でも見られる状態で公開します。よろしいですか？')) {
+        st.textContent = ''; return;
+      }
+      st.className = 'status'; st.textContent = '公開中...';
+      fileObj = { updatedAt: new Date().toISOString(), items: items };
+    }
+    // 次回の管理作業のためにコードも記憶しておく
+    localStorage.setItem('mamaroku_dl_access_code', code);
     try {
-      var jsonStr = JSON.stringify({ updatedAt: new Date().toISOString(), items: items }, null, 2);
+      var jsonStr = JSON.stringify(fileObj, null, 2);
       var url = 'https://api.github.com/repos/' + conf.repo + '/contents/' + conf.path;
       var headers = { Authorization: 'token ' + conf.token, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' };
       var sha;

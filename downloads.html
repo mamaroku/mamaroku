@@ -151,9 +151,80 @@
       .dl-title { font-size: 1.7rem; }
       .dl-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     }
+
+    /* アクセスコード入力画面 */
+    .gate {
+      position: fixed;
+      inset: 0;
+      background: var(--cream);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .gate-box { width: 100%; max-width: 360px; text-align: center; }
+    .gate-logo {
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      color: var(--teal-dark);
+      margin-bottom: 28px;
+    }
+    .gate-title { font-size: 1.3rem; margin-bottom: 10px; }
+    .gate-sub {
+      font-size: 0.78rem;
+      color: #777;
+      font-family: 'Noto Sans JP', sans-serif;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .gate-input {
+      width: 100%;
+      padding: 13px 14px;
+      font-size: 1rem;
+      border: 1px solid var(--teal-mid);
+      border-radius: 10px;
+      background: #fff;
+      text-align: center;
+      letter-spacing: 0.08em;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .gate-input:focus { outline: none; border-color: var(--teal-dark); }
+    .gate-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      border: none;
+      border-radius: 999px;
+      background: var(--teal-dark);
+      color: var(--cream);
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+    .gate-btn:hover { opacity: 0.88; }
+    .gate-err {
+      font-size: 0.76rem;
+      color: #b25a52;
+      margin-top: 14px;
+      min-height: 1.2em;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
   </style>
 </head>
 <body>
+
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <div class="gate-logo">mamaroku design</div>
+      <h2 class="gate-title">アクセスコードを入力</h2>
+      <p class="gate-sub">ご購入時にお伝えしたコードを入力してください。</p>
+      <input type="text" id="gate-input" class="gate-input" placeholder="コードを入力" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button class="gate-btn" id="gate-btn">確認する</button>
+      <p class="gate-err" id="gate-err"></p>
+    </div>
+  </div>
 
   <div class="dl-wrap">
     <a class="back-link" href="index.html">← mamarokuのサイトへ戻る</a>
@@ -176,6 +247,31 @@
     (function () {
       var grid = document.getElementById('dl-grid');
       var statusEl = document.getElementById('dl-status');
+      var wrap = document.querySelector('.dl-wrap');
+      var gate = document.getElementById('gate');
+      var gateInput = document.getElementById('gate-input');
+      var gateBtn = document.getElementById('gate-btn');
+      var gateErr = document.getElementById('gate-err');
+      var SS_KEY = 'mamaroku_dl_code';
+      var envelope = null;
+
+      // ---- 暗号化ヘルパー（AES-GCM + PBKDF2）----
+      function b64dec(str) {
+        var bin = atob(str), b = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+        return b;
+      }
+      async function deriveKey(code, salt) {
+        var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      }
+      async function decryptPayload(code, env) {
+        var key = await deriveKey(code, b64dec(env.salt));
+        var pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64dec(env.iv) }, key, b64dec(env.ct));
+        return JSON.parse(new TextDecoder().decode(pt));
+      }
 
       function showStatus(msg) {
         statusEl.textContent = msg;
@@ -186,39 +282,95 @@
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
 
+      function render(data) {
+        grid.innerHTML = '';
+        var items = data.items || [];
+        if (!items.length) {
+          showStatus('現在ダウンロードできる素材はありません。');
+          return;
+        }
+        items.forEach(function (item) {
+          var card = document.createElement('div');
+          card.className = 'dl-card';
+          var thumbHtml = item.mime && item.mime.indexOf('image/') === 0
+            ? '<img src="' + item.data + '" alt="">'
+            : '<span style="font-size:0.7rem;opacity:0.7;">' + esc((item.filename || '').split('.').pop().toUpperCase()) + '</span>';
+          card.innerHTML =
+            '<div class="thumb">' + thumbHtml + '</div>' +
+            '<h3></h3>' +
+            '<p></p>' +
+            '<a class="dl-btn" download></a>';
+          card.querySelector('h3').textContent = item.title || '';
+          card.querySelector('p').textContent = item.desc || '';
+          var a = card.querySelector('a');
+          a.href = item.data;
+          a.download = item.filename || '';
+          a.textContent = 'ダウンロード';
+          grid.appendChild(card);
+        });
+      }
+
+      function unlock(data) {
+        gate.style.display = 'none';
+        wrap.style.display = '';
+        render(data);
+      }
+
+      function showGate() {
+        wrap.style.display = 'none';
+        gate.style.display = 'flex';
+        setTimeout(function () { gateInput.focus(); }, 50);
+      }
+
+      async function tryCode(code, fromSession) {
+        try {
+          var data = await decryptPayload(code, envelope);
+          sessionStorage.setItem(SS_KEY, code);
+          unlock(data);
+          return true;
+        } catch (e) {
+          sessionStorage.removeItem(SS_KEY);
+          if (!fromSession) gateErr.textContent = 'コードが正しくありません。もう一度ご確認ください。';
+          return false;
+        }
+      }
+
+      gateBtn.onclick = function () {
+        var code = gateInput.value.trim();
+        if (!code) { gateErr.textContent = 'コードを入力してください。'; return; }
+        gateErr.textContent = '確認中...';
+        tryCode(code, false);
+      };
+      gateInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); gateBtn.onclick(); }
+      });
+
       fetch('downloads.json', { cache: 'no-store' })
         .then(function (res) {
           if (!res.ok) throw new Error('not found');
           return res.json();
         })
         .then(function (data) {
-          var items = data.items || [];
-          if (!items.length) {
-            showStatus('現在ダウンロードできる素材はありません。');
-            return;
+          if (data && (data.enc || data.ct)) {
+            // 暗号化されている → コード入力が必要
+            if (!(window.crypto && crypto.subtle)) {
+              showStatus('このブラウザでは表示できません。Safari か Chrome の最新版でお試しください。');
+              return;
+            }
+            envelope = data;
+            var saved = sessionStorage.getItem(SS_KEY);
+            if (saved) {
+              tryCode(saved, true).then(function (ok) { if (!ok) showGate(); });
+            } else {
+              showGate();
+            }
+          } else {
+            // 未暗号化（従来形式）→ そのまま表示
+            render(data);
           }
-          items.forEach(function (item) {
-            var card = document.createElement('div');
-            card.className = 'dl-card';
-            var thumbHtml = item.mime && item.mime.indexOf('image/') === 0
-              ? '<img src="' + item.data + '" alt="">'
-              : '<span style="font-size:0.7rem;opacity:0.7;">' + esc((item.filename || '').split('.').pop().toUpperCase()) + '</span>';
-            card.innerHTML =
-              '<div class="thumb">' + thumbHtml + '</div>' +
-              '<h3></h3>' +
-              '<p></p>' +
-              '<a class="dl-btn" download></a>';
-            card.querySelector('h3').textContent = item.title || '';
-            card.querySelector('p').textContent = item.desc || '';
-            var a = card.querySelector('a');
-            a.href = item.data;
-            a.download = item.filename || '';
-            a.textContent = 'ダウンロード';
-            grid.appendChild(card);
-          });
         })
         .catch(function () {
-          showStatus('素材の読み込みに準備中です。しばらくしてからもう一度お試しください。');
+          showStatus('素材の読み込みを準備中です。しばらくしてからもう一度お試しください。');
         });
     })();
   </script>
