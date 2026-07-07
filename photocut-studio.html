@@ -196,6 +196,8 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   font-family: 'Zen Kaku Gothic New', sans-serif;
 }
 .mat-back:hover { background: var(--blush); }
+.mat-size-row { display:flex; align-items:center; gap:8px; padding:6px 16px; border-bottom:1px solid rgba(180,130,120,0.15); flex-shrink:0; }
+.mat-size-label { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
 .mat-filter {
   display: flex;
   gap: 6px;
@@ -374,6 +376,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <h2>素材を選ぶ</h2>
     <button class="mat-back" onclick="hideMaterialScreen()">← もどる</button>
   </div>
+  <div class="mat-size-row">
+    <span class="mat-size-label">SIZE</span>
+    <div class="sz-btns" id="mat-size-btns"></div>
+  </div>
   <div class="mat-grid" id="mat-grid"></div>
 
 </div>
@@ -514,14 +520,14 @@ const SHAPES=[{"label":"","cat":"basic_1","inner":"<path fill=\"#231815\" d=\"M9
 
 // ── State ──
 const CATS=['basic_1','basic_3','basic_4','rafu','star','biribiri','template','template_2','unenu_2','basic_2','cloud','flower'];
-let activeCat=CATS[0], selIdx=0, selSize=400;
+let activeCat=CATS[0], selIdx=0, selSize=700;
 let borderStyle='none', borderColor='#ffffff', borderWidth=6;
 let userImg=null, photoOx=0, photoOy=0, fillMode='photo';
 let shapeRotation=0;
 
 
 // ── Premium ──
-const PREMIUM_SHAPE_CATS=['basic_2','unenu_2','cloud','flower','template','template_2'];
+const PREMIUM_SHAPE_CATS=['basic_2','unenu_2','cloud','flower','template','template_2','biribiri'];
 let PREMIUM_MATERIAL_CATS=['PAPER','label','コラージュ']; // materials.jsonのlockedCatsで上書きされる
 const PREMIUM_HASH='561fd0e4f3e56e3dc4b99c8eb682d646a0eec6bbb344523afc50379c78989f42';
 
@@ -640,11 +646,13 @@ function initUI(){
 
   // Sizes
   [{l:'S',p:700},{l:'M',p:1000},{l:'L',p:1500}].forEach(s=>{
-    const b=document.createElement('div');
-    b.className='szbtn'+(s.p===selSize?' selected':'');
-    b.textContent=s.l;
-    b.onclick=()=>{ document.querySelectorAll('.szbtn').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); selSize=s.p; render(); };
-    document.getElementById('size-row').appendChild(b);
+    ['size-row','mat-size-btns'].forEach(containerId=>{
+      const b=document.createElement('div');
+      b.className='szbtn'+(s.p===selSize?' selected':'');
+      b.textContent=s.l;
+      b.onclick=()=>{ document.querySelectorAll('.szbtn').forEach(x=>x.classList.remove('selected')); document.querySelectorAll('.szbtn').forEach(x=>{if(x.textContent===s.l)x.classList.add('selected');}); selSize=s.p; render(); };
+      document.getElementById(containerId).appendChild(b);
+    });
   });
 }
 
