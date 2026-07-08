@@ -115,6 +115,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #admin-screen.open{display:flex;}
 .adm-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--sur);border-bottom:1px solid var(--bdl);flex-shrink:0;}
 .adm-header h1{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:.3em;text-transform:uppercase;flex:1;}
+.adm-size-badge{font-size:10.5px;padding:4px 10px;border-radius:100px;border:1px solid;white-space:nowrap;}
+.adm-size-badge.ok{color:#5a9a5a;border-color:#5a9a5a44;background:#5a9a5a11;}
+.adm-size-badge.warn{color:#b8863a;border-color:#b8863a55;background:#b8863a14;}
+.adm-size-badge.danger{color:#a06060;border-color:#a0606055;background:#a0606014;}
 .adm-back{padding:6px 14px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--bd);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .2s;}
 .adm-back:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
 .adm-tabs{display:flex;background:var(--sur);border-bottom:1px solid var(--bdl);flex-shrink:0;}
@@ -265,6 +269,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 <div id="admin-screen">
   <div class="adm-header">
     <h1>素材管理</h1>
+    <span class="adm-size-badge ok" id="adm-size-badge" title="materials.json の推定サイズ">計測中…</span>
     <button class="adm-back" onclick="hideAdmin()">← 戻る</button>
   </div>
   <div class="adm-tabs">
@@ -1160,14 +1165,26 @@ async function admUpload(){
 async function admRenderGallery(){
   admLoadCats();const cont=document.getElementById('adm-gallery-cats');
   cont.classList.toggle('adm-select-mode',admSelMode);
-  if(!admCats.length){cont.innerHTML='<div class="adm-empty">カテゴリがありません</div>';return;}
   const allItems=await idbGetAll().catch(()=>[]);
+  admUpdateSizeBadge(allItems);
+  if(!admCats.length){cont.innerHTML='<div class="adm-empty">カテゴリがありません</div>';return;}
   const matsByCat={};admCats.forEach(c=>matsByCat[c]=[]);
   allItems.forEach(item=>{if(matsByCat[item.category])matsByCat[item.category].push(item);});
   cont.innerHTML=admCats.map(cat=>{
     const items=(matsByCat[cat]||[]).slice().sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)),catSel=admSelItems[cat]||new Set(),allSel=items.length>0&&items.every(m=>catSel.has(m.id));
     return`<div class="adm-gallery-cat" data-cat="${admEsc(cat)}"><div class="adm-gallery-cat-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="adm-gallery-cat-title">${admEsc(cat)} (${items.length})</div><button class="adm-cat-lock${admLockedCats.includes(cat)?' locked':''}" onclick="admToggleCatLock('${admEsc(cat)}')" title="${admLockedCats.includes(cat)?'鍵あり（タップで解除）':'鍵なし（タップでロック）'}">${admLockedCats.includes(cat)?'🔒':'🔓'}</button></div><div style="display:flex;gap:6px;align-items:center;"><button class="adm-sort-name-btn adm-cat-del" data-cat="${admEsc(cat)}">名前順</button><button class="adm-sel-all">${allSel?'全解除':'全選択'}</button></div></div>${items.length?`<div class="adm-gallery-grid">${items.map(item=>`<div class="adm-gallery-item${catSel.has(item.id)?' selected':''}${item.locked?' item-locked':''}" data-cat="${admEsc(cat)}" data-id="${item.id}" draggable="true"><img src="${item.data}" alt="${admEsc(item.name)}"><button class="adm-item-lock" data-cat="${admEsc(cat)}" data-id="${item.id}" title="${item.locked?'ロック中（タップで解除）':'ロックなし（タップでロック）'}">${item.locked?'🔒':'🔓'}</button><button class="adm-item-del" data-cat="${admEsc(cat)}" data-id="${item.id}">×</button></div>`).join('')}</div>`:'<div class="adm-empty">素材がありません</div>'}</div>`;
   }).join('');
+}
+function admUpdateSizeBadge(items){
+  const badge=document.getElementById('adm-size-badge');if(!badge)return;
+  const bytes=items.reduce((sum,item)=>sum+(item.data?item.data.length:0),0);
+  const mb=bytes/1024/1024;
+  let cls='ok',label=`素材データ 約${mb.toFixed(1)}MB`;
+  if(mb>=60){cls='danger';label=`⚠ 約${mb.toFixed(1)}MB — GitHubへのアップロードに失敗するおそれがあります`;}
+  else if(mb>=30){cls='warn';label=`約${mb.toFixed(1)}MB — 増えすぎに注意`;}
+  badge.className='adm-size-badge '+cls;
+  badge.textContent=label;
+  badge.title=`materials.json の推定サイズ（画像データの合計）。GitHubのアップロード上限は100MBです。現在: ${mb.toFixed(1)}MB`;
 }
 // ── Drag & Drop reorder ──
 let _dragId=null,_dragCat=null;
@@ -1245,6 +1262,8 @@ document.getElementById('adm-export-public').onclick=async()=>{
   allItems.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)).forEach(item=>{if(mats[item.category])mats[item.category].push(item);});
   cs.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity));
   const jsonStr=JSON.stringify({updatedAt:new Date().toISOString(),categories:admCats,catTargets:admCatTargets,lockedCats:admLockedCats,materials:mats,customShapes:cs},null,2);
+  const jsonMb=jsonStr.length/1024/1024;
+  if(jsonMb>=60&&!confirm(`materials.jsonが約${jsonMb.toFixed(1)}MBあります。GitHubへのアップロード上限(100MB)に近づいており、失敗する可能性があります。\nこのまま続けますか？`))return;
   const blob=new Blob([jsonStr],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='materials.json';a.click();
   const token=localStorage.getItem('mamaroku_gh_token');
