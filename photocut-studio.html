@@ -383,6 +383,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <span class="mat-size-label">SIZE</span>
     <div class="sz-btns" id="mat-size-btns"></div>
   </div>
+  <div class="mat-filter" id="mat-filter"></div>
   <div class="mat-grid" id="mat-grid"></div>
 
 </div>
@@ -1086,6 +1087,7 @@ function hideMaterialScreen() {
   setTimeout(()=>{ resizePreview(); if(userImg) render(); }, 100);
 }
 function selectMaterial(src) {
+  addRecentMaterial(src);
   const pngBlobPromise = fetch(src)
     .then(r => r.blob())
     .then(blob => {
@@ -1152,6 +1154,29 @@ function useMaterialForTrimming(src) {
   };
   img.src = src;
 }
+// ── 最近使った素材（端末のブラウザ内に記憶。base64全体ではなく短いキーで保存） ──
+const RECENT_MAT_KEY = 'mamaroku_recent_materials';
+function matKey(src) {
+  let h = 5381;
+  for (let i = 0; i < src.length; i += 97) { h = ((h * 33) ^ src.charCodeAt(i)) >>> 0; }
+  return h.toString(36) + '_' + src.length;
+}
+function getRecentKeys() {
+  try {
+    const a = JSON.parse(localStorage.getItem(RECENT_MAT_KEY));
+    return Array.isArray(a) ? a : [];
+  } catch (e) { return []; }
+}
+function addRecentMaterial(src) {
+  const k = matKey(src);
+  const keys = getRecentKeys().filter(x => x !== k);
+  keys.unshift(k);
+  try { localStorage.setItem(RECENT_MAT_KEY, JSON.stringify(keys.slice(0, 8))); } catch (e) {}
+}
+
+// 素材ギャラリーのカテゴリ絞り込み状態
+let matFilterCat = 'all';
+
 // 素材が暗い（黒っぽい）場合はカード背景を白にする
 function applyCardBgByBrightness(imgEl, card) {
   const check = () => {
@@ -1177,7 +1202,9 @@ function applyCardBgByBrightness(imgEl, card) {
 
 function buildMaterialScreen() {
   const container = document.getElementById('mat-grid');
+  const filterBar = document.getElementById('mat-filter');
   container.innerHTML = '';
+  filterBar.innerHTML = '';
 
   if (MATERIALS.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:48px 16px;color:var(--faint);font-size:13px;line-height:1.8;">素材がまだアップロードされていません</div>';
@@ -1187,46 +1214,72 @@ function buildMaterialScreen() {
   const categories = [...new Set(MATERIALS.map(m => m.category))];
   const lockSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="var(--text)"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>';
 
-  categories.forEach(cat => {
-    const items = MATERIALS.filter(m => m.category === cat);
-    if (!items.length) return;
-    const isCatLocked = !premiumUnlocked && (PREMIUM_MATERIAL_CATS === 'all' || (Array.isArray(PREMIUM_MATERIAL_CATS) && PREMIUM_MATERIAL_CATS.includes(cat)));
+  const isCatLockedFn = (cat) => !premiumUnlocked && (PREMIUM_MATERIAL_CATS === 'all' || (Array.isArray(PREMIUM_MATERIAL_CATS) && PREMIUM_MATERIAL_CATS.includes(cat)));
 
+  const makeCard = (m) => {
+    const card = document.createElement('div');
+    card.className = 'mat-card';
+    card.style.position = 'relative';
+    const imgEl = document.createElement('img');
+    imgEl.src = m.src;
+    imgEl.alt = m.label;
+    card.appendChild(imgEl);
+    applyCardBgByBrightness(imgEl, card);
+    const isItemLocked = isCatLockedFn(m.category) || (!premiumUnlocked && m.locked);
+    if (isItemLocked) {
+      const lk = document.createElement('div');
+      lk.innerHTML = lockSvg;
+      lk.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:23px;pointer-events:none;';
+      card.appendChild(lk);
+      card.addEventListener('click', () => showUnlockModal());
+    } else {
+      card.addEventListener('click', () => selectMaterial(m.src));
+    }
+    return card;
+  };
+
+  const makeSection = (titleText, mats) => {
     const sec = document.createElement('div');
     sec.className = 'mat-cat-sec';
-
     const title = document.createElement('div');
     title.className = 'mat-cat-title';
-    title.textContent = cat;
+    title.textContent = titleText;
     sec.appendChild(title);
-
     const grid = document.createElement('div');
     grid.className = 'mat-cat-grid';
-
-    items.forEach(m => {
-      const card = document.createElement('div');
-      card.className = 'mat-card';
-      card.style.position = 'relative';
-      const imgEl = document.createElement('img');
-      imgEl.src = m.src;
-      imgEl.alt = m.label;
-      card.appendChild(imgEl);
-      applyCardBgByBrightness(imgEl, card);
-      const isItemLocked = isCatLocked || (!premiumUnlocked && m.locked);
-      if (isItemLocked) {
-        const lk = document.createElement('div');
-        lk.innerHTML = lockSvg;
-        lk.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:23px;pointer-events:none;';
-        card.appendChild(lk);
-        card.addEventListener('click', () => showUnlockModal());
-      } else {
-        card.addEventListener('click', () => selectMaterial(m.src));
-      }
-      grid.appendChild(card);
-    });
-
+    mats.forEach(m => grid.appendChild(makeCard(m)));
     sec.appendChild(grid);
-    container.appendChild(sec);
+    return sec;
+  };
+
+  // ── カテゴリタブ ──
+  if (matFilterCat !== 'all' && !categories.includes(matFilterCat)) matFilterCat = 'all';
+  [{ id: 'all', label: 'すべて' }].concat(categories.map(c => ({ id: c, label: c }))).forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'mat-filter-btn' + (matFilterCat === t.id ? ' active' : '');
+    if (t.id !== 'all' && isCatLockedFn(t.id)) btn.classList.add('premium-locked');
+    btn.textContent = t.label;
+    btn.addEventListener('click', () => {
+      matFilterCat = t.id;
+      buildMaterialScreen();
+      document.getElementById('mat-grid').scrollTop = 0;
+    });
+    filterBar.appendChild(btn);
+  });
+
+  // ── 最近使った（「すべて」タブのときだけ先頭に表示） ──
+  if (matFilterCat === 'all') {
+    const recent = getRecentKeys()
+      .map(k => MATERIALS.find(m => (m._key || (m._key = matKey(m.src))) === k))
+      .filter(Boolean);
+    if (recent.length) container.appendChild(makeSection('最近使った', recent));
+  }
+
+  categories.forEach(cat => {
+    if (matFilterCat !== 'all' && cat !== matFilterCat) return;
+    const items = MATERIALS.filter(m => m.category === cat);
+    if (!items.length) return;
+    container.appendChild(makeSection(cat, items));
   });
 }
 
