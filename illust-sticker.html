@@ -237,17 +237,6 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       </div>
     </div>
     <div class="panel-sec" id="sec-photo">
-      <label id="upload-label" for="file-in">
-        <div class="uplus">＋</div>
-        <div class="utxt">写真をアップロード</div>
-        <div class="usub">複数選択・ドラッグ＆ドロップ可</div>
-      </label>
-      <input type="file" id="file-in" accept="image/*" multiple style="display:none">
-      <div id="myphoto-section" style="display:none;">
-        <div class="photo-section-title">マイ写真</div>
-        <div class="photo-grid" id="myphoto-grid"></div>
-      </div>
-      <div class="photo-section-title">素材</div>
       <div class="photo-grid" id="mat-grid"><div style="font-size:11px;color:var(--faint);padding:4px 0;">読み込み中…</div></div>
     </div>
     <div class="panel-sec" id="sec-phrase">
@@ -596,35 +585,9 @@ updateSwatch();
 document.getElementById('color-native').oninput=function(){fillMode='color';setColor(this.value);};
 
 // ── Photo ──
-function loadImage(src){
-  const img=new Image();img.onload=()=>{userImg=img;fillMode='photo';photoOx=0;photoOy=0;document.getElementById('zoom').value=100;document.getElementById('zoom-val').textContent='100%';document.getElementById('zoom-row').style.display='flex';updatePreview();};img.src=src;
-}
 function loadMaterial(src){
   const img=new Image();img.onload=()=>{userImg=img;fillMode='material';document.getElementById('zoom-row').style.display='none';updatePreview();};img.src=src;
 }
-function addMyPhoto(src,activate){
-  const sec=document.getElementById('myphoto-section'),grid=document.getElementById('myphoto-grid');
-  sec.style.display='block';
-  const card=document.createElement('div');card.className='mat-card';
-  const img=document.createElement('img');img.src=src;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block;';
-  card.appendChild(img);
-  card.onclick=()=>{document.querySelectorAll('#myphoto-grid .mat-card,#mat-grid .mat-card').forEach(x=>x.classList.remove('sel'));card.classList.add('sel');loadImage(src);};
-  grid.appendChild(card);
-  if(activate){document.querySelectorAll('#myphoto-grid .mat-card,#mat-grid .mat-card').forEach(x=>x.classList.remove('sel'));card.classList.add('sel');loadImage(src);}
-}
-function handleDropFiles(files){
-  const imgs=Array.from(files||[]).filter(f=>f.type.startsWith('image/'));
-  imgs.forEach((f,i)=>{const rd=new FileReader();rd.onload=ev=>addMyPhoto(ev.target.result,i===0);rd.readAsDataURL(f);});
-}
-const fileIn=document.getElementById('file-in');
-fileIn.addEventListener('change',e=>{if(e.target.files&&e.target.files.length)Array.from(e.target.files).forEach((f,i)=>{const rd=new FileReader();rd.onload=ev=>addMyPhoto(ev.target.result,i===0);rd.readAsDataURL(f);});fileIn.value='';});
-const uploadLabel=document.getElementById('upload-label');
-uploadLabel.addEventListener('dragover',e=>{e.preventDefault();uploadLabel.classList.add('drag-over');});
-uploadLabel.addEventListener('dragleave',e=>{if(!uploadLabel.contains(e.relatedTarget))uploadLabel.classList.remove('drag-over');});
-uploadLabel.addEventListener('drop',e=>{e.stopPropagation();e.preventDefault();uploadLabel.classList.remove('drag-over');handleDropFiles(e.dataTransfer.files);});
-document.addEventListener('dragenter',e=>e.preventDefault());
-document.addEventListener('dragover',e=>e.preventDefault());
-document.addEventListener('drop',e=>{e.preventDefault();handleDropFiles(e.dataTransfer.files);});
 
 // ── Zoom ──
 document.getElementById('zoom').oninput=function(){document.getElementById('zoom-val').textContent=this.value+'%';if(userImg)updatePreview();};
