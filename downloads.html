@@ -282,6 +282,17 @@
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
 
+      // data: URIをBlob URLに変換（Safariはdata:URIへのdownload属性を無視することがあるため）
+      function dataUrlToBlobUrl(dataUrl) {
+        var parts = dataUrl.split(',');
+        var mimeMatch = parts[0].match(/:(.*?);/);
+        var mime = mimeMatch ? mimeMatch[1] : '';
+        var bin = atob(parts[1]);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return URL.createObjectURL(new Blob([bytes], { type: mime }));
+      }
+
       function render(data) {
         grid.innerHTML = '';
         var items = data.items || [];
@@ -303,7 +314,7 @@
           card.querySelector('h3').textContent = item.title || '';
           card.querySelector('p').textContent = item.desc || '';
           var a = card.querySelector('a');
-          a.href = item.data;
+          a.href = dataUrlToBlobUrl(item.data);
           a.download = item.filename || '';
           a.textContent = 'ダウンロード';
           grid.appendChild(card);
