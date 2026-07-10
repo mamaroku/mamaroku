@@ -292,6 +292,17 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
           <button class="dt-style" data-style="vhs">ビデオ</button>
           <button class="dt-style" data-style="clock">とけい</button>
           <button class="dt-style" data-style="clock2">とけい中央</button>
+          <button class="dt-style" data-style="age">月齢</button>
+        </div>
+      </div>
+      <div>
+        <div class="dt-label">誕生日（月齢用・一度入れれば記憶されます）</div>
+        <div class="dt-row">
+          <input type="date" class="dt-input" id="dt-bday">
+          <span id="dt-age-units" style="display:flex;gap:8px;">
+            <button class="dt-style selected" data-unit="day">日数</button>
+            <button class="dt-style" data-unit="month">月数</button>
+          </span>
         </div>
       </div>
       <div>
@@ -1736,10 +1747,55 @@ function dtRenderClock(inp,center){
   ctx.fillText(sub2,sx,pad+bigFs*1.3+subFs*1.75);
   return cv;
 }
+// 月齢スタンプ
+let dtAgeUnit='day';
+function dtRenderAge(inp){
+  const F="'futura-pt','Futura PT',Futura,'Avenir Next',sans-serif";
+  const bv=document.getElementById('dt-bday').value;
+  const cv=document.createElement('canvas');
+  if(!bv){
+    cv.width=820;cv.height=180;
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle=dtInk;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+    ctx.font="42px 'Hiragino Kaku Gothic ProN',sans-serif";
+    ctx.fillText('誕生日を入力してください',410,90);
+    return cv;
+  }
+  const [by,bm,bdd]=bv.split('-').map(Number);
+  const bd=new Date(by,bm-1,bdd);
+  let days=Math.floor((inp.date-bd)/864e5);if(days<0)days=0;
+  let mo=(inp.date.getFullYear()-bd.getFullYear())*12+(inp.date.getMonth()-bd.getMonth());
+  if(inp.date.getDate()<bdd)mo--;if(mo<0)mo=0;
+  const big=dtAgeUnit==='month'?String(mo):String(days);
+  const unit=dtAgeUnit==='month'?(mo===1?'MONTH OLD':'MONTHS OLD'):(days===1?'DAY OLD':'DAYS OLD');
+  const dateStr=`${inp.date.getFullYear()}.${inp.date.getMonth()+1}.${inp.date.getDate()}`;
+  const bigFs=190,subFs=46,sub2Fs=30,pad=60;
+  const ctx0=cv.getContext('2d');
+  ctx0.font=`600 ${bigFs}px ${F}`;
+  const w1=ctx0.measureText(big).width;
+  ctx0.font=`600 ${subFs}px ${F}`;
+  const w2=ctx0.measureText(unit).width+unit.length*10; // 字間ぶんの概算
+  cv.width=Math.ceil(Math.max(w1,w2,420)+pad*2);
+  cv.height=Math.ceil(bigFs*1.18+subFs*1.5+sub2Fs*2.1+pad*2);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=dtInk;ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+  const cx=cv.width/2;
+  ctx.font=`600 ${bigFs}px ${F}`;
+  ctx.fillText(big,cx,pad);
+  ctx.font=`600 ${subFs}px ${F}`;
+  try{ctx.letterSpacing='10px';}catch(e){}
+  ctx.fillText(unit,cx-5,pad+bigFs*1.22);
+  ctx.font=`600 ${sub2Fs}px ${F}`;
+  try{ctx.letterSpacing='4px';}catch(e){}
+  ctx.fillText(dateStr,cx-2,pad+bigFs*1.22+subFs*1.75);
+  return cv;
+}
 async function dtMakeBlob(){
   await document.fonts.load('20px "Silkscreen"').catch(()=>{});
   const inp=dtGetInputs();
-  const cv=dtStyle==='film'?dtRenderFilm(inp):dtStyle==='vhs'?dtRenderVhs(inp):dtRenderClock(inp,dtStyle==='clock2');
+  const cv=dtStyle==='film'?dtRenderFilm(inp):dtStyle==='vhs'?dtRenderVhs(inp):dtStyle==='age'?dtRenderAge(inp):dtRenderClock(inp,dtStyle==='clock2');
   return await new Promise(r=>cv.toBlob(r,'image/png'));
 }
 async function dtUpdatePreview(){
@@ -1776,14 +1832,21 @@ function dtSetup(){
     cust.classList.add('selected');
     dtUpdatePreview();
   });
-  document.querySelectorAll('#sec-date .dt-style').forEach(b=>{
+  document.querySelectorAll('#dt-styles .dt-style').forEach(b=>{
     b.onclick=()=>{
       dtStyle=b.dataset.style;
-      document.querySelectorAll('#sec-date .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+      document.querySelectorAll('#dt-styles .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
       dtUpdatePreview();
     };
   });
-  ['dt-date','dt-time','dt-with-time'].forEach(id=>document.getElementById(id).addEventListener('change',dtUpdatePreview));
+  ['dt-date','dt-time','dt-with-time','dt-bday'].forEach(id=>document.getElementById(id).addEventListener('change',dtUpdatePreview));
+  // 誕生日は保存して次回から自動入力
+  const savedBday=localStorage.getItem('mamaroku_dt_birthday');
+  if(savedBday)document.getElementById('dt-bday').value=savedBday;
+  document.getElementById('dt-bday').addEventListener('change',e=>{localStorage.setItem('mamaroku_dt_birthday',e.target.value);});
+  document.querySelectorAll('#dt-age-units .dt-style').forEach(b=>{
+    b.onclick=()=>{dtAgeUnit=b.dataset.unit;document.querySelectorAll('#dt-age-units .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');dtUpdatePreview();};
+  });
   document.getElementById('dt-preview').addEventListener('dragstart',e=>{if(dtUrl)e.dataTransfer.setData('text/uri-list',dtUrl);});
   document.getElementById('dt-copy').onclick=async()=>{
     try{await navigator.clipboard.write([new ClipboardItem({'image/png':dtMakeBlob()})]);showToast('コピーしました ✓');}
