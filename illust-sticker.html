@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="イラストスタンプ">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=Silkscreen&family=Noto+Sans+JP:wght@300;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=Silkscreen&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f8f6f2;--sur:#fdfcfa;--bd:#d8d4cc;--bdl:#e8e4de;--text:#3a3630;--muted:#5a5450;--faint:#7a7670;--acc:#5a524a;--hover:#f0ede8;--rose:#d4a5a5;--blush:#f4e8e4;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -1560,7 +1560,7 @@ const DT_COLORS=[
 ];
 const DT_DEFAULT_INK={film:'#ff8a3c',vhs:'#ffffff',clock:'#ffffff'};
 const DT_MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-const DT_WDAYS=['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+const DT_WDAYS=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 // 7セグ数字の点灯パターン a,b,c,d,e,f,g
 const DT_SEG={'0':[1,1,1,1,1,1,0],'1':[0,1,1,0,0,0,0],'2':[1,1,0,1,1,0,1],'3':[1,1,1,1,0,0,1],'4':[0,1,1,0,0,1,1],'5':[1,0,1,1,0,1,1],'6':[1,0,1,1,1,1,1],'7':[1,1,1,0,0,0,0],'8':[1,1,1,1,1,1,1],'9':[1,1,1,1,0,1,1]};
 
@@ -1641,32 +1641,29 @@ function dtRenderClock(inp){
   const big=inp.withTime?`${inp.hh}:${dtP2(inp.mm)}`:`${inp.date.getMonth()+1}.${inp.date.getDate()}`;
   const sub1=DT_WDAYS[inp.date.getDay()];
   const sub2=inp.withTime?`${inp.date.getFullYear()}.${inp.date.getMonth()+1}.${inp.date.getDate()}`:String(inp.date.getFullYear());
-  const F="'Noto Sans JP','Hiragino Sans',sans-serif";
-  const bigFs=150,subFs=44,pad=50;
+  const F="'futura-pt','Futura PT',Futura,'Avenir Next',sans-serif";
+  const bigFs=150,subFs=40,pad=50;
   const cv=document.createElement('canvas');
   const ctx0=cv.getContext('2d');
-  ctx0.font=`500 ${bigFs}px ${F}`;
+  ctx0.font=`600 ${bigFs}px ${F}`;
   const w1=ctx0.measureText(big).width;
-  ctx0.font=`300 ${subFs}px ${F}`;
+  ctx0.font=`600 ${subFs}px ${F}`;
   const w2=Math.max(ctx0.measureText(sub1).width,ctx0.measureText(sub2).width);
   cv.width=Math.ceil(Math.max(w1,w2)+pad*2);
-  cv.height=Math.ceil(bigFs*1.02+subFs*2.6+pad*2);
+  cv.height=Math.ceil(bigFs*1.15+subFs*3.4+pad*2);
   const ctx=cv.getContext('2d');
   ctx.fillStyle=dtInk;ctx.textBaseline='top';
   ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
-  ctx.font=`500 ${bigFs}px ${F}`;
+  ctx.font=`600 ${bigFs}px ${F}`;
   ctx.fillText(big,pad,pad);
-  ctx.font=`300 ${subFs}px ${F}`;
-  ctx.fillText(sub1,pad+4,pad+bigFs*1.08);
-  ctx.fillText(sub2,pad+4,pad+bigFs*1.08+subFs*1.45);
+  ctx.font=`600 ${subFs}px ${F}`;
+  try{ctx.letterSpacing='4px';}catch(e){}
+  ctx.fillText(sub1,pad+4,pad+bigFs*1.3);
+  ctx.fillText(sub2,pad+4,pad+bigFs*1.3+subFs*1.75);
   return cv;
 }
 async function dtMakeBlob(){
-  await Promise.all([
-    document.fonts.load('20px "Silkscreen"'),
-    document.fonts.load('300 20px "Noto Sans JP"'),
-    document.fonts.load('500 20px "Noto Sans JP"')
-  ]).catch(()=>{});
+  await document.fonts.load('20px "Silkscreen"').catch(()=>{});
   const inp=dtGetInputs();
   const cv=dtStyle==='film'?dtRenderFilm(inp):dtStyle==='vhs'?dtRenderVhs(inp):dtRenderClock(inp);
   return await new Promise(r=>cv.toBlob(r,'image/png'));
