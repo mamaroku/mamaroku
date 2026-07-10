@@ -110,6 +110,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .dt-style.selected{background:var(--text);border-color:var(--text);color:var(--bg);}
 .dt-ink{width:26px;height:26px;border-radius:50%;border:2px solid var(--sur);outline:1px solid var(--bdl);cursor:pointer;padding:0;flex-shrink:0;}
 .dt-ink.selected{outline:2px solid var(--acc);}
+.dt-ink-custom{position:relative;overflow:hidden;display:inline-block;background:conic-gradient(#f0a0a0,#f0dfa0,#b4e0a8,#a4d4ec,#c4b4ec,#ecb4d4,#f0a0a0);}
+.dt-ink-custom span{position:absolute;inset:6px;border-radius:50%;background:#ff8a3c;}
+.dt-ink-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0;}
+#dt-hex{font-size:11px;color:var(--muted);letter-spacing:.05em;}
 .dt-preview-wrap{display:flex;align-items:center;gap:14px;}
 #dt-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
 #dt-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
@@ -1550,15 +1554,12 @@ async function syncFromRemote(){
 }
 
 // ── 日付スタンプ ──
-let dtInitDone=false, dtStyle='film', dtInk='#ff8a3c', dtUrl=null;
+let dtInitDone=false, dtStyle='film', dtInk='#ffffff', dtUrl=null;
 const DT_COLORS=[
-  {c:'#ff8a3c',n:'オレンジ'},
   {c:'#ffffff',n:'ホワイト'},
-  {c:'#ffd94f',n:'イエロー'},
-  {c:'#3a3630',n:'ブラック'},
-  {c:'#a06070',n:'ローズ'}
+  {c:'#231815',n:'ブラック'}
 ];
-const DT_DEFAULT_INK={film:'#ff8a3c',vhs:'#ffffff',clock:'#ffffff'};
+function dtIsDark(c){const n=parseInt(c.slice(1),16);return ((n>>16&255)*299+(n>>8&255)*587+(n&255)*114)/1000<140;}
 const DT_MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const DT_WDAYS=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 // 7セグ数字の点灯パターン a,b,c,d,e,f,g
@@ -1674,8 +1675,7 @@ async function dtUpdatePreview(){
   dtUrl=URL.createObjectURL(blob);
   document.getElementById('dt-preview').src=dtUrl;
   // 濃い色インクのときは明るい市松に切り替え
-  const dark=dtInk==='#3a3630'||dtInk==='#a06070';
-  document.getElementById('dt-preview-box').classList.toggle('light',dark);
+  document.getElementById('dt-preview-box').classList.toggle('light',dtIsDark(dtInk));
 }
 function dtSetup(){
   const now=new Date();
@@ -1685,15 +1685,28 @@ function dtSetup(){
   DT_COLORS.forEach(({c,n})=>{
     const b=document.createElement('button');
     b.className='dt-ink'+(c===dtInk?' selected':'');b.style.background=c;b.title=n;b.dataset.ink=c;
-    b.onclick=()=>{dtInk=c;document.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');dtUpdatePreview();};
+    b.onclick=()=>{dtInk=c;document.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.getElementById('dt-hex').textContent=c;dtUpdatePreview();};
     inkRow.appendChild(b);
+  });
+  // カスタムカラー（カラーパネル）
+  const cust=document.createElement('label');
+  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
+  cust.innerHTML='<span id="dt-chip"></span><input type="color" id="dt-picker" value="#ff8a3c">';
+  inkRow.appendChild(cust);
+  const hex=document.createElement('span');hex.id='dt-hex';hex.textContent=dtInk;
+  inkRow.appendChild(hex);
+  document.getElementById('dt-picker').addEventListener('input',e=>{
+    dtInk=e.target.value;
+    document.getElementById('dt-chip').style.background=dtInk;
+    hex.textContent=dtInk;
+    document.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));
+    cust.classList.add('selected');
+    dtUpdatePreview();
   });
   document.querySelectorAll('.dt-style').forEach(b=>{
     b.onclick=()=>{
       dtStyle=b.dataset.style;
       document.querySelectorAll('.dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
-      dtInk=DT_DEFAULT_INK[dtStyle];
-      document.querySelectorAll('.dt-ink').forEach(x=>x.classList.toggle('selected',x.dataset.ink===dtInk));
       dtUpdatePreview();
     };
   });
