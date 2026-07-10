@@ -1712,7 +1712,6 @@ function dtRenderVhs(inp){
   const ctx=cv.getContext('2d');
   ctx.font=`${fs}px "Silkscreen"`;ctx.textBaseline='top';
   ctx.fillStyle=dtInk;
-  ctx.shadowColor='rgba(0,0,0,.4)';ctx.shadowBlur=4;ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;
   let y=pad*0.7;
   if(line1){ctx.fillText(line1,pad,y);y+=lh;}
   ctx.fillText(line2,pad,y);
@@ -1735,7 +1734,6 @@ function dtRenderClock(inp,center){
   cv.height=Math.ceil(bigFs*1.15+subFs*3.4+pad*2);
   const ctx=cv.getContext('2d');
   ctx.fillStyle=dtInk;ctx.textBaseline='top';
-  ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
   if(center){ctx.textAlign='center';}
   const bx=center?cv.width/2:pad;
   const sx=center?cv.width/2-2:pad+4; // 字間4pxの分を補正
@@ -1757,7 +1755,6 @@ function dtRenderAge(inp){
     cv.width=820;cv.height=180;
     const ctx=cv.getContext('2d');
     ctx.fillStyle=dtInk;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
     ctx.font="42px 'Hiragino Kaku Gothic ProN',sans-serif";
     ctx.fillText('誕生日を入力してください',410,90);
     return cv;
@@ -1780,7 +1777,6 @@ function dtRenderAge(inp){
   cv.height=Math.ceil(bigFs*1.18+subFs*1.5+sub2Fs*2.1+pad*2);
   const ctx=cv.getContext('2d');
   ctx.fillStyle=dtInk;ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
   const cx=cv.width/2;
   ctx.font=`600 ${bigFs}px ${F}`;
   ctx.fillText(big,cx,pad);
