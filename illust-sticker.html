@@ -121,8 +121,9 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #dt-copy,#fr-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
 
 /* FRAME TEXT PANEL */
-#panel.frame-mode{max-height:520px;}
-.panel-sec#sec-frame{padding:12px 14px;display:none;flex-direction:column;gap:12px;}
+#panel.frame-mode{max-height:660px;}
+.panel-sec#sec-frame{padding:12px 14px;display:none;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;box-sizing:border-box;}
+.dt-ink-none{background:linear-gradient(135deg,#fff 42%,#d66 42%,#d66 58%,#fff 58%);}
 .panel-sec#sec-frame.active{display:flex;}
 .fr-textarea{width:100%;border:1px solid var(--bdl);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px;resize:none;line-height:1.6;box-sizing:border-box;}
 .dt-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;}
@@ -327,8 +328,16 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
         </div>
       </div>
       <div>
-        <div class="dt-label">カラー</div>
-        <div class="dt-row" id="fr-inks"></div>
+        <div class="dt-label">文字の色</div>
+        <div class="dt-row" id="fr-inks-text"></div>
+      </div>
+      <div>
+        <div class="dt-label">枠の色</div>
+        <div class="dt-row" id="fr-inks-frame"></div>
+      </div>
+      <div>
+        <div class="dt-label">背景の色</div>
+        <div class="dt-row" id="fr-inks-bg"></div>
       </div>
       <div class="dt-preview-wrap">
         <div id="fr-preview-box"><img id="fr-preview" draggable="true" alt="囲みテキスト"></div>
@@ -1773,16 +1782,37 @@ function dtSetup(){
 }
 
 // ── 囲みテキスト ──
-let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frInk='#231815', frUrl=null;
+let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frUrl=null;
+let frInkText='#231815', frInkFrame='#231815', frInkBg='none';
 const FR_FONTS={
   mincho:"'Hiragino Mincho ProN',serif",
   gothic:"'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif",
   maru:"'Hiragino Maru Gothic ProN',sans-serif"
 };
-const FR_COLORS=[
-  {c:'#231815',n:'ブラック'},
-  {c:'#ffffff',n:'ホワイト'}
-];
+function frBuildInks(rowId,presets,initial,custDefault,onPick){
+  const row=document.getElementById(rowId);
+  const hex=document.createElement('span');hex.className='dt-hint';
+  const setSel=el=>{row.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');};
+  presets.forEach(({c,n})=>{
+    const b=document.createElement('button');
+    b.className='dt-ink'+(c===initial?' selected':'')+(c==='none'?' dt-ink-none':'');
+    if(c!=='none')b.style.background=c;
+    b.title=n;b.dataset.ink=c;
+    b.onclick=()=>{setSel(b);hex.textContent=c==='none'?'なし':c;onPick(c);};
+    row.appendChild(b);
+  });
+  const cust=document.createElement('label');
+  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
+  cust.innerHTML='<span></span><input type="color" value="'+custDefault+'">';
+  row.appendChild(cust);
+  hex.textContent=initial==='none'?'なし':initial;
+  row.appendChild(hex);
+  cust.querySelector('input').addEventListener('input',e=>{
+    const v=e.target.value;
+    cust.querySelector('span').style.background=v;
+    setSel(cust);hex.textContent=v;onPick(v);
+  });
+}
 function frRRect(ctx,x,y,w,h,r){
   ctx.beginPath();
   ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
@@ -1805,8 +1835,14 @@ function frRenderCanvas(){
   const m=lw*4; // 枠線と二重枠のための余白
   cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
   const ctx=cv.getContext('2d');
-  ctx.strokeStyle=ctx.fillStyle=frInk;
   ctx.lineWidth=lw;
+  // 背景（枠の形に合わせて塗る）
+  if(frInkBg!=='none'){
+    ctx.fillStyle=frInkBg;
+    if(frFrame==='marukado'){frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.fill();}
+    else ctx.fillRect(m,m,boxW,boxH);
+  }
+  ctx.strokeStyle=frInkFrame;
   if(frFrame==='kaku'){
     ctx.strokeRect(m,m,boxW,boxH);
   }else if(frFrame==='marukado'){
@@ -1816,6 +1852,7 @@ function frRenderCanvas(){
     ctx.lineWidth=lw*0.5;
     ctx.strokeRect(m+lw*2.4,m+lw*2.4,boxW-lw*4.8,boxH-lw*4.8);
   }
+  ctx.fillStyle=frInkText;
   ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
   try{ctx.letterSpacing=sp+'px';}catch(e){}
   // letter-spacing分は右に余るので中心を少し左に補正
@@ -1831,30 +1868,12 @@ async function frUpdatePreview(){
   if(frUrl)URL.revokeObjectURL(frUrl);
   frUrl=URL.createObjectURL(blob);
   document.getElementById('fr-preview').src=frUrl;
-  document.getElementById('fr-preview-box').classList.toggle('light',dtIsDark(frInk));
+  document.getElementById('fr-preview-box').classList.toggle('light',dtIsDark(frInkBg!=='none'?frInkBg:frInkText));
 }
 function frSetup(){
-  const inkRow=document.getElementById('fr-inks');
-  FR_COLORS.forEach(({c,n})=>{
-    const b=document.createElement('button');
-    b.className='dt-ink'+(c===frInk?' selected':'');b.style.background=c;b.title=n;b.dataset.ink=c;
-    b.onclick=()=>{frInk=c;document.querySelectorAll('#fr-inks .dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.getElementById('fr-hex').textContent=c;frUpdatePreview();};
-    inkRow.appendChild(b);
-  });
-  const cust=document.createElement('label');
-  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
-  cust.innerHTML='<span id="fr-chip"></span><input type="color" id="fr-picker" value="#a06070">';
-  inkRow.appendChild(cust);
-  const hex=document.createElement('span');hex.id='fr-hex';hex.className='dt-hint';hex.textContent=frInk;
-  inkRow.appendChild(hex);
-  document.getElementById('fr-picker').addEventListener('input',e=>{
-    frInk=e.target.value;
-    document.getElementById('fr-chip').style.background=frInk;
-    hex.textContent=frInk;
-    document.querySelectorAll('#fr-inks .dt-ink').forEach(x=>x.classList.remove('selected'));
-    cust.classList.add('selected');
-    frUpdatePreview();
-  });
+  frBuildInks('fr-inks-text',[{c:'#231815',n:'ブラック'},{c:'#ffffff',n:'ホワイト'}],frInkText,'#a06070',v=>{frInkText=v;frUpdatePreview();});
+  frBuildInks('fr-inks-frame',[{c:'#231815',n:'ブラック'},{c:'#ffffff',n:'ホワイト'}],frInkFrame,'#a06070',v=>{frInkFrame=v;frUpdatePreview();});
+  frBuildInks('fr-inks-bg',[{c:'none',n:'なし（透明）'},{c:'#ffffff',n:'ホワイト'},{c:'#f5eee8',n:'クリーム'}],frInkBg,'#f5eee8',v=>{frInkBg=v;frUpdatePreview();});
   document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(b=>{
     b.onclick=()=>{frFont=b.dataset.font;document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
   });
