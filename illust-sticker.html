@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="イラストスタンプ">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=DotGothic16&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f8f6f2;--sur:#fdfcfa;--bd:#d8d4cc;--bdl:#e8e4de;--text:#3a3630;--muted:#5a5450;--faint:#7a7670;--acc:#5a524a;--hover:#f0ede8;--rose:#d4a5a5;--blush:#f4e8e4;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -97,6 +97,25 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #panel.phrase-mode{max-height:380px;}
 .panel-sec#sec-phrase{padding:10px 12px;display:none;flex-direction:column;}
 .panel-sec#sec-phrase.active{display:flex;}
+
+/* DATE PANEL */
+#panel.date-mode{max-height:440px;}
+.panel-sec#sec-date{padding:12px 14px;display:none;flex-direction:column;gap:12px;}
+.panel-sec#sec-date.active{display:flex;}
+.dt-label{font-size:10px;letter-spacing:.15em;color:var(--faint);text-transform:uppercase;width:100%;margin-bottom:2px;}
+.dt-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dt-input{border:1px solid var(--bdl);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;padding:5px 8px;}
+.dt-check{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.dt-style{padding:5px 14px;font-size:12px;letter-spacing:.08em;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
+.dt-style.selected{background:var(--text);border-color:var(--text);color:var(--bg);}
+.dt-ink{width:26px;height:26px;border-radius:50%;border:2px solid var(--sur);outline:1px solid var(--bdl);cursor:pointer;padding:0;flex-shrink:0;}
+.dt-ink.selected{outline:2px solid var(--acc);}
+.dt-preview-wrap{display:flex;align-items:center;gap:14px;}
+#dt-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
+#dt-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
+#dt-preview{max-width:94%;max-height:80px;object-fit:contain;}
+#dt-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
+.dt-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;}
 #ph-search{width:100%;padding:9px 14px;border:1.5px solid var(--bdl);background:var(--bg);font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:8px;flex-shrink:0;}
 #ph-search:focus{border-color:var(--acc);}
 #ph-cats{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:8px;flex-shrink:0;padding-bottom:2px;}
@@ -225,6 +244,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <button class="tool-tab active" id="tab-color" onclick="switchTab('color')">カラー</button>
     <button class="tool-tab" id="tab-photo" onclick="switchTab('photo')">写真・素材</button>
     <button class="tool-tab" id="tab-phrase" onclick="switchTab('phrase')">フレーズ</button>
+    <button class="tool-tab" id="tab-date" onclick="switchTab('date')">日付</button>
   </div>
   <div id="panel">
     <div class="panel-sec active" id="sec-color">
@@ -243,6 +263,33 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <input type="text" id="ph-search" placeholder="日本語で検索…（例：公園・おやつ・イヤイヤ）" oninput="phRender()">
       <div id="ph-cats"></div>
       <div id="ph-list"></div>
+    </div>
+    <div class="panel-sec" id="sec-date">
+      <div>
+        <div class="dt-label">日付・時刻</div>
+        <div class="dt-row">
+          <input type="date" class="dt-input" id="dt-date">
+          <input type="time" class="dt-input" id="dt-time">
+          <label class="dt-check"><input type="checkbox" id="dt-with-time">時刻も入れる</label>
+        </div>
+      </div>
+      <div>
+        <div class="dt-label">デザイン</div>
+        <div class="dt-row" id="dt-styles">
+          <button class="dt-style selected" data-style="film">フィルム</button>
+          <button class="dt-style" data-style="vhs">ビデオ</button>
+          <button class="dt-style" data-style="clock">とけい</button>
+        </div>
+      </div>
+      <div>
+        <div class="dt-label">カラー</div>
+        <div class="dt-row" id="dt-inks"></div>
+      </div>
+      <div class="dt-preview-wrap">
+        <div id="dt-preview-box"><img id="dt-preview" draggable="true" alt="日付スタンプ"></div>
+        <button id="dt-copy">コピー</button>
+      </div>
+      <div class="dt-hint">コピーしてGoodnotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
     </div>
   </div>
   <div id="zoom-row" style="display:none;">
@@ -505,7 +552,7 @@ function switchTab(tab){
     document.getElementById('tab-photo').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-photo').classList.add('active');
-    panel.classList.add('open');panel.classList.remove('phrase-mode');panelOpen=true;
+    panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
         app.classList.add('photo-mode');
     return;
   }
@@ -515,8 +562,19 @@ function switchTab(tab){
     document.getElementById('tab-phrase').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-phrase').classList.add('active');
-    panel.classList.add('open','phrase-mode');panelOpen=true;
+    panel.classList.add('open','phrase-mode');panel.classList.remove('date-mode');panelOpen=true;
     app.classList.remove('photo-mode');    if(!phInitDone){phSetup();phInitDone=true;}
+    return;
+  }
+  if(tab==='date'){
+    activeTab=tab;
+    document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-date').classList.add('active');
+    document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
+    document.getElementById('sec-date').classList.add('active');
+    panel.classList.add('open','date-mode');panel.classList.remove('phrase-mode');panelOpen=true;
+    app.classList.remove('photo-mode');
+    if(!dtInitDone){dtSetup();dtInitDone=true;}
     return;
   }
   app.classList.remove('photo-mode');
@@ -526,7 +584,7 @@ function switchTab(tab){
   document.getElementById('tab-color').classList.add('active');
   document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-color').classList.add('active');
-  panel.classList.add('open');panel.classList.remove('phrase-mode');panelOpen=true;
+  panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
   document.getElementById('zoom-row').style.display='none';
 }
 
@@ -1489,6 +1547,162 @@ async function syncFromRemote(){
   }catch(e){
     if(isLocal)showSyncStatus('同期エラー: '+e.message);
   }
+}
+
+// ── 日付スタンプ ──
+let dtInitDone=false, dtStyle='film', dtInk='#ff8a3c', dtUrl=null;
+const DT_COLORS=[
+  {c:'#ff8a3c',n:'オレンジ'},
+  {c:'#ffffff',n:'ホワイト'},
+  {c:'#ffd94f',n:'イエロー'},
+  {c:'#3a3630',n:'ブラック'},
+  {c:'#a06070',n:'ローズ'}
+];
+const DT_DEFAULT_INK={film:'#ff8a3c',vhs:'#ffffff',clock:'#ffffff'};
+const DT_MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DT_WDAYS=['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+// 7セグ数字の点灯パターン a,b,c,d,e,f,g
+const DT_SEG={'0':[1,1,1,1,1,1,0],'1':[0,1,1,0,0,0,0],'2':[1,1,0,1,1,0,1],'3':[1,1,1,1,0,0,1],'4':[0,1,1,0,0,1,1],'5':[1,0,1,1,0,1,1],'6':[1,0,1,1,1,1,1],'7':[1,1,1,0,0,0,0],'8':[1,1,1,1,1,1,1],'9':[1,1,1,1,0,1,1]};
+
+function dtGetInputs(){
+  const dv=document.getElementById('dt-date').value;
+  const tv=document.getElementById('dt-time').value||'10:00';
+  const withTime=document.getElementById('dt-with-time').checked;
+  const [y,m,d]=dv?dv.split('-').map(Number):[2026,1,1];
+  const [hh,mm]=tv.split(':').map(Number);
+  return {date:new Date(y,m-1,d),hh,mm,withTime};
+}
+function dtP2(n){return String(n).padStart(2,'0');}
+
+// フィルム風: 7セグ数字を線で描く
+function dtDrawSeg(ctx,ch,x,y,h){
+  const w=h*0.52,t=h*0.15,i=t*0.65,g=i*0.7;
+  if(ch==='.'){ctx.fillRect(x,y+h-t,t,t);return t+h*0.18;}
+  if(ch===':'){ctx.fillRect(x,y+h*0.25,t,t);ctx.fillRect(x,y+h*0.62,t,t);return t+h*0.18;}
+  if(ch===' ')return h*0.34;
+  const s=DT_SEG[ch];if(!s)return 0;
+  ctx.lineWidth=t;ctx.lineCap='butt';
+  const L=(x1,y1,x2,y2)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
+  if(s[0])L(x+i,y,x+w-i,y);
+  if(s[1])L(x+w,y+i,x+w,y+h/2-g);
+  if(s[2])L(x+w,y+h/2+g,x+w,y+h-i);
+  if(s[3])L(x+i,y+h,x+w-i,y+h);
+  if(s[4])L(x,y+h/2+g,x,y+h-i);
+  if(s[5])L(x,y+i,x,y+h/2-g);
+  if(s[6])L(x+i,y+h/2,x+w-i,y+h/2);
+  return w+h*0.26;
+}
+function dtMeasureSeg(ch,h){
+  const t=h*0.15;
+  if(ch==='.'||ch===':')return t+h*0.18;
+  if(ch===' ')return h*0.34;
+  return h*0.52+h*0.26;
+}
+function dtRenderFilm(inp){
+  let text=`${dtP2(inp.date.getMonth()+1)}.${dtP2(inp.date.getDate())}.${inp.date.getFullYear()}`;
+  if(inp.withTime)text+=` ${dtP2(inp.hh)}:${dtP2(inp.mm)}`;
+  const h=110,pad=60;
+  let w=0;for(const ch of text)w+=dtMeasureSeg(ch,h);
+  const cv=document.createElement('canvas');
+  cv.width=Math.ceil(w+pad*2+h*0.14);cv.height=h+pad*2;
+  const ctx=cv.getContext('2d');
+  ctx.strokeStyle=ctx.fillStyle=dtInk;
+  ctx.shadowColor=dtInk;ctx.shadowBlur=h*0.16;
+  ctx.transform(1,0,-0.09,1,h*0.12,0); // 少し斜体
+  let x=pad;
+  for(const ch of text)x+=dtDrawSeg(ctx,ch,x,pad,h);
+  // 2度描きで芯を強く
+  ctx.shadowBlur=0;x=pad;
+  for(const ch of text)x+=dtDrawSeg(ctx,ch,x,pad,h);
+  return cv;
+}
+// ビデオ(VHS)風: ドット文字
+function dtRenderVhs(inp){
+  const line2=`${DT_MONTHS[inp.date.getMonth()]} ${dtP2(inp.date.getDate())} ${inp.date.getFullYear()}`;
+  const h12=inp.hh%12===0?12:inp.hh%12;
+  const line1=inp.withTime?`${inp.hh<12?'AM':'PM'} ${dtP2(h12)}:${dtP2(inp.mm)}`:null;
+  const fs=76,pad=50,lh=fs*1.3;
+  const cv=document.createElement('canvas');
+  const ctx0=cv.getContext('2d');
+  ctx0.font=`${fs}px "DotGothic16"`;
+  const w=Math.max(ctx0.measureText(line2).width,line1?ctx0.measureText(line1).width:0);
+  cv.width=Math.ceil(w+pad*2);cv.height=Math.ceil((line1?lh*2:lh)+pad*1.4);
+  const ctx=cv.getContext('2d');
+  ctx.font=`${fs}px "DotGothic16"`;ctx.textBaseline='top';
+  ctx.fillStyle=dtInk;
+  ctx.shadowColor='rgba(0,0,0,.4)';ctx.shadowBlur=4;ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;
+  let y=pad*0.7;
+  if(line1){ctx.fillText(line1,pad,y);y+=lh;}
+  ctx.fillText(line2,pad,y);
+  return cv;
+}
+// とけい(ロック画面)風
+function dtRenderClock(inp){
+  const big=inp.withTime?`${inp.hh}:${dtP2(inp.mm)}`:`${inp.date.getMonth()+1}.${inp.date.getDate()}`;
+  const sub1=DT_WDAYS[inp.date.getDay()];
+  const sub2=inp.withTime?`${inp.date.getFullYear()}.${inp.date.getMonth()+1}.${inp.date.getDate()}`:String(inp.date.getFullYear());
+  const F="'Helvetica Neue',Helvetica,'Hiragino Sans',Arial,sans-serif";
+  const bigFs=150,subFs=44,pad=50;
+  const cv=document.createElement('canvas');
+  const ctx0=cv.getContext('2d');
+  ctx0.font=`500 ${bigFs}px ${F}`;
+  const w1=ctx0.measureText(big).width;
+  ctx0.font=`300 ${subFs}px ${F}`;
+  const w2=Math.max(ctx0.measureText(sub1).width,ctx0.measureText(sub2).width);
+  cv.width=Math.ceil(Math.max(w1,w2)+pad*2);
+  cv.height=Math.ceil(bigFs*1.02+subFs*2.6+pad*2);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=dtInk;ctx.textBaseline='top';
+  ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+  ctx.font=`500 ${bigFs}px ${F}`;
+  ctx.fillText(big,pad,pad);
+  ctx.font=`300 ${subFs}px ${F}`;
+  ctx.fillText(sub1,pad+4,pad+bigFs*1.08);
+  ctx.fillText(sub2,pad+4,pad+bigFs*1.08+subFs*1.45);
+  return cv;
+}
+async function dtMakeBlob(){
+  await document.fonts.load('20px "DotGothic16"').catch(()=>{});
+  const inp=dtGetInputs();
+  const cv=dtStyle==='film'?dtRenderFilm(inp):dtStyle==='vhs'?dtRenderVhs(inp):dtRenderClock(inp);
+  return await new Promise(r=>cv.toBlob(r,'image/png'));
+}
+async function dtUpdatePreview(){
+  const blob=await dtMakeBlob();
+  if(dtUrl)URL.revokeObjectURL(dtUrl);
+  dtUrl=URL.createObjectURL(blob);
+  document.getElementById('dt-preview').src=dtUrl;
+  // 濃い色インクのときは明るい市松に切り替え
+  const dark=dtInk==='#3a3630'||dtInk==='#a06070';
+  document.getElementById('dt-preview-box').classList.toggle('light',dark);
+}
+function dtSetup(){
+  const now=new Date();
+  document.getElementById('dt-date').value=`${now.getFullYear()}-${dtP2(now.getMonth()+1)}-${dtP2(now.getDate())}`;
+  document.getElementById('dt-time').value=`${dtP2(now.getHours())}:${dtP2(now.getMinutes())}`;
+  const inkRow=document.getElementById('dt-inks');
+  DT_COLORS.forEach(({c,n})=>{
+    const b=document.createElement('button');
+    b.className='dt-ink'+(c===dtInk?' selected':'');b.style.background=c;b.title=n;b.dataset.ink=c;
+    b.onclick=()=>{dtInk=c;document.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');dtUpdatePreview();};
+    inkRow.appendChild(b);
+  });
+  document.querySelectorAll('.dt-style').forEach(b=>{
+    b.onclick=()=>{
+      dtStyle=b.dataset.style;
+      document.querySelectorAll('.dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+      dtInk=DT_DEFAULT_INK[dtStyle];
+      document.querySelectorAll('.dt-ink').forEach(x=>x.classList.toggle('selected',x.dataset.ink===dtInk));
+      dtUpdatePreview();
+    };
+  });
+  ['dt-date','dt-time','dt-with-time'].forEach(id=>document.getElementById(id).addEventListener('change',dtUpdatePreview));
+  document.getElementById('dt-preview').addEventListener('dragstart',e=>{if(dtUrl)e.dataTransfer.setData('text/uri-list',dtUrl);});
+  document.getElementById('dt-copy').onclick=async()=>{
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':dtMakeBlob()})]);showToast('コピーしました ✓');}
+    catch(e){if(dtUrl){window.open(dtUrl,'_blank');showToast('画像を長押しでコピーできます');}}
+  };
+  dtUpdatePreview();
 }
 
 // ── Init ──
