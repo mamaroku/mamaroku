@@ -115,10 +115,16 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .dt-ink-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0;}
 #dt-hex{font-size:11px;color:var(--muted);letter-spacing:.05em;}
 .dt-preview-wrap{display:flex;align-items:center;gap:14px;}
-#dt-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
-#dt-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
-#dt-preview{max-width:94%;max-height:80px;object-fit:contain;}
-#dt-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
+#dt-preview-box,#fr-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
+#dt-preview-box.light,#fr-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
+#dt-preview,#fr-preview{max-width:94%;max-height:80px;object-fit:contain;}
+#dt-copy,#fr-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
+
+/* FRAME TEXT PANEL */
+#panel.frame-mode{max-height:520px;}
+.panel-sec#sec-frame{padding:12px 14px;display:none;flex-direction:column;gap:12px;}
+.panel-sec#sec-frame.active{display:flex;}
+.fr-textarea{width:100%;border:1px solid var(--bdl);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px;resize:none;line-height:1.6;box-sizing:border-box;}
 .dt-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;}
 #ph-search{width:100%;padding:9px 14px;border:1.5px solid var(--bdl);background:var(--bg);font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:8px;flex-shrink:0;}
 #ph-search:focus{border-color:var(--acc);}
@@ -249,6 +255,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <button class="tool-tab" id="tab-photo" onclick="switchTab('photo')">写真・素材</button>
     <button class="tool-tab" id="tab-phrase" onclick="switchTab('phrase')">フレーズ</button>
     <button class="tool-tab" id="tab-date" onclick="switchTab('date')">日付</button>
+    <button class="tool-tab" id="tab-frame" onclick="switchTab('frame')">囲み</button>
   </div>
   <div id="panel">
     <div class="panel-sec active" id="sec-color">
@@ -292,6 +299,40 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <div class="dt-preview-wrap">
         <div id="dt-preview-box"><img id="dt-preview" draggable="true" alt="日付スタンプ"></div>
         <button id="dt-copy">コピー</button>
+      </div>
+      <div class="dt-hint">コピーしてGoodnotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
+    </div>
+    <div class="panel-sec" id="sec-frame">
+      <div>
+        <div class="dt-label">テキスト（改行で複数行）</div>
+        <textarea class="fr-textarea" id="fr-text" rows="2" placeholder="きょうのできごと"></textarea>
+      </div>
+      <div>
+        <div class="dt-label">フォント</div>
+        <div class="dt-row" id="fr-fonts">
+          <button class="dt-style selected" data-font="mincho">明朝</button>
+          <button class="dt-style" data-font="gothic">ゴシック</button>
+          <button class="dt-style" data-font="maru">丸ゴシック</button>
+          <button class="dt-style" data-weight="300" id="fr-w-light">細</button>
+          <button class="dt-style selected" data-weight="600" id="fr-w-bold">太</button>
+        </div>
+      </div>
+      <div>
+        <div class="dt-label">枠</div>
+        <div class="dt-row" id="fr-frames">
+          <button class="dt-style selected" data-frame="kaku">四角</button>
+          <button class="dt-style" data-frame="marukado">角丸</button>
+          <button class="dt-style" data-frame="niju">二重</button>
+          <button class="dt-style" data-frame="none">なし</button>
+        </div>
+      </div>
+      <div>
+        <div class="dt-label">カラー</div>
+        <div class="dt-row" id="fr-inks"></div>
+      </div>
+      <div class="dt-preview-wrap">
+        <div id="fr-preview-box"><img id="fr-preview" draggable="true" alt="囲みテキスト"></div>
+        <button id="fr-copy">コピー</button>
       </div>
       <div class="dt-hint">コピーしてGoodnotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
     </div>
@@ -556,7 +597,7 @@ function switchTab(tab){
     document.getElementById('tab-photo').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-photo').classList.add('active');
-    panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
+    panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode','frame-mode');panelOpen=true;
         app.classList.add('photo-mode');
     return;
   }
@@ -566,7 +607,7 @@ function switchTab(tab){
     document.getElementById('tab-phrase').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-phrase').classList.add('active');
-    panel.classList.add('open','phrase-mode');panel.classList.remove('date-mode');panelOpen=true;
+    panel.classList.add('open','phrase-mode');panel.classList.remove('date-mode','frame-mode');panelOpen=true;
     app.classList.remove('photo-mode');    if(!phInitDone){phSetup();phInitDone=true;}
     return;
   }
@@ -576,9 +617,20 @@ function switchTab(tab){
     document.getElementById('tab-date').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-date').classList.add('active');
-    panel.classList.add('open','date-mode');panel.classList.remove('phrase-mode');panelOpen=true;
+    panel.classList.add('open','date-mode');panel.classList.remove('phrase-mode','frame-mode');panelOpen=true;
     app.classList.remove('photo-mode');
     if(!dtInitDone){dtSetup();dtInitDone=true;}
+    return;
+  }
+  if(tab==='frame'){
+    activeTab=tab;
+    document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-frame').classList.add('active');
+    document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
+    document.getElementById('sec-frame').classList.add('active');
+    panel.classList.add('open','frame-mode');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
+    app.classList.remove('photo-mode');
+    if(!frInitDone){frSetup();frInitDone=true;}
     return;
   }
   app.classList.remove('photo-mode');
@@ -588,7 +640,7 @@ function switchTab(tab){
   document.getElementById('tab-color').classList.add('active');
   document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-color').classList.add('active');
-  panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
+  panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode','frame-mode');panelOpen=true;
   document.getElementById('zoom-row').style.display='none';
 }
 
@@ -1686,7 +1738,7 @@ function dtSetup(){
   DT_COLORS.forEach(({c,n})=>{
     const b=document.createElement('button');
     b.className='dt-ink'+(c===dtInk?' selected':'');b.style.background=c;b.title=n;b.dataset.ink=c;
-    b.onclick=()=>{dtInk=c;document.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.getElementById('dt-hex').textContent=c;dtUpdatePreview();};
+    b.onclick=()=>{dtInk=c;document.querySelectorAll('#sec-date .dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.getElementById('dt-hex').textContent=c;dtUpdatePreview();};
     inkRow.appendChild(b);
   });
   // カスタムカラー（カラーパネル）
@@ -1700,14 +1752,14 @@ function dtSetup(){
     dtInk=e.target.value;
     document.getElementById('dt-chip').style.background=dtInk;
     hex.textContent=dtInk;
-    document.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));
+    document.querySelectorAll('#sec-date .dt-ink').forEach(x=>x.classList.remove('selected'));
     cust.classList.add('selected');
     dtUpdatePreview();
   });
-  document.querySelectorAll('.dt-style').forEach(b=>{
+  document.querySelectorAll('#sec-date .dt-style').forEach(b=>{
     b.onclick=()=>{
       dtStyle=b.dataset.style;
-      document.querySelectorAll('.dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+      document.querySelectorAll('#sec-date .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
       dtUpdatePreview();
     };
   });
@@ -1718,6 +1770,110 @@ function dtSetup(){
     catch(e){if(dtUrl){window.open(dtUrl,'_blank');showToast('画像を長押しでコピーできます');}}
   };
   dtUpdatePreview();
+}
+
+// ── 囲みテキスト ──
+let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frInk='#231815', frUrl=null;
+const FR_FONTS={
+  mincho:"'Hiragino Mincho ProN',serif",
+  gothic:"'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif",
+  maru:"'Hiragino Maru Gothic ProN',sans-serif"
+};
+const FR_COLORS=[
+  {c:'#231815',n:'ブラック'},
+  {c:'#ffffff',n:'ホワイト'}
+];
+function frRRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function frRenderCanvas(){
+  const raw=document.getElementById('fr-text').value;
+  let lines=raw.split('\n').map(s=>s.trim()).filter(s=>s!=='');
+  if(!lines.length)lines=['きょうのできごと'];
+  const fs=72, lh=fs*1.5, sp=fs*0.1;
+  const font=`${frWeight} ${fs}px ${FR_FONTS[frFont]}`;
+  const cv=document.createElement('canvas');
+  const ctx0=cv.getContext('2d');
+  ctx0.font=font;
+  try{ctx0.letterSpacing=sp+'px';}catch(e){}
+  let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
+  const lw=Math.max(3,fs*0.055);
+  const padX=fs*1.0, padY=fs*0.55;
+  const boxW=maxW+padX*2, boxH=lines.length*lh+padY*2;
+  const m=lw*4; // 枠線と二重枠のための余白
+  cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
+  const ctx=cv.getContext('2d');
+  ctx.strokeStyle=ctx.fillStyle=frInk;
+  ctx.lineWidth=lw;
+  if(frFrame==='kaku'){
+    ctx.strokeRect(m,m,boxW,boxH);
+  }else if(frFrame==='marukado'){
+    frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.stroke();
+  }else if(frFrame==='niju'){
+    ctx.strokeRect(m,m,boxW,boxH);
+    ctx.lineWidth=lw*0.5;
+    ctx.strokeRect(m+lw*2.4,m+lw*2.4,boxW-lw*4.8,boxH-lw*4.8);
+  }
+  ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
+  try{ctx.letterSpacing=sp+'px';}catch(e){}
+  // letter-spacing分は右に余るので中心を少し左に補正
+  const cx=m+boxW/2+(sp/2);
+  lines.forEach((l,i)=>{ctx.fillText(l,cx,m+padY+lh*(i+0.5));});
+  return cv;
+}
+async function frMakeBlob(){
+  return await new Promise(r=>frRenderCanvas().toBlob(r,'image/png'));
+}
+async function frUpdatePreview(){
+  const blob=await frMakeBlob();
+  if(frUrl)URL.revokeObjectURL(frUrl);
+  frUrl=URL.createObjectURL(blob);
+  document.getElementById('fr-preview').src=frUrl;
+  document.getElementById('fr-preview-box').classList.toggle('light',dtIsDark(frInk));
+}
+function frSetup(){
+  const inkRow=document.getElementById('fr-inks');
+  FR_COLORS.forEach(({c,n})=>{
+    const b=document.createElement('button');
+    b.className='dt-ink'+(c===frInk?' selected':'');b.style.background=c;b.title=n;b.dataset.ink=c;
+    b.onclick=()=>{frInk=c;document.querySelectorAll('#fr-inks .dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.getElementById('fr-hex').textContent=c;frUpdatePreview();};
+    inkRow.appendChild(b);
+  });
+  const cust=document.createElement('label');
+  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
+  cust.innerHTML='<span id="fr-chip"></span><input type="color" id="fr-picker" value="#a06070">';
+  inkRow.appendChild(cust);
+  const hex=document.createElement('span');hex.id='fr-hex';hex.className='dt-hint';hex.textContent=frInk;
+  inkRow.appendChild(hex);
+  document.getElementById('fr-picker').addEventListener('input',e=>{
+    frInk=e.target.value;
+    document.getElementById('fr-chip').style.background=frInk;
+    hex.textContent=frInk;
+    document.querySelectorAll('#fr-inks .dt-ink').forEach(x=>x.classList.remove('selected'));
+    cust.classList.add('selected');
+    frUpdatePreview();
+  });
+  document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(b=>{
+    b.onclick=()=>{frFont=b.dataset.font;document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  document.querySelectorAll('#fr-fonts .dt-style[data-weight]').forEach(b=>{
+    b.onclick=()=>{frWeight=b.dataset.weight;document.querySelectorAll('#fr-fonts .dt-style[data-weight]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  document.querySelectorAll('#fr-frames .dt-style').forEach(b=>{
+    b.onclick=()=>{frFrame=b.dataset.frame;document.querySelectorAll('#fr-frames .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  let frTimer=null;
+  document.getElementById('fr-text').addEventListener('input',()=>{
+    clearTimeout(frTimer);frTimer=setTimeout(frUpdatePreview,250);
+  });
+  document.getElementById('fr-preview').addEventListener('dragstart',e=>{if(frUrl)e.dataTransfer.setData('text/uri-list',frUrl);});
+  document.getElementById('fr-copy').onclick=async()=>{
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':frMakeBlob()})]);showToast('コピーしました ✓');}
+    catch(e){if(frUrl){window.open(frUrl,'_blank');showToast('画像を長押しでコピーできます');}}
+  };
+  frUpdatePreview();
 }
 
 // ── Init ──
