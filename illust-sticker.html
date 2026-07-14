@@ -722,9 +722,22 @@ updateSwatch();
 ].forEach(c=>{
   const p=document.createElement('div');p.className='preset'+(c===selColor?' sel':'');p.dataset.color=c;
   p.style.cssText=`background:${c};border:1.5px solid ${c==='#ffffff'?'#bbb':'transparent'};`;
-  p.onclick=()=>{fillMode='color';setColor(c);};document.getElementById('color-presets').appendChild(p);
+  p.onclick=()=>{copyColor(c);};document.getElementById('color-presets').appendChild(p);
 });
 document.getElementById('color-native').oninput=function(){fillMode='color';setColor(this.value);};
+// カラーもタップだけでコピー（素材と同じ挙動）。カスタムカラーはドラッグ中に連続発火するため対象外
+function copyColor(c){
+  fillMode='color';setColor(c);
+  navigator.clipboard.write([new ClipboardItem({'image/png':renderBlob(selSize)})])
+    .then(()=>showToast('コピーしました ✓'))
+    .catch(async()=>{
+      try{
+        const blob=await renderBlob(selSize);
+        window.open(URL.createObjectURL(blob),'_blank');
+        showToast('画像を長押しでコピーできます');
+      }catch(e){showToast('コピーできませんでした');}
+    });
+}
 
 // ── Photo ──
 function loadMaterial(src){
