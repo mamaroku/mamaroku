@@ -730,6 +730,24 @@ document.getElementById('color-native').oninput=function(){fillMode='color';setC
 function loadMaterial(src){
   const img=new Image();img.onload=()=>{userImg=img;fillMode='material';document.getElementById('zoom-row').style.display='none';updatePreview();};img.src=src;
 }
+// タップだけでコピー（photocut studioと同じ挙動）。プレビューも従来どおり更新する
+function copyMaterial(src){
+  const blobPromise=new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{userImg=img;fillMode='material';document.getElementById('zoom-row').style.display='none';updatePreview();renderBlob(selSize).then(resolve,reject);};
+    img.onerror=reject;
+    img.src=src;
+  });
+  navigator.clipboard.write([new ClipboardItem({'image/png':blobPromise})])
+    .then(()=>showToast('コピーしました ✓'))
+    .catch(async()=>{
+      try{
+        const blob=await blobPromise;
+        window.open(URL.createObjectURL(blob),'_blank');
+        showToast('画像を長押しでコピーできます');
+      }catch(e){showToast('コピーできませんでした');}
+    });
+}
 
 // ── Zoom ──
 document.getElementById('zoom').oninput=function(){document.getElementById('zoom-val').textContent=this.value+'%';if(userImg)updatePreview();};
@@ -751,7 +769,7 @@ async function loadMaterials(){
       items.forEach(m=>{
         const card=document.createElement('div');card.className='mat-card';
         const img=document.createElement('img');img.src=m.src;img.alt=m.label;card.appendChild(img);
-        card.onclick=()=>{document.querySelectorAll('.mat-cat-grid .mat-card,#myphoto-grid .mat-card').forEach(x=>x.classList.remove('sel'));card.classList.add('sel');loadMaterial(m.src);};
+        card.onclick=()=>{document.querySelectorAll('.mat-cat-grid .mat-card,#myphoto-grid .mat-card').forEach(x=>x.classList.remove('sel'));card.classList.add('sel');copyMaterial(m.src);};
         grid.appendChild(card);
       });
       sec.appendChild(grid);container.appendChild(sec);
