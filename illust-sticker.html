@@ -1722,13 +1722,15 @@ function dtRenderClock(inp,center){
   const big=inp.withTime?`${inp.hh}:${dtP2(inp.mm)}`:`${inp.date.getMonth()+1}.${inp.date.getDate()}`;
   const sub1=DT_WDAYS[inp.date.getDay()];
   const sub2=inp.withTime?`${inp.date.getFullYear()}.${inp.date.getMonth()+1}.${inp.date.getDate()}`:String(inp.date.getFullYear());
-  const F="'futura-pt','Futura PT',Futura,'Avenir Next',sans-serif";
+  // とけい中央はDarumadrop One（400のみ）・年を1番上に置くレイアウト
+  const F=center?"'Darumadrop One',sans-serif":"'futura-pt','Futura PT',Futura,'Avenir Next',sans-serif";
+  const W=center?400:600;
   const bigFs=150,subFs=40,pad=50;
   const cv=document.createElement('canvas');
   const ctx0=cv.getContext('2d');
-  ctx0.font=`600 ${bigFs}px ${F}`;
+  ctx0.font=`${W} ${bigFs}px ${F}`;
   const w1=ctx0.measureText(big).width;
-  ctx0.font=`600 ${subFs}px ${F}`;
+  ctx0.font=`${W} ${subFs}px ${F}`;
   const w2=Math.max(ctx0.measureText(sub1).width,ctx0.measureText(sub2).width);
   cv.width=Math.ceil(Math.max(w1,w2)+pad*2);
   cv.height=Math.ceil(bigFs*1.15+subFs*3.4+pad*2);
@@ -1737,12 +1739,24 @@ function dtRenderClock(inp,center){
   if(center){ctx.textAlign='center';}
   const bx=center?cv.width/2:pad;
   const sx=center?cv.width/2-2:pad+4; // 字間4pxの分を補正
-  ctx.font=`600 ${bigFs}px ${F}`;
-  ctx.fillText(big,bx,pad);
-  ctx.font=`600 ${subFs}px ${F}`;
-  try{ctx.letterSpacing='4px';}catch(e){}
-  ctx.fillText(sub1,sx,pad+bigFs*1.3);
-  ctx.fillText(sub2,sx,pad+bigFs*1.3+subFs*1.75);
+  if(center){
+    ctx.font=`${W} ${subFs}px ${F}`;
+    try{ctx.letterSpacing='4px';}catch(e){}
+    ctx.fillText(sub2,sx,pad);
+    try{ctx.letterSpacing='0px';}catch(e){}
+    ctx.font=`${W} ${bigFs}px ${F}`;
+    ctx.fillText(big,bx,pad+subFs*0.4);
+    ctx.font=`${W} ${subFs}px ${F}`;
+    try{ctx.letterSpacing='4px';}catch(e){}
+    ctx.fillText(sub1,sx,pad+subFs*0.4+bigFs*1.3);
+  }else{
+    ctx.font=`${W} ${bigFs}px ${F}`;
+    ctx.fillText(big,bx,pad);
+    ctx.font=`${W} ${subFs}px ${F}`;
+    try{ctx.letterSpacing='4px';}catch(e){}
+    ctx.fillText(sub1,sx,pad+bigFs*1.3);
+    ctx.fillText(sub2,sx,pad+bigFs*1.3+subFs*1.75);
+  }
   return cv;
 }
 // 月齢スタンプ
@@ -1790,6 +1804,7 @@ function dtRenderAge(inp){
 }
 async function dtMakeBlob(){
   await document.fonts.load('20px "Silkscreen"').catch(()=>{});
+  await document.fonts.load('20px "Darumadrop One"').catch(()=>{});
   const inp=dtGetInputs();
   const cv=dtStyle==='film'?dtRenderFilm(inp):dtStyle==='vhs'?dtRenderVhs(inp):dtStyle==='age'?dtRenderAge(inp):dtRenderClock(inp,dtStyle==='clock2');
   return await new Promise(r=>cv.toBlob(r,'image/png'));
