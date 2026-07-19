@@ -160,11 +160,13 @@ gtag('config', 'G-QBYGZ9TTWS');
 
   /* 動画/GIFの差し込み枠。ファイルが無い間はタウペの箱のまま表示される */
   .step-card__media {
+    position: relative;
     aspect-ratio: 4 / 3;
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 22px;
     background: var(--taupe);
+    cursor: pointer;
   }
 
   .step-card__media video,
@@ -173,6 +175,45 @@ gtag('config', 'G-QBYGZ9TTWS');
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+
+  /* タップ再生ボタン。再生中はフェードアウト */
+  .step-card__play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(61, 58, 55, 0.15);
+    opacity: 1;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+
+  .step-card__play::before {
+    content: "";
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: 0 2px 8px rgba(61, 58, 55, 0.25);
+  }
+
+  .step-card__play::after {
+    content: "";
+    position: relative;
+    z-index: 1;
+    width: 0;
+    height: 0;
+    margin-left: 4px;
+    border-style: solid;
+    border-width: 11px 0 11px 18px;
+    border-color: transparent transparent transparent var(--dark);
+  }
+
+  .step-card__media.is-playing .step-card__play {
+    opacity: 0;
   }
 
   .step-card__num {
@@ -605,46 +646,46 @@ gtag('config', 'G-QBYGZ9TTWS');
     <p class="section__lead">STORESでのお買い物から、GoodNotesにかわいい1ページができるまで。全体の流れをご紹介します。</p>
     <div class="steps-row steps-row--flow">
       <div class="step-card">
-        <div class="step-card__media"><video src="images/redesign/guide-flow/01-stores.mp4" autoplay muted loop playsinline onerror="this.style.display='none'"></video></div>
+        <div class="step-card__media" onclick="toggleStepVideo(this)"><video src="images/redesign/guide-flow/01-stores.mp4" muted playsinline preload="metadata" onerror="this.closest('.step-card__media').style.display='none'"></video><div class="step-card__play"></div></div>
         <div class="step-card__num">01</div>
         <span class="step-card__tag">STORES</span>
         <div class="step-card__title">テンプレートを選ぶ</div>
         <p class="step-card__desc">STORESの商品ページから、好きなテンプレートを選んでご購入いただきます。</p>
       </div>
       <div class="step-card">
-        <div class="step-card__media"><video src="images/redesign/guide-flow/02-download.mp4" autoplay muted loop playsinline onerror="this.style.display='none'"></video></div>
+        <div class="step-card__media" onclick="toggleStepVideo(this)"><video src="images/redesign/guide-flow/02-download.mp4" muted playsinline preload="metadata" onerror="this.closest('.step-card__media').style.display='none'"></video><div class="step-card__play"></div></div>
         <div class="step-card__num">02</div>
         <span class="step-card__tag">download</span>
         <div class="step-card__title">ファイルをダウンロード</div>
         <p class="step-card__desc">ご購入後、STORESのマイページからPDFファイルをダウンロードします。</p>
       </div>
       <div class="step-card">
-        <div class="step-card__media"><video src="images/redesign/guide-flow/03-goodnotes.mp4" autoplay muted loop playsinline onerror="this.style.display='none'"></video></div>
+        <div class="step-card__media" onclick="toggleStepVideo(this)"><video src="images/redesign/guide-flow/03-goodnotes.mp4" muted playsinline preload="metadata" onerror="this.closest('.step-card__media').style.display='none'"></video><div class="step-card__play"></div></div>
         <div class="step-card__num">03</div>
         <span class="step-card__tag">GoodNotes</span>
         <div class="step-card__title">テンプレートをGoodNotesで開く</div>
         <p class="step-card__desc">ダウンロードしたPDFの共有メニューから「GoodNotesで開く」を選びます。</p>
       </div>
       <div class="step-card">
-        <div class="step-card__media"><video src="images/redesign/guide-flow/04-photocut.mp4" autoplay muted loop playsinline onerror="this.style.display='none'"></video></div>
+        <div class="step-card__media" onclick="toggleStepVideo(this)"><video src="images/redesign/guide-flow/04-photocut.mp4" muted playsinline preload="metadata" onerror="this.closest('.step-card__media').style.display='none'"></video><div class="step-card__play"></div></div>
         <div class="step-card__num">04</div>
         <span class="step-card__tag">photocut</span>
-        <div class="step-card__title">photocut studioを開く</div>
-        <p class="step-card__desc">Safariでphotocut studioのサイトにアクセスします。インストールは不要です。</p>
+        <div class="step-card__title">photocut studioを開いて並べる</div>
+        <p class="step-card__desc">Safariでphotocut studioを開き、iPadの画面分割（Split View）でGoodNotesと左右に並べます。インストールは不要です。</p>
       </div>
       <div class="step-card">
-        <div class="step-card__media"><video src="images/redesign/guide-flow/05-splitview.mp4" autoplay muted loop playsinline onerror="this.style.display='none'"></video></div>
+        <div class="step-card__media" onclick="toggleStepVideo(this)"><video src="images/redesign/guide-flow/05-paste.mp4" muted playsinline preload="metadata" onerror="this.closest('.step-card__media').style.display='none'"></video><div class="step-card__play"></div></div>
         <div class="step-card__num">05</div>
-        <span class="step-card__tag">split view</span>
-        <div class="step-card__title">2つを並べて表示</div>
-        <p class="step-card__desc">iPadの画面分割（Split View）で、GoodNotesとphotocut studioを左右に並べます。</p>
-      </div>
-      <div class="step-card">
-        <div class="step-card__media"><video src="images/redesign/guide-flow/06-paste.mp4" autoplay muted loop playsinline onerror="this.style.display='none'"></video></div>
-        <div class="step-card__num">06</div>
         <span class="step-card__tag">paste</span>
         <div class="step-card__title">切り抜いて貼り付け</div>
         <p class="step-card__desc">テンプレートと同じ形に写真を切り抜いて、そのままGoodNotesへ貼り付けます。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-card__media" onclick="toggleStepVideo(this)"><video src="images/redesign/guide-flow/06-guide.mp4" muted playsinline preload="metadata" onerror="this.closest('.step-card__media').style.display='none'"></video><div class="step-card__play"></div></div>
+        <div class="step-card__num">06</div>
+        <span class="step-card__tag">guide</span>
+        <div class="step-card__title">くわしい使い方はガイドボタンから</div>
+        <p class="step-card__desc">photocut studioの画面右上にある「guide」ボタンから、フチ設定やプレミアム機能などくわしい使い方をいつでも確認できます。</p>
       </div>
     </div>
 
@@ -665,6 +706,31 @@ gtag('config', 'G-QBYGZ9TTWS');
   <div class="footer__brand">mamaroku</div>
   <div class="footer__sub">photocut studio — photo cutout tool</div>
 </footer>
+
+<script>
+document.querySelectorAll('.step-card__media video').forEach(function(video) {
+  video.addEventListener('loadedmetadata', function() {
+    video.currentTime = 0.01;
+  });
+  video.addEventListener('ended', function() {
+    const media = video.closest('.step-card__media');
+    if (media) media.classList.remove('is-playing');
+  });
+});
+
+function toggleStepVideo(el) {
+  const video = el.querySelector('video');
+  if (!video) return;
+  if (video.paused) {
+    if (video.ended) video.currentTime = 0;
+    video.play();
+    el.classList.add('is-playing');
+  } else {
+    video.pause();
+    el.classList.remove('is-playing');
+  }
+}
+</script>
 
 </body>
 </html>
