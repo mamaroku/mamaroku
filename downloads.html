@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Downloads | mamaroku design</title>
   <meta name="description" content="mamarokuの無料素材・お試しテンプレートのダウンロードページです。">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBYGZ9TTWS"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QBYGZ9TTWS');
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -317,6 +324,11 @@
           a.href = dataUrlToBlobUrl(item.data);
           a.download = item.filename || '';
           a.textContent = 'ダウンロード';
+          a.addEventListener('click', function () {
+            if (window.gtag) {
+              gtag('event', 'download_click', { item_title: item.title || '', item_filename: item.filename || '' });
+            }
+          });
           grid.appendChild(card);
         });
       }

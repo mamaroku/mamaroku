@@ -164,19 +164,16 @@
   </section>
 
   <section>
-    <h2>読み込み・公開</h2>
-    <div class="footer-actions">
-      <button class="btn ghost" id="load-btn">GitHubから現在の内容を読み込む</button>
-      <span class="status" id="load-status"></span>
-    </div>
-  </section>
-
-  <section>
     <h2 style="justify-content:space-between;">
       <span>素材リスト（<span id="item-count">0</span>件）</span>
     </h2>
+    <p style="font-size:0.72rem;color:#999;margin:-4px 0 12px;" id="autoload-note">ページを開くと自動で現在の内容を読み込みます。</p>
     <div class="item-list" id="item-list"></div>
-    <p class="empty" id="empty-msg">まだ素材がありません。上のフォームから追加するか、GitHubから読み込んでください。</p>
+    <p class="empty" id="empty-msg">まだ素材がありません。上のフォームから追加してください。</p>
+    <div class="footer-actions">
+      <button class="btn ghost small" id="load-btn">もう一度読み込み直す</button>
+      <span class="status" id="load-status"></span>
+    </div>
 
     <div class="footer-actions">
       <button class="btn primary" id="publish-btn">この内容をGitHubに公開する</button>
@@ -332,10 +329,15 @@
     };
   }
 
-  $('load-btn').onclick = async function () {
+  var hasLoadedOnce = false;
+
+  async function doLoad(silent) {
     var st = $('load-status');
     var conf = ghConf();
-    if (!conf.token) { st.className = 'status err'; st.textContent = 'トークンを設定してください'; return; }
+    if (!conf.token) {
+      if (!silent) { st.className = 'status err'; st.textContent = 'トークンを設定してください'; }
+      return;
+    }
     st.className = 'status'; st.textContent = '読み込み中...';
     try {
       var mr = await fetch('https://api.github.com/repos/' + conf.repo + '/contents/' + conf.path, {
@@ -344,6 +346,7 @@
       if (!mr.ok) {
         if (mr.status === 404) {
           items = [];
+          hasLoadedOnce = true;
           render();
           st.className = 'status ok';
           st.textContent = 'まだファイルが存在しません（新規作成になります）';
@@ -359,7 +362,7 @@
       var data = await br.json();
       if (data && (data.enc || data.ct)) {
         var code = getCode();
-        if (!code) throw new Error('暗号化されています。先に上の「アクセスコード」を入力してください');
+        if (!code) throw new Error('暗号化されています。上の「アクセスコード」を入力してから「もう一度読み込み直す」を押してください');
         try {
           data = await decryptPayload(code, data);
         } catch (e2) {
@@ -369,17 +372,27 @@
       items = (data.items || []).map(function (it) {
         return { id: it.id, title: it.title, desc: it.desc, filename: it.filename, mime: it.mime, size: it.size, data: it.data };
       });
+      hasLoadedOnce = true;
       render();
       st.className = 'status ok';
       st.textContent = '読み込み完了（' + items.length + '件）';
     } catch (e) {
-      st.className = 'status err';
-      st.textContent = 'エラー: ' + e.message;
+      st.className = silent ? 'status' : 'status err';
+      st.textContent = silent
+        ? '自動読み込みできませんでした（アクセスコードを確認して「もう一度読み込み直す」を押してください）'
+        : 'エラー: ' + e.message;
     }
-  };
+  }
+
+  $('load-btn').onclick = function () { doLoad(false); };
 
   $('publish-btn').onclick = async function () {
     var st = $('publish-status');
+    if (!hasLoadedOnce && items.length === 0) {
+      if (!confirm('現在の内容をまだ読み込んでいません。このまま公開すると、既存の素材がすべて消えて空の状態で公開される可能性があります。\n\n本当に続けますか？')) {
+        return;
+      }
+    }
     var conf = ghConf();
     if (!conf.token) { st.className = 'status err'; st.textContent = 'トークンを設定してください'; return; }
     var code = getCode();
@@ -427,6 +440,7 @@
   };
 
   render();
+  doLoad(true);
 })();
 </script>
 </body>
