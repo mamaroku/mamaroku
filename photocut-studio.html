@@ -576,7 +576,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <div id="premium-code-error"></div>
     <button id="premium-code-submit">解除する</button>
     <button id="premium-modal-cancel" onclick="closePremiumModal()">キャンセル</button>
-    <a id="premium-buy-link" href="https://mamaroku.stores.jp/" target="_blank" rel="noopener">コードをお持ちでない方はこちら →</a>
+    <a id="premium-buy-link" href="index.html#premium" target="_blank" rel="noopener">コードをお持ちでない方はこちら →</a>
   </div>
 </div>
 
@@ -608,8 +608,57 @@ const PREMIUM_HASH='561fd0e4f3e56e3dc4b99c8eb682d646a0eec6bbb344523afc50379c7898
 let premiumUnlocked=localStorage.getItem('mamaroku_premium')==='1';
 
 async function sha256(str){
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(window.crypto&&crypto.subtle){
+    const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  // 暗号化APIが使えない環境（http+IPアドレスでのローカル確認など）用フォールバック
+  return sha256Fallback(str);
+}
+function sha256Fallback(str){
+  function rr(v,a){return (v>>>a)|(v<<(32-a));}
+  var mp=Math.pow,maxWord=mp(2,32),result='',words=[];
+  var ascii=unescape(encodeURIComponent(str));
+  var bitLen=ascii.length*8;
+  var hash=sha256Fallback.h=sha256Fallback.h||[];
+  var k=sha256Fallback.k=sha256Fallback.k||[];
+  var pc=k.length,comp={};
+  for(var cand=2;pc<64;cand++){
+    if(!comp[cand]){
+      for(var i=0;i<313;i+=cand){comp[i]=cand;}
+      hash[pc]=(mp(cand,.5)*maxWord)|0;
+      k[pc++]=(mp(cand,1/3)*maxWord)|0;
+    }
+  }
+  ascii+='\x80';
+  while(ascii.length%64-56)ascii+='\x00';
+  for(var i=0;i<ascii.length;i++){
+    var j=ascii.charCodeAt(i);
+    if(j>>8)return;
+    words[i>>2]|=j<<((3-i)%4)*8;
+  }
+  words[words.length]=(bitLen/maxWord)|0;
+  words[words.length]=bitLen;
+  for(var j=0;j<words.length;){
+    var w=words.slice(j,j+=16),oldHash=hash;
+    hash=hash.slice(0,8);
+    for(var i=0;i<64;i++){
+      var w15=w[i-15],w2=w[i-2],a=hash[0],e=hash[4];
+      var t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]
+        +(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+      var t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+      hash=[(t1+t2)|0].concat(hash);
+      hash[4]=(hash[4]+t1)|0;
+    }
+    for(var i=0;i<8;i++){hash[i]=(hash[i]+oldHash[i])|0;}
+  }
+  for(var i=0;i<8;i++){
+    for(var j=3;j+1;j--){
+      var b=(hash[i]>>(j*8))&255;
+      result+=((b<16)?0:'')+b.toString(16);
+    }
+  }
+  return result;
 }
 function showUnlockModal(){
   document.getElementById('premium-code-input').value='';
@@ -755,46 +804,52 @@ function dtRenderVhs(inp){
   ctx.fillText(line2,pad,y);
   return cv;
 }
-// とけい(ロック画面)風
+// とけい(ロック画面)風。01=左寄せ(futura)、02=中央(Darumadrop One 400)
+// 日付を主役（大）に、上から 年／日付／…の順で積み上げる
 function dtRenderClock(inp,center){
-  const big=inp.withTime?`${inp.hh}:${dtP2(inp.mm)}`:`${inp.date.getMonth()+1}.${inp.date.getDate()}`;
-  const sub1=DT_WDAYS[inp.date.getDay()];
-  const sub2=inp.withTime?`${inp.date.getFullYear()}.${inp.date.getMonth()+1}.${inp.date.getDate()}`:String(inp.date.getFullYear());
-  // とけい中央はDarumadrop One（400のみ）・年を1番上に置くレイアウト
   const F=center?"'Darumadrop One',sans-serif":"'futura-pt','Futura PT',Futura,'Avenir Next',sans-serif";
   const W=center?400:600;
   const bigFs=150,subFs=40,pad=50;
+  const year=String(inp.date.getFullYear());
+  const date=`${inp.date.getMonth()+1}.${inp.date.getDate()}`;
+  const weekday=DT_WDAYS[inp.date.getDay()];
+  const time=`${dtP2(inp.hh)}:${dtP2(inp.mm)}`;
+  // 表示する行を上から順に組み立てる
+  const lines=[{t:year,fs:subFs},{t:date,fs:bigFs}];
+  if(center){
+    // 02: 年 / 日付 / 曜日 / 時刻（曜日と同じ大きさ・時刻ONのときのみ）
+    lines.push({t:weekday,fs:subFs});
+    if(inp.withTime)lines.push({t:time,fs:subFs});
+  }else{
+    // 01: 年 / 日付 / 時刻␣曜日（時刻ONなら1行にまとめる）
+    lines.push({t:inp.withTime?`${time}　${weekday}`:weekday,fs:subFs});
+  }
   const cv=document.createElement('canvas');
   const ctx0=cv.getContext('2d');
-  ctx0.font=`${W} ${bigFs}px ${F}`;
-  const w1=ctx0.measureText(big).width;
-  ctx0.font=`${W} ${subFs}px ${F}`;
-  const w2=Math.max(ctx0.measureText(sub1).width,ctx0.measureText(sub2).width);
-  cv.width=Math.ceil(Math.max(w1,w2)+pad*2);
-  cv.height=Math.ceil(bigFs*1.15+subFs*3.4+pad*2);
+  // 幅の測定（サブ行は字間4pxぶんを加味）
+  let maxW=0;
+  lines.forEach(L=>{ctx0.font=`${W} ${L.fs}px ${F}`;const extra=L.fs<bigFs?L.t.length*4:0;maxW=Math.max(maxW,ctx0.measureText(L.t).width+extra);});
+  // 各行のY位置を上から積み上げ（年→日付だけは詰める）
+  const gap=subFs*0.5;
+  const ys=[];let y=pad;
+  lines.forEach((L,i)=>{
+    ys.push(y);
+    const next=lines[i+1];
+    const h=(L.fs===bigFs?L.fs*1.05:L.fs*0.78);       // 行の見かけの高さ
+    const g=!next?0:(next.fs===bigFs?(center?-subFs*0.5:subFs*0.05):gap); // 次が日付(大)なら詰める（02はフォント上余白が多いので大きく詰める）
+    y+=h+g;
+  });
+  cv.width=Math.ceil(maxW+pad*2);
+  cv.height=Math.ceil(y+pad);
   const ctx=cv.getContext('2d');
   ctx.fillStyle=dtInk;ctx.textBaseline='top';
-  if(center){ctx.textAlign='center';}
-  const bx=center?cv.width/2:pad;
-  const sx=center?cv.width/2-2:pad+4; // 字間4pxの分を補正
-  if(center){
-    ctx.font=`${W} ${subFs}px ${F}`;
-    try{ctx.letterSpacing='4px';}catch(e){}
-    ctx.fillText(sub2,sx,pad);
-    try{ctx.letterSpacing='0px';}catch(e){}
-    ctx.font=`${W} ${bigFs}px ${F}`;
-    ctx.fillText(big,bx,pad+subFs*0.4);
-    ctx.font=`${W} ${subFs}px ${F}`;
-    try{ctx.letterSpacing='4px';}catch(e){}
-    ctx.fillText(sub1,sx,pad+subFs*0.4+bigFs*1.3);
-  }else{
-    ctx.font=`${W} ${bigFs}px ${F}`;
-    ctx.fillText(big,bx,pad);
-    ctx.font=`${W} ${subFs}px ${F}`;
-    try{ctx.letterSpacing='4px';}catch(e){}
-    ctx.fillText(sub1,sx,pad+bigFs*1.3);
-    ctx.fillText(sub2,sx,pad+bigFs*1.3+subFs*1.75);
-  }
+  const x=center?cv.width/2:pad;
+  if(center)ctx.textAlign='center';
+  lines.forEach((L,i)=>{
+    ctx.font=`${W} ${L.fs}px ${F}`;
+    try{ctx.letterSpacing=L.fs<bigFs?'4px':'0px';}catch(e){}
+    ctx.fillText(L.t,x,ys[i]);
+  });
   return cv;
 }
 async function dtMakeBlob(){
