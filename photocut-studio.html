@@ -853,15 +853,11 @@ function dtSetup(){
   ['dt-date','dt-time','dt-with-time'].forEach(id=>document.getElementById(id).addEventListener('change',dtUpdatePreview));
   document.getElementById('dt-preview').addEventListener('dragstart',e=>{if(dtUrl)e.dataTransfer.setData('text/uri-list',dtUrl);});
   document.getElementById('dt-copy').onclick=()=>{
-    // 事前に用意した画像を待ち時間ゼロで即コピー（操作許可を保ったまま書き込むので連続コピーできる）
-    const blob=dtBlob;
-    if(!blob)return;
-    navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).catch(()=>{
-      if(dtUrl){
-        document.getElementById('copy-modal-img').src=dtUrl;
-        document.getElementById('copy-modal').classList.add('show');
-      }
-    });
+    // メインのCOPYボタンと同じ「プレビューを出して長押し→コピー」方式に統一
+    // （iOSではこの方式が確実。何度でも連続でコピーできる）
+    if(!dtUrl)return;
+    document.getElementById('copy-modal-img').src=dtUrl;
+    document.getElementById('copy-modal').classList.add('show');
   };
   dtUpdatePreview();
 }
