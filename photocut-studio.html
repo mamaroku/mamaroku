@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="mamaroku">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=Silkscreen&display=swap" rel="stylesheet">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBYGZ9TTWS"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -98,6 +98,26 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .panel-inner{padding:8px 10px;overflow-y:auto;max-height:366px;}
 .panel-inner::-webkit-scrollbar{width:3px;}
 .panel-inner::-webkit-scrollbar-thumb{background:var(--bdl);border-radius:2px;}
+
+/* date panel */
+.dt-label{font-size:10px;letter-spacing:.15em;color:var(--faint);text-transform:uppercase;width:100%;margin-bottom:6px;}
+.dt-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.dt-input{border:1px solid var(--bdl);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;padding:5px 8px;}
+.dt-check{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.dt-style{padding:5px 14px;font-size:12px;letter-spacing:.08em;border:1px solid var(--bdl);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
+.dt-style.selected{background:var(--text);border-color:var(--text);color:var(--bg);}
+.dt-ink{width:26px;height:26px;border-radius:50%;border:2px solid var(--sur);outline:1px solid var(--bdl);cursor:pointer;padding:0;flex-shrink:0;}
+.dt-ink.selected{outline:2px solid var(--acc);}
+.dt-ink-custom{position:relative;overflow:hidden;display:inline-block;background:conic-gradient(#f0a0a0,#f0dfa0,#b4e0a8,#a4d4ec,#c4b4ec,#ecb4d4,#f0a0a0);}
+.dt-ink-custom span{position:absolute;inset:6px;border-radius:50%;background:#ff8a3c;}
+.dt-ink-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0;}
+#dt-hex{font-size:11px;color:var(--muted);letter-spacing:.05em;}
+.dt-preview-wrap{display:flex;align-items:center;gap:14px;margin-top:2px;}
+#dt-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
+#dt-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
+#dt-preview{max-width:94%;max-height:80px;object-fit:contain;}
+#dt-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
+.dt-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;margin-top:8px;}
 
 /* photo panel */
 #panel-photo label{
@@ -449,6 +469,11 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
       <span class="tool-lbl">border</span>
     </button>
+    <!-- date -->
+    <button class="tool-btn" id="tool-date" onclick="togglePanel('date')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="tool-lbl">日付</span>
+    </button>
     <!-- material -->
     <button class="tool-btn" id="tool-material" onclick="showMaterialScreen()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -493,6 +518,29 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
         <div style="display:flex;gap:5px;flex-wrap:wrap;" id="color-presets"></div>
       </div>
     </div>
+    <!-- date panel -->
+    <div class="panel-inner" id="panel-date" style="display:none">
+      <div class="dt-label">日付・時刻</div>
+      <div class="dt-row">
+        <input type="date" class="dt-input" id="dt-date">
+        <input type="time" class="dt-input" id="dt-time">
+        <label class="dt-check"><input type="checkbox" id="dt-with-time">時刻も入れる</label>
+      </div>
+      <div class="dt-label">デザイン</div>
+      <div class="dt-row" id="dt-styles">
+        <button class="dt-style selected" data-style="film">フィルム</button>
+        <button class="dt-style" data-style="vhs">ビデオ</button>
+        <button class="dt-style" data-style="clock">日付01</button>
+        <button class="dt-style" data-style="clock2">日付02</button>
+      </div>
+      <div class="dt-label">カラー</div>
+      <div class="dt-row" id="dt-inks"></div>
+      <div class="dt-preview-wrap">
+        <div id="dt-preview-box"><img id="dt-preview" draggable="true" alt="日付スタンプ"></div>
+        <button id="dt-copy">コピー</button>
+      </div>
+      <div class="dt-hint">コピーしてGoodNotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
+    </div>
   </div>
 
   <div id="footer-logo">mamaroku</div>
@@ -535,6 +583,7 @@ let activeCat=CATS[0], selIdx=0, selSize=700;
 let borderStyle='none', borderColor='#ffffff', borderWidth=6;
 let userImg=null, photoOx=0, photoOy=0, fillMode='photo';
 let shapeRotation=0;
+let dtStyle='film', dtInk='#ffffff', dtUrl=null, dtBlob=null;
 
 
 // ── Premium ──
@@ -581,7 +630,7 @@ let activePanel=null;
 let colorPickerInited=false;
 function togglePanel(name){
   const panel=document.getElementById('panel');
-  const all=['photo','shape','border'];
+  const all=['photo','shape','border','date'];
   if(activePanel===name){
     panel.classList.remove('open');
     all.forEach(n=>{ const p=document.getElementById('panel-'+n); const t=document.getElementById('tool-'+n); if(p)p.style.display='none'; if(t)t.classList.remove('active'); });
@@ -600,6 +649,196 @@ function togglePanel(name){
     // resizePreviewでrender()が呼ばれなかった場合の保険
     if(userImg) requestAnimationFrame(()=>render());
   },300);
+}
+
+// ── 日付スタンプ ──
+const DT_COLORS=[
+  {c:'#ffffff',n:'ホワイト'},
+  {c:'#231815',n:'ブラック'},
+  {c:'#ff8a3c',n:'オレンジ'}
+];
+function dtIsDark(c){const n=parseInt(c.slice(1),16);return ((n>>16&255)*299+(n>>8&255)*587+(n&255)*114)/1000<140;}
+const DT_MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DT_WDAYS=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+// 7セグ数字の点灯パターン a,b,c,d,e,f,g
+const DT_SEG={'0':[1,1,1,1,1,1,0],'1':[0,1,1,0,0,0,0],'2':[1,1,0,1,1,0,1],'3':[1,1,1,1,0,0,1],'4':[0,1,1,0,0,1,1],'5':[1,0,1,1,0,1,1],'6':[1,0,1,1,1,1,1],'7':[1,1,1,0,0,0,0],'8':[1,1,1,1,1,1,1],'9':[1,1,1,1,0,1,1]};
+
+function dtGetInputs(){
+  const dv=document.getElementById('dt-date').value;
+  const tv=document.getElementById('dt-time').value||'10:00';
+  const withTime=document.getElementById('dt-with-time').checked;
+  const [y,m,d]=dv?dv.split('-').map(Number):[2026,1,1];
+  const [hh,mm]=tv.split(':').map(Number);
+  return {date:new Date(y,m-1,d),hh,mm,withTime};
+}
+function dtP2(n){return String(n).padStart(2,'0');}
+
+// フィルム風: 7セグ数字を線で描く
+function dtDrawSeg(ctx,ch,x,y,h){
+  const w=h*0.52,t=h*0.15,i=t*0.65,g=i*0.7;
+  if(ch==='.'){ctx.fillRect(x,y+h-t,t,t);return t+h*0.18;}
+  if(ch===':'){ctx.fillRect(x,y+h*0.25,t,t);ctx.fillRect(x,y+h*0.62,t,t);return t+h*0.18;}
+  if(ch===' ')return h*0.34;
+  const s=DT_SEG[ch];if(!s)return 0;
+  ctx.lineWidth=t;ctx.lineCap='butt';
+  const L=(x1,y1,x2,y2)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
+  if(s[0])L(x+i,y,x+w-i,y);
+  if(s[1])L(x+w,y+i,x+w,y+h/2-g);
+  if(s[2])L(x+w,y+h/2+g,x+w,y+h-i);
+  if(s[3])L(x+i,y+h,x+w-i,y+h);
+  if(s[4])L(x,y+h/2+g,x,y+h-i);
+  if(s[5])L(x,y+i,x,y+h/2-g);
+  if(s[6])L(x+i,y+h/2,x+w-i,y+h/2);
+  return w+h*0.26;
+}
+function dtMeasureSeg(ch,h){
+  const t=h*0.15;
+  if(ch==='.'||ch===':')return t+h*0.18;
+  if(ch===' ')return h*0.34;
+  return h*0.52+h*0.26;
+}
+function dtRenderFilm(inp){
+  let text=`${dtP2(inp.date.getMonth()+1)}.${dtP2(inp.date.getDate())}.${inp.date.getFullYear()}`;
+  if(inp.withTime)text+=` ${dtP2(inp.hh)}:${dtP2(inp.mm)}`;
+  const h=110,pad=60;
+  let w=0;for(const ch of text)w+=dtMeasureSeg(ch,h);
+  const cv=document.createElement('canvas');
+  cv.width=Math.ceil(w+pad*2+h*0.14);cv.height=h+pad*2;
+  const ctx=cv.getContext('2d');
+  ctx.strokeStyle=ctx.fillStyle=dtInk;
+  ctx.shadowColor=dtInk;ctx.shadowBlur=h*0.16;
+  ctx.transform(1,0,-0.09,1,h*0.12,0); // 少し斜体
+  let x=pad;
+  for(const ch of text)x+=dtDrawSeg(ctx,ch,x,pad,h);
+  // 2度描きで芯を強く
+  ctx.shadowBlur=0;x=pad;
+  for(const ch of text)x+=dtDrawSeg(ctx,ch,x,pad,h);
+  return cv;
+}
+// ビデオ(VHS)風: ドット文字
+function dtRenderVhs(inp){
+  const line2=`${DT_MONTHS[inp.date.getMonth()]} ${dtP2(inp.date.getDate())} ${inp.date.getFullYear()}`;
+  const h12=inp.hh%12===0?12:inp.hh%12;
+  const line1=inp.withTime?`${inp.hh<12?'AM':'PM'} ${dtP2(h12)}:${dtP2(inp.mm)}`:null;
+  const fs=64,pad=50,lh=fs*1.4;
+  const cv=document.createElement('canvas');
+  const ctx0=cv.getContext('2d');
+  ctx0.font=`${fs}px "Silkscreen"`;
+  const w=Math.max(ctx0.measureText(line2).width,line1?ctx0.measureText(line1).width:0);
+  cv.width=Math.ceil(w+pad*2);cv.height=Math.ceil((line1?lh*2:lh)+pad*1.4);
+  const ctx=cv.getContext('2d');
+  ctx.font=`${fs}px "Silkscreen"`;ctx.textBaseline='top';
+  ctx.fillStyle=dtInk;
+  let y=pad*0.7;
+  if(line1){ctx.fillText(line1,pad,y);y+=lh;}
+  ctx.fillText(line2,pad,y);
+  return cv;
+}
+// とけい(ロック画面)風
+function dtRenderClock(inp,center){
+  const big=inp.withTime?`${inp.hh}:${dtP2(inp.mm)}`:`${inp.date.getMonth()+1}.${inp.date.getDate()}`;
+  const sub1=DT_WDAYS[inp.date.getDay()];
+  const sub2=inp.withTime?`${inp.date.getFullYear()}.${inp.date.getMonth()+1}.${inp.date.getDate()}`:String(inp.date.getFullYear());
+  // とけい中央はDarumadrop One（400のみ）・年を1番上に置くレイアウト
+  const F=center?"'Darumadrop One',sans-serif":"'futura-pt','Futura PT',Futura,'Avenir Next',sans-serif";
+  const W=center?400:600;
+  const bigFs=150,subFs=40,pad=50;
+  const cv=document.createElement('canvas');
+  const ctx0=cv.getContext('2d');
+  ctx0.font=`${W} ${bigFs}px ${F}`;
+  const w1=ctx0.measureText(big).width;
+  ctx0.font=`${W} ${subFs}px ${F}`;
+  const w2=Math.max(ctx0.measureText(sub1).width,ctx0.measureText(sub2).width);
+  cv.width=Math.ceil(Math.max(w1,w2)+pad*2);
+  cv.height=Math.ceil(bigFs*1.15+subFs*3.4+pad*2);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=dtInk;ctx.textBaseline='top';
+  if(center){ctx.textAlign='center';}
+  const bx=center?cv.width/2:pad;
+  const sx=center?cv.width/2-2:pad+4; // 字間4pxの分を補正
+  if(center){
+    ctx.font=`${W} ${subFs}px ${F}`;
+    try{ctx.letterSpacing='4px';}catch(e){}
+    ctx.fillText(sub2,sx,pad);
+    try{ctx.letterSpacing='0px';}catch(e){}
+    ctx.font=`${W} ${bigFs}px ${F}`;
+    ctx.fillText(big,bx,pad+subFs*0.4);
+    ctx.font=`${W} ${subFs}px ${F}`;
+    try{ctx.letterSpacing='4px';}catch(e){}
+    ctx.fillText(sub1,sx,pad+subFs*0.4+bigFs*1.3);
+  }else{
+    ctx.font=`${W} ${bigFs}px ${F}`;
+    ctx.fillText(big,bx,pad);
+    ctx.font=`${W} ${subFs}px ${F}`;
+    try{ctx.letterSpacing='4px';}catch(e){}
+    ctx.fillText(sub1,sx,pad+bigFs*1.3);
+    ctx.fillText(sub2,sx,pad+bigFs*1.3+subFs*1.75);
+  }
+  return cv;
+}
+async function dtMakeBlob(){
+  await document.fonts.load('20px "Silkscreen"').catch(()=>{});
+  await document.fonts.load('20px "Darumadrop One"').catch(()=>{});
+  const inp=dtGetInputs();
+  const cv=dtStyle==='film'?dtRenderFilm(inp):dtStyle==='vhs'?dtRenderVhs(inp):dtRenderClock(inp,dtStyle==='clock2');
+  return await new Promise(r=>cv.toBlob(r,'image/png'));
+}
+async function dtUpdatePreview(){
+  const blob=await dtMakeBlob();
+  dtBlob=blob; // コピー用に保持（押した瞬間に待ち時間ゼロでコピーするため）
+  if(dtUrl)URL.revokeObjectURL(dtUrl);
+  dtUrl=URL.createObjectURL(blob);
+  document.getElementById('dt-preview').src=dtUrl;
+  // 濃い色インクのときは明るい市松に切り替え
+  document.getElementById('dt-preview-box').classList.toggle('light',dtIsDark(dtInk));
+}
+function dtSetup(){
+  const now=new Date();
+  document.getElementById('dt-date').value=`${now.getFullYear()}-${dtP2(now.getMonth()+1)}-${dtP2(now.getDate())}`;
+  document.getElementById('dt-time').value=`${dtP2(now.getHours())}:${dtP2(now.getMinutes())}`;
+  const inkRow=document.getElementById('dt-inks');
+  DT_COLORS.forEach(({c,n})=>{
+    const b=document.createElement('button');
+    b.className='dt-ink'+(c===dtInk?' selected':'');b.style.background=c;b.title=n;b.dataset.ink=c;
+    b.onclick=()=>{dtInk=c;document.querySelectorAll('#panel-date .dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.getElementById('dt-hex').textContent=c;dtUpdatePreview();};
+    inkRow.appendChild(b);
+  });
+  // カスタムカラー
+  const cust=document.createElement('label');
+  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
+  cust.innerHTML='<span id="dt-chip"></span><input type="color" id="dt-picker" value="#ff8a3c">';
+  inkRow.appendChild(cust);
+  const hex=document.createElement('span');hex.id='dt-hex';hex.textContent=dtInk;
+  inkRow.appendChild(hex);
+  document.getElementById('dt-picker').addEventListener('input',e=>{
+    dtInk=e.target.value;
+    document.getElementById('dt-chip').style.background=dtInk;
+    hex.textContent=dtInk;
+    document.querySelectorAll('#panel-date .dt-ink').forEach(x=>x.classList.remove('selected'));
+    cust.classList.add('selected');
+    dtUpdatePreview();
+  });
+  document.querySelectorAll('#dt-styles .dt-style').forEach(b=>{
+    b.onclick=()=>{
+      dtStyle=b.dataset.style;
+      document.querySelectorAll('#dt-styles .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+      dtUpdatePreview();
+    };
+  });
+  ['dt-date','dt-time','dt-with-time'].forEach(id=>document.getElementById(id).addEventListener('change',dtUpdatePreview));
+  document.getElementById('dt-preview').addEventListener('dragstart',e=>{if(dtUrl)e.dataTransfer.setData('text/uri-list',dtUrl);});
+  document.getElementById('dt-copy').onclick=()=>{
+    // 事前に用意した画像を待ち時間ゼロで即コピー（操作許可を保ったまま書き込むので連続コピーできる）
+    const blob=dtBlob;
+    if(!blob)return;
+    navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).catch(()=>{
+      if(dtUrl){
+        document.getElementById('copy-modal-img').src=dtUrl;
+        document.getElementById('copy-modal').classList.add('show');
+      }
+    });
+  };
+  dtUpdatePreview();
 }
 
 // ── Init UI ──
@@ -623,6 +862,7 @@ function renderCategoryTabs(){
 
 function initUI(){
   renderCategoryTabs();
+  dtSetup();
 
   // Border options
   const BOPTS=[
