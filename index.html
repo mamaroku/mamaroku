@@ -1175,6 +1175,51 @@
     })();
   </script>
 
+  <!-- ── クリック計測（GA4） ── -->
+  <script>
+    (function () {
+      if (typeof gtag !== 'function') return;
+
+      // リンクの中身から名前を取る（商品はimgのalt、それ以外は文字）
+      function labelOf(a) {
+        var img = a.querySelector('img');
+        var alt = img && img.getAttribute('alt');
+        if (alt) return alt.trim().slice(0, 60);
+        return (a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60) || '(名称なし)';
+      }
+
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('a[href]');
+        if (!a) return;
+        var href = a.getAttribute('href') || '';
+        var name = labelOf(a);
+
+        // STORESの商品ページ → GA4の商品レポートに載る形で送る
+        if (href.indexOf('mamaroku-design.stores.jp') > -1) {
+          var m = href.match(/items\/([A-Za-z0-9]+)/);
+          gtag('event', 'select_item', {
+            item_list_name: 'トップページ Line up',
+            items: [{ item_id: m ? m[1] : href, item_name: name }]
+          });
+          return;
+        }
+
+        if (href.indexOf('free.html') > -1) {
+          gtag('event', 'click_free_template', { link_text: name });
+        } else if (href.indexOf('photocut-studio') > -1) {
+          gtag('event', 'click_photocut_studio', { link_text: name });
+        } else if (href.indexOf('photocut-guide') > -1) {
+          gtag('event', 'click_photocut_guide', { link_text: name });
+        } else if (href.indexOf('instagram.com') > -1) {
+          gtag('event', 'click_instagram', { link_text: name });
+        } else if (href.indexOf('pinterest.') > -1) {
+          gtag('event', 'click_pinterest', { link_text: name });
+        } else if (href.indexOf('faq.stores.jp') > -1) {
+          gtag('event', 'click_stores_help', { link_text: name });
+        }
+      }, true);
+    })();
+  </script>
 
 </body>
 </html>
