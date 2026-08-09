@@ -345,9 +345,11 @@
     .lineup-price {
       font-size: 0.75rem;
       color: rgba(245,242,237,0.6);
-      margin-bottom: 32px;
+      margin-bottom: 20px;
       letter-spacing: 0.04em;
     }
+
+    .lineup-try { margin-bottom: 34px; }
 
     .sidebar-instagram {
       margin-top: 16px;
@@ -907,6 +909,7 @@
         <img loading="lazy" decoding="async" class="lineup-badge" src="images/redesign/lineup-badge.png" width="520" height="553" alt="必要なのはこちら → 01 Line up 育児記録テンプレートをみる">
         <p class="lineup-intro">それぞれ異なる世界観のテンプレートをご用意しています。</p>
         <p class="lineup-price">¥1,280〜（税込）・無料テンプレートあり</p>
+        <a class="btn-outline lineup-try" href="free.html">まずは無料テンプレートで試す</a>
         <div class="product-grid">
           <a href="https://mamaroku-design.stores.jp/items/6a2d382213b903dbc9e5b6ad" target="_blank" rel="noopener noreferrer">
             <img loading="lazy" decoding="async" src="images/redesign/product-01-merry.png" width="600" height="600" alt="メリーゴーランド（くすみカラー）">
@@ -975,11 +978,11 @@
             <img loading="lazy" decoding="async" src="images/redesign/product-10-daily-2026-08.png" width="600" height="600" alt="daily template 2026.8">
             <span class="product-meta">
               <span class="product-name">daily template 2026.8</span>
-              <span class="product-spec">¥1,280</span>
+              <span class="product-spec">¥1,280 ／ 全31ページ</span>
             </span>
           </a>
         </div>
-        <a class="btn-black" href="free.html">無料のテンプレートからはじめてみる</a>
+        <a class="btn-black" href="https://mamaroku-design.stores.jp/" target="_blank" rel="noopener noreferrer">ストアで全部を見る →</a>
       </section>
 
       <!-- Photocut Studio -->
@@ -1268,10 +1271,15 @@
         // STORESの商品ページ → GA4の商品レポートに載る形で送る
         if (href.indexOf('mamaroku-design.stores.jp') > -1) {
           var m = href.match(/items\/([A-Za-z0-9]+)/);
-          gtag('event', 'select_item', {
-            item_list_name: 'トップページ Line up',
-            items: [{ item_id: m ? m[1] : href, item_name: name }]
-          });
+          if (m) {
+            gtag('event', 'select_item', {
+              item_list_name: 'トップページ Line up',
+              items: [{ item_id: m[1], item_name: name }]
+            });
+          } else {
+            // 商品ページではないストアへのリンク（ストアトップなど）
+            gtag('event', 'click_stores_top', { link_text: name });
+          }
           return;
         }
 
