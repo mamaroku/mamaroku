@@ -408,6 +408,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <div class="adm-section">
         <h2>素材をアップロード</h2>
         <div class="adm-form">
+          <div id="adm-dirty-badge" style="display:none;background:#fff8e1;border:1px solid #d9b95c;color:#7a5c10;padding:10px 12px;font-size:12px;line-height:1.7;margin-bottom:12px;">
+            <b>未公開の変更があります。</b><br>
+            「GitHubに公開」を押すまで反映されません。公開するまでリモートとの同期は見送られます。
+          </div>
           <div id="adm-webp-warn" style="display:none;background:#fdf0ed;border:1px solid #e0a49a;color:#8a3524;padding:10px 12px;font-size:12px;line-height:1.7;margin-bottom:12px;">
             <b>このブラウザでは素材をWebPで保存できません。</b><br>
             SafariはWebPの書き出しに対応していないため、PNGで保存されます（同じ画像で5〜20倍の容量になります）。<br>
@@ -526,19 +530,33 @@ function openDB(){
     req.onerror=e=>reject(e.target.error);
   });
 }
+// ── 未公開のローカル変更の追跡 ──
+// syncFromRemote() は起動のたびにIndexedDBをリモートの内容で上書きするため、
+// 公開前にリロードすると作業が消える。ローカルに書き込みがあったら印を付けておき、
+// 公開が済むまでは同期で上書きしないようにする。
+const LOCAL_DIRTY_KEY='mamaroku_local_dirty';
+let admSyncing=false;
+function admTouchLocal(){ if(admSyncing)return; try{localStorage.setItem(LOCAL_DIRTY_KEY,'1');}catch(e){} admUpdateDirtyBadge(); }
+function admHasLocalChanges(){ try{return localStorage.getItem(LOCAL_DIRTY_KEY)==='1';}catch(e){return false;} }
+function admClearLocalDirty(){ try{localStorage.removeItem(LOCAL_DIRTY_KEY);}catch(e){} admUpdateDirtyBadge(); }
+function admUpdateDirtyBadge(){
+  const el=document.getElementById('adm-dirty-badge');
+  if(el) el.style.display=admHasLocalChanges()?'block':'none';
+}
+
 function idbGetAll(){return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readonly');const req=tx.objectStore(IDB_STORE).getAll();req.onsuccess=e=>resolve(e.target.result);req.onerror=e=>reject(e.target.error);}));}
-function idbPut(item){return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const req=tx.objectStore(IDB_STORE).put(item);req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
-function idbPutMany(items){return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const st=tx.objectStore(IDB_STORE);items.forEach(item=>st.put(item));tx.oncomplete=()=>resolve();tx.onerror=e=>reject(e.target.error);}));}
-function idbDelete(id){return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const req=tx.objectStore(IDB_STORE).delete(id);req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
-function idbDeleteByCategory(cat){return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const idx=tx.objectStore(IDB_STORE).index('category');const req=idx.openCursor(IDBKeyRange.only(cat));req.onsuccess=e=>{const cursor=e.target.result;if(cursor){cursor.delete();cursor.continue();}};tx.oncomplete=()=>resolve();tx.onerror=e=>reject(e.target.error);}));}
-function idbClear(){return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const req=tx.objectStore(IDB_STORE).clear();req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
+function idbPut(item){admTouchLocal();return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const req=tx.objectStore(IDB_STORE).put(item);req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
+function idbPutMany(items){admTouchLocal();return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const st=tx.objectStore(IDB_STORE);items.forEach(item=>st.put(item));tx.oncomplete=()=>resolve();tx.onerror=e=>reject(e.target.error);}));}
+function idbDelete(id){admTouchLocal();return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const req=tx.objectStore(IDB_STORE).delete(id);req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
+function idbDeleteByCategory(cat){admTouchLocal();return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const idx=tx.objectStore(IDB_STORE).index('category');const req=idx.openCursor(IDBKeyRange.only(cat));req.onsuccess=e=>{const cursor=e.target.result;if(cursor){cursor.delete();cursor.continue();}};tx.oncomplete=()=>resolve();tx.onerror=e=>reject(e.target.error);}));}
+function idbClear(){admTouchLocal();return openDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');const req=tx.objectStore(IDB_STORE).clear();req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
 function csGetAll(){return openDB().then(db=>new Promise((res,rej)=>{const r=db.transaction(CS_STORE).objectStore(CS_STORE).getAll();r.onsuccess=()=>res(r.result);r.onerror=e=>rej(e.target.error);}));}
 function csPutMany(items){return openDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(CS_STORE,'readwrite');const st=tx.objectStore(CS_STORE);items.forEach(it=>st.put(it));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);}));}
 function csDelete(id){return openDB().then(db=>new Promise((res,rej)=>{const r=db.transaction(CS_STORE,'readwrite').objectStore(CS_STORE).delete(id);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);}));}
 function csDeleteAll(){return openDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(CS_STORE,'readwrite');tx.objectStore(CS_STORE).clear();tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);}));}
 const VB_DEFAULT = '0 0 702.33 723.61';
 
-let selIdx=0, selSize=400, selColor='#231815';
+let selIdx=0, selSize=800, selColor='#231815';
 let selCustomId=null, customShapes=[];
 let fillMode='color', userImg=null, photoOx=0, photoOy=0;
 let currentPngUrl=null, activeTab='color', panelOpen=false;
@@ -570,11 +588,15 @@ async function renderBlob(size){
   if(selCustomId){const cs=customShapes.find(s=>s.id===selCustomId);if(!cs)return new Blob([],{type:'image/png'});inner=cs.inner;vb=cs.viewBox;}
   else{inner=SHAPES[selIdx].inner;vb=VBOXES[selIdx];}
   if(fillMode==='material'&&userImg){
-    const pC=document.createElement('canvas');pC.width=pC.height=size;
-    const ctx=pC.getContext('2d');
-    const sc=Math.min(size/userImg.width,size/userImg.height);
-    const w=userImg.width*sc,h=userImg.height*sc;
-    ctx.drawImage(userImg,(size-w)/2,(size-h)/2,w,h);
+    // 素材は正方形に収めず、元の縦横比のまま書き出す。
+    // 正方形にすると横長のテープやラベルの周りに透明の余白が大量に入り、
+    // GoodNotesで選択枠が正方形になって掴みにくく、ファイルも無駄に重くなる。
+    // 素材より大きくは書き出さない。引き伸ばしても情報は増えず、ファイルが重くなるだけ
+    // （GoodNotes側で拡大するのと結果は同じ）。平均0.80MB→0.37MBになる。
+    const sc=Math.min(size/userImg.width,size/userImg.height,1);
+    const w=Math.max(1,Math.round(userImg.width*sc)),h=Math.max(1,Math.round(userImg.height*sc));
+    const pC=document.createElement('canvas');pC.width=w;pC.height=h;
+    pC.getContext('2d').drawImage(userImg,0,0,w,h);
     return await new Promise(r=>pC.toBlob(r,'image/png'));
   }
   if(fillMode==='color'||!userImg){
@@ -614,8 +636,10 @@ document.getElementById('copy-btn').onclick=async()=>{
 };
 
 // ── Size buttons ──
-[{l:'S',v:200},{l:'M',v:400},{l:'L',v:600}].forEach(s=>{
-  const b=document.createElement('button');b.className='szbtn'+(s.v===selSize?' sel':'');b.textContent=s.l;
+// 素材が最大1600pxになったので、書き出しも合わせて引き上げる。
+// 文字入りラベルは600pxではGoodNotesで貼ったときに読めなかった。
+[{l:'S',v:400},{l:'M',v:800},{l:'L',v:1600}].forEach(s=>{
+  const b=document.createElement('button');b.className='szbtn'+(s.v===selSize?' sel':'');b.textContent=s.l;b.title=s.v+'px';
   b.onclick=()=>{document.querySelectorAll('.szbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');selSize=s.v;updatePreview();};
   document.getElementById('sz-grp').appendChild(b);
 });
@@ -1468,6 +1492,7 @@ document.getElementById('adm-export-public').onclick=async()=>{
       if(ok){
         try{const d=JSON.parse(jsonStr);if(d.updatedAt)localStorage.setItem('mamaroku_remote_ts',d.updatedAt);}catch(e){}
         try{localStorage.setItem('mamaroku_materials_cache',jsonStr);}catch(e){}
+        admClearLocalDirty();   // 公開できたので、以降はリモートと同期してよい
       }
     }catch(e){st.style.color='#a06060';st.textContent='エラー: '+e.message;}
     setTimeout(()=>{st.textContent='';},5000);
@@ -1706,15 +1731,27 @@ async function syncFromRemote(){
     if(!d||(!d.customShapes&&!d.materials&&!d.categories))return;
     if(d.categories)localStorage.setItem(CAT_KEY,JSON.stringify(d.categories));
     if(d.catTargets)localStorage.setItem(CAT_TARGET_KEY,JSON.stringify(d.catTargets));
-    if(d.materials){
-      await idbClear();
-      const items=[];
-      Object.entries(d.materials).forEach(([cat,arr])=>(arr||[]).forEach(item=>items.push({...item,category:item.category||cat})));
-      if(items.length)await idbPutMany(items);
+    // 未公開のローカル変更があるときは上書きしない（公開前のリロードで作業が消えるのを防ぐ）
+    if(admHasLocalChanges()){
+      showSyncStatus('未公開の変更があるため、リモートとの同期を見送りました');
+      admUpdateDirtyBadge();
+      return;
     }
-    if(d.customShapes!==undefined){
-      await csDeleteAll();
-      if(d.customShapes.length)await csPutMany(d.customShapes);
+    admSyncing=true;
+    try{
+      if(d.materials){
+        await idbClear();
+        const items=[];
+        Object.entries(d.materials).forEach(([cat,arr])=>(arr||[]).forEach(item=>items.push({...item,category:item.category||cat})));
+        if(items.length)await idbPutMany(items);
+      }
+      if(d.customShapes!==undefined){
+        await csDeleteAll();
+        if(d.customShapes.length)await csPutMany(d.customShapes);
+      }
+    }finally{
+      admSyncing=false;
+      admClearLocalDirty();
     }
   }catch(e){
     if(isLocal)showSyncStatus('同期エラー: '+e.message);
