@@ -408,12 +408,17 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <div class="adm-section">
         <h2>素材をアップロード</h2>
         <div class="adm-form">
+          <div id="adm-webp-warn" style="display:none;background:#fdf0ed;border:1px solid #e0a49a;color:#8a3524;padding:10px 12px;font-size:12px;line-height:1.7;margin-bottom:12px;">
+            <b>このブラウザでは素材をWebPで保存できません。</b><br>
+            SafariはWebPの書き出しに対応していないため、PNGで保存されます（同じ画像で5〜20倍の容量になります）。<br>
+            素材をアップロードするときは <b>Chrome</b> でこの管理画面を開いてください。
+          </div>
           <label class="adm-form-label">カテゴリを選択</label>
           <select class="adm-select" id="adm-upload-cat"></select>
           <button class="adm-btn adm-btn-full" id="adm-upload-btn" disabled>アップロード</button>
           <label class="adm-form-label" style="margin-top:16px;">画像ファイル（複数選択可）</label>
           <label class="adm-file-wrap" for="adm-file-input">
-            <input type="file" id="adm-file-input" accept="image/png,image/jpeg" multiple>
+            <input type="file" id="adm-file-input" accept="image/png,image/jpeg,image/webp" multiple>
             <div class="adm-file-icon">📁</div>
             <div class="adm-file-text">タップして画像を選択</div>
           </label>
@@ -437,7 +442,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <div class="adm-section">
         <h2>公開用データを書き出し</h2>
         <p>ステッカーメーカーで使用するmaterials.jsonをダウンロード、またはGitHubに直接アップロードします。</p>
-        <button class="adm-btn adm-btn-full" id="adm-recompress-btn">① 既存素材を再圧縮（初回のみ）</button>
+        <button class="adm-btn adm-btn-full" id="adm-recompress-btn">① 既存素材をWebPに変換（何度押しても劣化しません）</button>
         <div id="adm-recompress-status" style="font-size:11px;margin-top:6px;min-height:16px;text-align:center;"></div>
         <button class="adm-btn adm-btn-full" id="adm-export-public" style="margin-top:8px;">② GitHubにアップロード &amp; ダウンロード</button>
         <div id="adm-gh-push-status" style="font-size:11px;margin-top:6px;min-height:16px;text-align:center;"></div>
@@ -1250,25 +1255,75 @@ function admRenderUploadSelect(){
 document.getElementById('adm-file-input').addEventListener('change',admHandleFiles);
 document.getElementById('adm-upload-cat').addEventListener('change',admUpdateUploadBtn);
 document.getElementById('adm-upload-btn').onclick=admUpload;
+// ── 素材の縮小・エンコード ──
+// 長辺の上限。文字入りラベルをGoodNotesで大きく貼っても荒れない解像度。
+const ADM_MAX=1600;
+
+// 画像を上限内に縮小したcanvasを返す（元が小さいときは拡大しない）
+function admFitCanvas(img,max){
+  const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+  const sc=Math.min(1,max/Math.max(w,h));
+  const cv=document.createElement('canvas');
+  cv.width=Math.max(1,Math.round(w*sc));cv.height=Math.max(1,Math.round(h*sc));
+  cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+  return cv;
+}
+
+// このブラウザが canvas から WebP を書き出せるか。
+// Safari は 26.5 時点でも未対応で、toDataURL/toBlob/OffscreenCanvas すべて黙ってPNGを返す。
+const ADM_WEBP_OK=(function(){
+  try{
+    const c=document.createElement('canvas'); c.width=c.height=8;
+    return c.toDataURL('image/webp',0.9).startsWith('data:image/webp');
+  }catch(e){ return false; }
+})();
+if(!ADM_WEBP_OK){
+  const w=document.getElementById('adm-webp-warn');
+  if(w) w.style.display='block';
+}
+
+// 可逆WebP・高品質WebP・PNGを作って「いちばん小さいもの」を採用する。
+// ・線画やテープ系は可逆WebPが最小になり、無劣化のまま容量も減る
+// ・紙テクスチャ系は高品質WebPが最小になる
+// ・WebP非対応ブラウザでは toDataURL が黙ってPNGを返すため、自動的にPNGが残る
+function admEncodeBest(cv){
+  const cands=[];
+  const tryEnc=(type,q)=>{
+    try{const d=cv.toDataURL(type,q);if(typeof d==='string'&&d.startsWith('data:image/'))cands.push(d);}catch(e){}
+  };
+  tryEnc('image/webp',1);      // 対応環境では可逆
+  tryEnc('image/webp',0.92);
+  tryEnc('image/png');
+  if(!cands.length)return cv.toDataURL('image/png');
+  return cands.reduce((a,b)=>b.length<a.length?b:a);
+}
+
 function admHandleFiles(e){
   const files=Array.from(e.target.files).sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));if(!files.length)return;
   admSelFiles=files;admSelFilesData=[];
   const grid=document.getElementById('adm-preview-grid'),cnt=document.getElementById('adm-file-count');
   grid.innerHTML='';let loaded=0;
-  const MAX=400;
   files.forEach((f,i)=>{
     const rd=new FileReader();rd.onload=ev=>{
       const src=ev.target.result;
       const img2=new Image();img2.onload=()=>{
-        const w=img2.width,h=img2.height,sc=Math.min(1,MAX/Math.max(w,h));
-        const cv=document.createElement('canvas');cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);
-        cv.getContext('2d').drawImage(img2,0,0,cv.width,cv.height);
-        const px=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;
-        let hasAlpha=false;for(let j=3;j<px.length;j+=4){if(px[j]<250){hasAlpha=true;break;}}
-        const data=hasAlpha?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',0.82);
+        const data=admEncodeBest(admFitCanvas(img2,ADM_MAX));
         admSelFilesData[i]={name:f.name,data};
         const thumb=document.createElement('img');thumb.src=data;grid.appendChild(thumb);
-        if(++loaded===files.length){document.getElementById('adm-preview-area').classList.add('active');cnt.textContent=`${files.length}個を選択中`;admUpdateUploadBtn();}
+        if(++loaded===files.length){
+          document.getElementById('adm-preview-area').classList.add('active');
+          // 実際に何形式・何MBで保存されるかを見せる（PNGのまま気づかず膨らむのを防ぐ）
+          const tally={};let bytes=0;
+          admSelFilesData.forEach(d=>{
+            if(!d)return;
+            const t=d.data.slice(5,d.data.indexOf(';')).replace('image/','');
+            tally[t]=(tally[t]||0)+1; bytes+=d.data.length*0.75;
+          });
+          const kinds=Object.entries(tally).map(([k,v])=>`${k} ${v}件`).join('・');
+          cnt.textContent=`${files.length}個を選択中（${kinds} / 合計 ${(bytes/1024/1024).toFixed(2)}MB）`;
+          cnt.style.color=tally.png&&!ADM_WEBP_OK?'#b42318':'';
+          admUpdateUploadBtn();
+        }
       };img2.src=src;
     };rd.readAsDataURL(f);
   });
@@ -1435,7 +1490,7 @@ document.getElementById('adm-import-input').addEventListener('change',e=>{
       admCats=d.categories;admSaveCats();
       await idbClear();
       const items=[];
-      Object.entries(d.materials).forEach(([cat,arr])=>(arr||[]).forEach(item=>items.push({id:item.id||Date.now()+Math.random(),category:cat,name:item.name||'',data:item.data||''})));
+      Object.entries(d.materials).forEach(([cat,arr])=>(arr||[]).forEach((item,i)=>items.push({id:item.id||Date.now()+Math.random(),category:cat,name:item.name||'',data:item.data||'',sortOrder:item.sortOrder??i+1,locked:!!item.locked})));
       await idbPutMany(items);
       admRenderCatList();admRenderUploadSelect();admRenderGallery();alert('インポートしました');
     }catch(err){alert('エラー: '+err.message);}
@@ -1451,26 +1506,28 @@ document.getElementById('adm-recompress-btn').onclick=async()=>{
   st.style.color='var(--faint)';st.textContent='再圧縮中...';
   const all=await idbGetAll().catch(()=>[]);
   if(!all.length){st.textContent='素材がありません';return;}
-  const MAX=400;
-  let done=0;
+  const before=all.reduce((s,m)=>s+(m.data?m.data.length:0),0);
+  let done=0,conv=0,skip=0;
+  // 非可逆を何度もかけ直すと劣化が積み重なるので、変換済み(WebP)はそのまま残す。
+  // 縮小も上限内に収めるだけで拡大はしないため、何度押しても安全。
   const recompressed=await Promise.all(all.map(item=>new Promise(res=>{
+    if(!item.data||item.data.startsWith('data:image/webp')){skip++;st.textContent=`変換中... ${++done}/${all.length}`;return res(item);}
     const img=new Image();
     img.onload=()=>{
-      const w=img.width,h=img.height,sc=Math.min(1,MAX/Math.max(w,h));
-      const cv=document.createElement('canvas');cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);
-      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
-      const px=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;
-      let hasAlpha=false;for(let j=3;j<px.length;j+=4){if(px[j]<250){hasAlpha=true;break;}}
-      const data=hasAlpha?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',0.82);
-      st.textContent=`再圧縮中... ${++done}/${all.length}`;
-      res({...item,data});
+      const data=admEncodeBest(admFitCanvas(img,ADM_MAX));
+      st.textContent=`変換中... ${++done}/${all.length}`;
+      // 小さくならなかった場合は元のまま（無駄な作り直しをしない）
+      if(data.length>=item.data.length){skip++;return res(item);}
+      conv++;res({...item,data});
     };
-    img.onerror=()=>res(item);
+    img.onerror=()=>{skip++;st.textContent=`変換中... ${++done}/${all.length}`;res(item);};
     img.src=item.data;
   })));
   await idbPutMany(recompressed);
-  const totalMB=(recompressed.reduce((s,m)=>s+m.data.length,0)/1024/1024).toFixed(2);
-  st.style.color='#5a9a5a';st.textContent=`完了！${all.length}件を再圧縮しました（約${totalMB}MB）`;
+  const after=recompressed.reduce((s,m)=>s+m.data.length,0);
+  const mb=x=>(x/1024/1024).toFixed(2);
+  st.style.color='#5a9a5a';
+  st.textContent=`完了！${conv}件を変換・${skip}件は据え置き（${mb(before)}MB → ${mb(after)}MB）`;
 };
 
 // ── GitHub連携 ──
