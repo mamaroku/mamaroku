@@ -583,6 +583,33 @@ async function svgToCanvas(size,inner,vbox,color){
   });
 }
 
+// 素材の「絵が実際に描かれている範囲」を返す。完全に透明なピクセルだけを外側から削るので
+// 見た目は変わらない。1素材につき1回だけ計算して img に覚えさせる。
+function materialTrimBox(img){
+  if(img._trimBox) return img._trimBox;
+  const W=img.naturalWidth||img.width, H=img.naturalHeight||img.height;
+  let box={x:0,y:0,w:W,h:H};
+  try{
+    const c=document.createElement('canvas');c.width=W;c.height=H;
+    const cx=c.getContext('2d',{willReadFrequently:true});
+    cx.drawImage(img,0,0);
+    const d=cx.getImageData(0,0,W,H).data;
+    let x0=W,y0=H,x1=-1,y1=-1;
+    for(let y=0;y<H;y++){
+      const row=y*W;
+      for(let x=0;x<W;x++){
+        if(d[(row+x)*4+3]!==0){
+          if(x<x0)x0=x; if(x>x1)x1=x;
+          if(y<y0)y0=y; if(y>y1)y1=y;
+        }
+      }
+    }
+    if(x1>=0) box={x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};
+  }catch(e){/* 読めなければ切らずにそのまま */}
+  img._trimBox=box;
+  return box;
+}
+
 async function renderBlob(size){
   let inner,vb;
   if(selCustomId){const cs=customShapes.find(s=>s.id===selCustomId);if(!cs)return new Blob([],{type:'image/png'});inner=cs.inner;vb=cs.viewBox;}
@@ -591,12 +618,16 @@ async function renderBlob(size){
     // 素材は正方形に収めず、元の縦横比のまま書き出す。
     // 正方形にすると横長のテープやラベルの周りに透明の余白が大量に入り、
     // GoodNotesで選択枠が正方形になって掴みにくく、ファイルも無駄に重くなる。
+    // さらに素材PNG自体にも、同じ大きさで並べるためのアートボードが余白として
+    // 焼き込まれている（TAPE2は平均5割超が透明）。書き出すときだけ切り落とす。
+    // ギャラリーの整列はCSSの枠で作っており素材データには触れないので、並びは変わらない。
+    const t=materialTrimBox(userImg);
     // 素材より大きくは書き出さない。引き伸ばしても情報は増えず、ファイルが重くなるだけ
-    // （GoodNotes側で拡大するのと結果は同じ）。平均0.80MB→0.37MBになる。
-    const sc=Math.min(size/userImg.width,size/userImg.height,1);
-    const w=Math.max(1,Math.round(userImg.width*sc)),h=Math.max(1,Math.round(userImg.height*sc));
+    // （GoodNotes側で拡大するのと結果は同じ）。
+    const sc=Math.min(size/t.w,size/t.h,1);
+    const w=Math.max(1,Math.round(t.w*sc)),h=Math.max(1,Math.round(t.h*sc));
     const pC=document.createElement('canvas');pC.width=w;pC.height=h;
-    pC.getContext('2d').drawImage(userImg,0,0,w,h);
+    pC.getContext('2d').drawImage(userImg,t.x,t.y,t.w,t.h,0,0,w,h);
     return await new Promise(r=>pC.toBlob(r,'image/png'));
   }
   if(fillMode==='color'||!userImg){
