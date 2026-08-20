@@ -1196,27 +1196,39 @@ function drawShapeMask(ctx,size){ ctx.fillStyle='#000'; drawShapeElements(ctx,si
 // 素材PNGには「ギャラリーで同じ大きさに並べるためのアートボード」が透明の余白として
 // 焼き込まれている（TAPE2は平均5割超が透明）。完全に透明なピクセルだけを外側から削るので
 // 絵そのものは変わらないが、GoodNotesに貼ったときの余計な余白と選択枠が消える。
-// 1素材につき1回だけ計算して img に覚えさせる。
+//
+// 【重要】全画素をそのまま調べると1600pxの素材で数百msかかる。これをタップした瞬間に
+// 走らせると、iOS Safariが「コピーしました」と言いながら実際にはペーストボードを
+// 更新しない（2026-08-20に本番で発生）。そこで縮小してから測り、縮小1ピクセル分だけ
+// 外側に余裕を持たせる。切りすぎる方向には絶対にずれない。
+const TRIM_SCAN_MAX = 256;
 function materialTrimBox(img){
   if(img._trimBox) return img._trimBox;
   const W=img.naturalWidth||img.width, H=img.naturalHeight||img.height;
   let box={x:0,y:0,w:W,h:H};
   try{
-    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const k=Math.min(TRIM_SCAN_MAX/W,TRIM_SCAN_MAX/H,1);
+    const sw=Math.max(1,Math.round(W*k)), sh=Math.max(1,Math.round(H*k));
+    const c=document.createElement('canvas'); c.width=sw; c.height=sh;
     const cx=c.getContext('2d',{willReadFrequently:true});
-    cx.drawImage(img,0,0);
-    const d=cx.getImageData(0,0,W,H).data;
-    let x0=W,y0=H,x1=-1,y1=-1;
-    for(let y=0;y<H;y++){
-      const row=y*W;
-      for(let x=0;x<W;x++){
+    cx.drawImage(img,0,0,sw,sh);
+    const d=cx.getImageData(0,0,sw,sh).data;
+    let x0=sw,y0=sh,x1=-1,y1=-1;
+    for(let y=0;y<sh;y++){
+      const row=y*sw;
+      for(let x=0;x<sw;x++){
         if(d[(row+x)*4+3]!==0){
           if(x<x0)x0=x; if(x>x1)x1=x;
           if(y<y0)y0=y; if(y>y1)y1=y;
         }
       }
     }
-    if(x1>=0) box={x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};
+    if(x1>=0){
+      const m=Math.ceil(1/k); // 縮小1ピクセル＝元の何px分か（安全マージン）
+      const bx=Math.max(0,Math.floor(x0/k)-m), by=Math.max(0,Math.floor(y0/k)-m);
+      const bx1=Math.min(W,Math.ceil((x1+1)/k)+m), by1=Math.min(H,Math.ceil((y1+1)/k)+m);
+      box={x:bx,y:by,w:bx1-bx,h:by1-by};
+    }
   }catch(e){/* 読めなければ切らずにそのまま */}
   img._trimBox=box;
   return box;
@@ -1480,21 +1492,21 @@ function hideMaterialScreen() {
 }
 // ギャラリーの素材をそのまま渡すと、素材PNGに焼き込まれた透明の余白ごとコピーされる。
 // 余白を切り、選んだサイズ(S/M/L)に合わせてからコピーする。
-function trimmedMaterialBlob(src, maxSize) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const cv = document.createElement('canvas');
-        drawMaterialTo(cv, img, maxSize);
-        cv.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
-      } catch (e) { reject(e); }
-    };
-    img.onerror = reject;
-    img.src = src;
-  });
+//
+// iOS Safariは、タップから時間が経ってからクリップボードに中身が届くと、成功を返しながら
+// 実際には貼れない。そのため待ち時間のある処理（画像の読み込み・toBlob）を一切使わず、
+// 表示済みのギャラリー画像から同期処理だけでPNGを作って、実物のBlobを渡す。
+function materialPngBlobSync(img, maxSize) {
+  const cv = document.createElement('canvas');
+  drawMaterialTo(cv, img, maxSize);
+  const url = cv.toDataURL('image/png');
+  const bin = atob(url.slice(url.indexOf(',') + 1));
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return new Blob([buf], { type: 'image/png' });
 }
-// 何かの理由で↑が使えないとき（canvasが汚染されている等）の保険：素材をそのままPNGで渡す
+// 何かの理由で↑が使えないとき（画像がまだ読み込み中、canvasが汚染されている等）の
+// 保険：以前と同じく素材をそのままPNGで渡す
 function rawMaterialBlob(src) {
   return fetch(src)
     .then(r => r.blob())
@@ -1512,26 +1524,29 @@ function rawMaterialBlob(src) {
       });
     });
 }
-function selectMaterial(src, category, label) {
+function selectMaterial(src, category, label, imgEl) {
   addRecentMaterial(src);
   if (typeof gtag === 'function') {
     gtag('event', 'material_copy', { material_category: category || '', material_name: label || '' });
   }
-  const pngBlobPromise = trimmedMaterialBlob(src, matSize).catch(() => rawMaterialBlob(src));
+  // ギャラリーに表示中の画像（読み込み済み）から、その場でPNGを作る
+  let blob = null;
+  try {
+    if (imgEl && imgEl.complete && imgEl.naturalWidth) blob = materialPngBlobSync(imgEl, matSize);
+  } catch (e) { blob = null; }
 
-  navigator.clipboard.write([
-    new ClipboardItem({ 'image/png': pngBlobPromise })
-  ])
+  const item = blob
+    ? new ClipboardItem({ 'image/png': blob })
+    : new ClipboardItem({ 'image/png': rawMaterialBlob(src) });
+
+  navigator.clipboard.write([item])
     .then(() => {
       showMatToast('コピーしました ✓');
     })
     .catch(() => {
       // クリップボードが使えない端末：画像を出して長押しでコピーしてもらう
-      const im = document.getElementById('copy-modal-img');
-      pngBlobPromise
-        .then(b => { setCopyModalSrc(URL.createObjectURL(b)); })
-        .catch(() => { setCopyModalSrc(src); });
-      if (im) im.src = '';
+      if (blob) setCopyModalSrc(URL.createObjectURL(blob));
+      else setCopyModalSrc(src);
       document.getElementById('copy-modal').classList.add('show');
     });
 }
@@ -1604,6 +1619,7 @@ function addRecentMaterial(src) {
 let matFilterCat = 'all';
 
 // 素材が暗い（黒っぽい）場合はカード背景を白にする
+const requestIdle = window.requestIdleCallback ? window.requestIdleCallback.bind(window) : (f => setTimeout(f, 200));
 function applyCardBgByBrightness(imgEl, card) {
   const check = () => {
     try {
@@ -1651,6 +1667,11 @@ function buildMaterialScreen() {
     imgEl.alt = m.label;
     card.appendChild(imgEl);
     applyCardBgByBrightness(imgEl, card);
+    // 余白の測定はタップの瞬間ではなく、絵が表示できた時点の暇なときに済ませておく
+    // （タップ時に測るとiOSのクリップボードが間に合わない）
+    const precomputeTrim = () => { try { materialTrimBox(imgEl); } catch (e) {} };
+    if (imgEl.complete && imgEl.naturalWidth) requestIdle(precomputeTrim);
+    else imgEl.addEventListener('load', () => requestIdle(precomputeTrim));
     const isItemLocked = isCatLockedFn(m.category) || (!premiumUnlocked && m.locked);
     if (isItemLocked) {
       const lk = document.createElement('div');
@@ -1659,7 +1680,7 @@ function buildMaterialScreen() {
       card.appendChild(lk);
       card.addEventListener('click', () => showUnlockModal());
     } else {
-      card.addEventListener('click', () => selectMaterial(m.src, m.category, m.label));
+      card.addEventListener('click', () => selectMaterial(m.src, m.category, m.label, imgEl));
     }
     return card;
   };
