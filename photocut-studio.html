@@ -593,8 +593,7 @@ const SHAPES=[{"label":"","cat":"basic_1","inner":"<path fill=\"#231815\" d=\"M9
 
 // ── State ──
 const CATS=['basic_1','basic_3','basic_4','rafu','star','biribiri','template','template_2','unenu_2','basic_2','cloud','flower'];
-let activeCat=CATS[0], selIdx=0, selSize=800;
-let matSize=1600; // 素材コピーの上限サイズ（ギャラリー画面のS/M/L）
+let activeCat=CATS[0], selIdx=0, selSize=700;
 let borderStyle='none', borderColor='#ffffff', borderWidth=6;
 let userImg=null, photoOx=0, photoOy=0, fillMode='photo';
 let shapeRotation=0;
@@ -975,29 +974,14 @@ function initUI(){
   // Color picker inits lazily when border panel first opens
 
   // Sizes
-  // 素材が最大1600pxになったので書き出しも合わせて引き上げた（旧 700/1000/1500）。
-  // 写真（メイン画面）と素材（ギャラリー画面）でボタンを分けている。
-  //  ・写真は等倍以上に引き伸ばせるので、重すぎないSを初期値にする
-  //  ・素材は元のサイズを超えて引き伸ばさないため、Lでも無駄に重くならない。
-  //    もとから素材のサイズでコピーされていたので、初期値をLにして画質を落とさない
-  const SIZES=[{l:'S',p:800},{l:'M',p:1200},{l:'L',p:1600}];
-  const selectSzBtn=(containerId,label)=>{
-    document.querySelectorAll('#'+containerId+' .szbtn').forEach(x=>x.classList.toggle('selected',x.textContent===label));
-  };
-  SIZES.forEach(s=>{
-    const b=document.createElement('div');
-    b.className='szbtn'+(s.p===selSize?' selected':'');
-    b.textContent=s.l;
-    b.title=s.p+'px';
-    b.onclick=()=>{ selectSzBtn('size-row',s.l); selSize=s.p; render(); };
-    document.getElementById('size-row').appendChild(b);
-
-    const mb=document.createElement('div');
-    mb.className='szbtn'+(s.p===matSize?' selected':'');
-    mb.textContent=s.l;
-    mb.title='最大'+s.p+'px（素材が小さいときは元のサイズのまま）';
-    mb.onclick=()=>{ selectSzBtn('mat-size-btns',s.l); matSize=s.p; };
-    document.getElementById('mat-size-btns').appendChild(mb);
+  [{l:'S',p:700},{l:'M',p:1000},{l:'L',p:1500}].forEach(s=>{
+    ['size-row','mat-size-btns'].forEach(containerId=>{
+      const b=document.createElement('div');
+      b.className='szbtn'+(s.p===selSize?' selected':'');
+      b.textContent=s.l;
+      b.onclick=()=>{ document.querySelectorAll('.szbtn').forEach(x=>x.classList.remove('selected')); document.querySelectorAll('.szbtn').forEach(x=>{if(x.textContent===s.l)x.classList.add('selected');}); selSize=s.p; render(); };
+      document.getElementById(containerId).appendChild(b);
+    });
   });
 }
 
@@ -1192,55 +1176,7 @@ function drawShapeElements(ctx,size,mode,strokeWidth){
 }
 function drawShapeMask(ctx,size){ ctx.fillStyle='#000'; drawShapeElements(ctx,size,'fill',0); }
 
-// ── 素材の余白トリム ──
-// 素材PNGには「ギャラリーで同じ大きさに並べるためのアートボード」が透明の余白として
-// 焼き込まれている（TAPE2は平均5割超が透明）。完全に透明なピクセルだけを外側から削るので
-// 絵そのものは変わらないが、GoodNotesに貼ったときの余計な余白と選択枠が消える。
-// 1素材につき1回だけ計算して img に覚えさせる。
-function materialTrimBox(img){
-  if(img._trimBox) return img._trimBox;
-  const W=img.naturalWidth||img.width, H=img.naturalHeight||img.height;
-  let box={x:0,y:0,w:W,h:H};
-  try{
-    const c=document.createElement('canvas'); c.width=W; c.height=H;
-    const cx=c.getContext('2d',{willReadFrequently:true});
-    cx.drawImage(img,0,0);
-    const d=cx.getImageData(0,0,W,H).data;
-    let x0=W,y0=H,x1=-1,y1=-1;
-    for(let y=0;y<H;y++){
-      const row=y*W;
-      for(let x=0;x<W;x++){
-        if(d[(row+x)*4+3]!==0){
-          if(x<x0)x0=x; if(x>x1)x1=x;
-          if(y<y0)y0=y; if(y>y1)y1=y;
-        }
-      }
-    }
-    if(x1>=0) box={x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};
-  }catch(e){/* 読めなければ切らずにそのまま */}
-  img._trimBox=box;
-  return box;
-}
-
-// 素材を「余白なし・元の縦横比のまま・maxSizeを超えない」canvasに描く。
-// 素材より大きくは書き出さない（引き伸ばしても情報は増えず、ファイルが重くなるだけで
-// GoodNotes側で拡大するのと結果は同じ）。
-function drawMaterialTo(canvas,img,maxSize){
-  const t=materialTrimBox(img);
-  const sc=Math.min(maxSize/t.w,maxSize/t.h,1);
-  const w=Math.max(1,Math.round(t.w*sc)), h=Math.max(1,Math.round(t.h*sc));
-  canvas.width=w; canvas.height=h;
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,w,h);
-  ctx.drawImage(img,t.x,t.y,t.w,t.h,0,0,w,h);
-  return canvas;
-}
-
 function renderToCanvas(canvas,size){
-  // 素材は写真と別経路。正方形に収めると横長のテープやラベルの周りに透明の余白が
-  // 大量に入り、GoodNotesで選択枠が正方形になって掴みにくくなるため、
-  // 元の縦横比のまま余白を切って書き出す。素材には枠・影・シェイプは付けない。
-  if(fillMode==='material'&&userImg){ drawMaterialTo(canvas,userImg,size); return; }
   const hasBorder=borderStyle.startsWith('border');
   const hasShadow=borderStyle.includes('shadow')||borderStyle==='shadow_only';
   const borderPx=hasBorder?size*(borderWidth/100):0;
@@ -1258,11 +1194,16 @@ function renderToCanvas(canvas,size){
   const photoC=document.createElement('canvas'); photoC.width=size; photoC.height=size;
   const pCtx=photoC.getContext('2d');
   if(userImg){
-    const sc=Math.max(size/userImg.width,size/userImg.height)*zoom;
-    pCtx.drawImage(userImg,(size-userImg.width*sc)/2+ox,(size-userImg.height*sc)/2+oy,userImg.width*sc,userImg.height*sc);
-    const maskC=document.createElement('canvas'); maskC.width=size; maskC.height=size;
-    drawShapeMask(maskC.getContext('2d'),size);
-    pCtx.globalCompositeOperation='destination-in'; pCtx.drawImage(maskC,0,0);
+    if(fillMode==='material'){
+      const sc=Math.min(size/userImg.width,size/userImg.height);
+      pCtx.drawImage(userImg,(size-userImg.width*sc)/2,(size-userImg.height*sc)/2,userImg.width*sc,userImg.height*sc);
+    }else{
+      const sc=Math.max(size/userImg.width,size/userImg.height)*zoom;
+      pCtx.drawImage(userImg,(size-userImg.width*sc)/2+ox,(size-userImg.height*sc)/2+oy,userImg.width*sc,userImg.height*sc);
+      const maskC=document.createElement('canvas'); maskC.width=size; maskC.height=size;
+      drawShapeMask(maskC.getContext('2d'),size);
+      pCtx.globalCompositeOperation='destination-in'; pCtx.drawImage(maskC,0,0);
+    }
   }
   let borderC=null;
   if(hasBorder){
@@ -1294,14 +1235,7 @@ function rotateShape(){
 function render(){
   if(!userImg)return;
   try{
-    const cv=document.getElementById('preview');
-    renderToCanvas(cv,previewBaseSize||240);
-    // canvasは正方形とは限らない（素材モード・フチや影のはみ出し）ので、
-    // 長辺がプレビュー枠に収まるようCSSサイズを縦横比どおりに合わせる。
-    const box=previewBaseSize||240;
-    const k=box/Math.max(cv.width,cv.height);
-    cv.style.width=(cv.width*k)+'px';
-    cv.style.height=(cv.height*k)+'px';
+    renderToCanvas(document.getElementById('preview'),previewBaseSize||240);
   }catch(e){
     console.warn('render error:',e);
   }
@@ -1315,7 +1249,7 @@ document.getElementById('dl-btn').onclick=()=>{
   const a=document.createElement('a'); a.href=off.toDataURL('image/png'); a.download='mamaroku-sticker.png'; a.click();
   showMatToast('保存しました ✓');
 };
-function closeCopyModal(){ document.getElementById('copy-modal').classList.remove('show'); document.getElementById('copy-modal-img').src=''; if(copyModalUrl){URL.revokeObjectURL(copyModalUrl);copyModalUrl=null;} }
+function closeCopyModal(){ document.getElementById('copy-modal').classList.remove('show'); document.getElementById('copy-modal-img').src=''; }
 document.getElementById('copy-btn').onclick=()=>{
   if(!userImg)return;
   const off=document.createElement('canvas');
@@ -1376,23 +1310,22 @@ function resizePreview(){
   const sz=Math.max(80, Math.min(H-usedH, W-16));
   const cv=document.getElementById('preview');
   if(!cv)return;
-  // 枠の一辺(sz)が変わった時だけ、写真の位置をスケール変換して維持する。
-  // canvas自体の幅・高さは render() 側が決める（素材は正方形ではないため、
-  // ここで正方形に戻すと素材が潰れてしまう）。
-  if(previewBaseSize!==sz){
-    if(previewBaseSize){
-      const ratio=sz/previewBaseSize;
+  // サイズが変わった時だけcanvasをリセット（フチ選択で不必要にリセットされるのを防ぐ）
+  if(cv.width!==sz || cv.height!==sz){
+    // canvasサイズが変わる場合、photoOx/photoOyをスケール変換して位置を維持する
+    if(cv.width && cv.width!==sz){
+      const ratio=sz/cv.width;
       photoOx=photoOx*ratio;
       photoOy=photoOy*ratio;
     }
-    previewBaseSize=sz;
-  }
-  if(userImg){
-    // 描画内容が消えている可能性があるので毎回再描画
-    render();
-  } else {
     cv.width=sz; cv.height=sz;
     cv.style.width=sz+'px'; cv.style.height=sz+'px';
+    previewBaseSize=sz;
+    if(userImg) render();
+  } else {
+    // サイズが同じでも描画内容が消えている可能性があるので再描画
+    previewBaseSize=sz;
+    if(userImg) render();
   }
 }
 window.addEventListener('resize',resizePreview);
@@ -1478,25 +1411,12 @@ function hideMaterialScreen() {
   document.getElementById('main-screen').classList.add('active');
   setTimeout(()=>{ resizePreview(); if(userImg) render(); }, 100);
 }
-// ギャラリーの素材をそのまま渡すと、素材PNGに焼き込まれた透明の余白ごとコピーされる。
-// 余白を切り、選んだサイズ(S/M/L)に合わせてからコピーする。
-function trimmedMaterialBlob(src, maxSize) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const cv = document.createElement('canvas');
-        drawMaterialTo(cv, img, maxSize);
-        cv.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
-      } catch (e) { reject(e); }
-    };
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-// 何かの理由で↑が使えないとき（canvasが汚染されている等）の保険：素材をそのままPNGで渡す
-function rawMaterialBlob(src) {
-  return fetch(src)
+function selectMaterial(src, category, label) {
+  addRecentMaterial(src);
+  if (typeof gtag === 'function') {
+    gtag('event', 'material_copy', { material_category: category || '', material_name: label || '' });
+  }
+  const pngBlobPromise = fetch(src)
     .then(r => r.blob())
     .then(blob => {
       if (blob.type === 'image/png') return blob;
@@ -1511,13 +1431,6 @@ function rawMaterialBlob(src) {
         img.src = URL.createObjectURL(blob);
       });
     });
-}
-function selectMaterial(src, category, label) {
-  addRecentMaterial(src);
-  if (typeof gtag === 'function') {
-    gtag('event', 'material_copy', { material_category: category || '', material_name: label || '' });
-  }
-  const pngBlobPromise = trimmedMaterialBlob(src, matSize).catch(() => rawMaterialBlob(src));
 
   navigator.clipboard.write([
     new ClipboardItem({ 'image/png': pngBlobPromise })
@@ -1526,20 +1439,9 @@ function selectMaterial(src, category, label) {
       showMatToast('コピーしました ✓');
     })
     .catch(() => {
-      // クリップボードが使えない端末：画像を出して長押しでコピーしてもらう
-      const im = document.getElementById('copy-modal-img');
-      pngBlobPromise
-        .then(b => { setCopyModalSrc(URL.createObjectURL(b)); })
-        .catch(() => { setCopyModalSrc(src); });
-      if (im) im.src = '';
+      document.getElementById('copy-modal-img').src = src;
       document.getElementById('copy-modal').classList.add('show');
     });
-}
-let copyModalUrl = null;
-function setCopyModalSrc(url) {
-  if (copyModalUrl) URL.revokeObjectURL(copyModalUrl);
-  copyModalUrl = url.startsWith('blob:') ? url : null;
-  document.getElementById('copy-modal-img').src = url;
 }
 
 function showMatToast(msg) {
