@@ -567,10 +567,50 @@ function getVBox(inner,pad=20){
   bboxTarget.innerHTML=inner.replace(/__C__/g,'#000');
   try{const bb=bboxTarget.getBBox();if(bb.width===0&&bb.height===0)return VB_DEFAULT;const sz=Math.max(bb.width,bb.height),cx=bb.x+bb.width/2,cy=bb.y+bb.height/2;return`${cx-sz/2-pad} ${cy-sz/2-pad} ${sz+pad*2} ${sz+pad*2}`;}catch(e){return VB_DEFAULT;}
 }
+// 絵が実際に描かれている範囲そのもの（正方形にそろえず、余白も足さない）。
+// 縁のアンチエイリアスが切れないぶんだけ、ごくわずかに外へ広げる。
+function getTightBox(inner){
+  bboxTarget.innerHTML=inner.replace(/__C__/g,'#000');
+  let r=null;
+  try{
+    const bb=bboxTarget.getBBox();
+    if(bb.width&&bb.height){
+      const pad=Math.max(bb.width,bb.height)*0.005;
+      r={x:bb.x-pad,y:bb.y-pad,w:bb.width+pad*2,h:bb.height+pad*2};
+    }
+  }catch(e){/* 測れなければnull */}
+  bboxTarget.innerHTML='';
+  return r;
+}
 const VBOXES=SHAPES.map(s=>getVBox(s.inner));
+// 実寸の枠は「使った形だけ」測って覚える。起動時に151個ぶんgetBBoxをもう一周させると
+// 読み込みが重くなるため（VBOXESで既に一周している）。
+const TIGHT_BOXES=[];
+function tightBoxAt(i){ if(!(i in TIGHT_BOXES)) TIGHT_BOXES[i]=getTightBox(SHAPES[i].inner); return TIGHT_BOXES[i]; }
 bboxTarget.innerHTML='';
 
 // ── SVG→Canvas ──
+// VBOXES は「ギャラリーで大きさをそろえるため」に長辺で正方形にし、周囲に20の余白も足している。
+// そのまま正方形のcanvasに描くと、縦長・横長の形の周りに透明の余白が乗ったままコピーされ、
+// GoodNotesに貼ると選択枠が形より大きくなって掴みにくい。
+// 書き出すときだけ実寸の枠で描く（ギャラリーの整列はCSS側で作っているので並びは変わらない）。
+// 形の長辺がちょうど size px になるので、今までより実寸はわずかに大きくなる。
+async function svgToCanvasFit(size,inner,vbox,color,tight){
+  const b=tight||getTightBox(inner);
+  if(!b) return await svgToCanvas(size,inner,vbox,color); // 測れなければ今までどおり正方形
+  const sc=size/Math.max(b.w,b.h);
+  const w=Math.max(1,Math.round(b.w*sc)),h=Math.max(1,Math.round(b.h*sc));
+  const svgStr=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" width="${w}" height="${h}" fill="${color}">${inner.replace(/__C__/g,color)}</svg>`;
+  const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);resolve(c);};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject();};
+    img.src=url;
+  });
+}
+
 async function svgToCanvas(size,inner,vbox,color){
   const svgStr=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbox}" width="${size}" height="${size}" fill="${color}">${inner.replace(/__C__/g,color)}</svg>`;
   const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
@@ -611,9 +651,9 @@ function materialTrimBox(img){
 }
 
 async function renderBlob(size){
-  let inner,vb;
-  if(selCustomId){const cs=customShapes.find(s=>s.id===selCustomId);if(!cs)return new Blob([],{type:'image/png'});inner=cs.inner;vb=cs.viewBox;}
-  else{inner=SHAPES[selIdx].inner;vb=VBOXES[selIdx];}
+  let inner,vb,tight;
+  if(selCustomId){const cs=customShapes.find(s=>s.id===selCustomId);if(!cs)return new Blob([],{type:'image/png'});inner=cs.inner;vb=cs.viewBox;if(cs._tight===undefined)cs._tight=getTightBox(cs.inner);tight=cs._tight;}
+  else{inner=SHAPES[selIdx].inner;vb=VBOXES[selIdx];tight=tightBoxAt(selIdx);}
   if(fillMode==='material'&&userImg){
     // 素材は正方形に収めず、元の縦横比のまま書き出す。
     // 正方形にすると横長のテープやラベルの周りに透明の余白が大量に入り、
@@ -631,7 +671,7 @@ async function renderBlob(size){
     return await new Promise(r=>pC.toBlob(r,'image/png'));
   }
   if(fillMode==='color'||!userImg){
-    const c=await svgToCanvas(size,inner,vb,fillMode==='color'?selColor:'#ccc');
+    const c=await svgToCanvasFit(size,inner,vb,fillMode==='color'?selColor:'#ccc',tight);
     return await new Promise(r=>c.toBlob(r,'image/png'));
   }
   const zoom=parseInt(document.getElementById('zoom').value)/100;
