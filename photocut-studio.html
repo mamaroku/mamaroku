@@ -1248,6 +1248,47 @@ function drawMaterialTo(canvas,img,maxSize){
   return canvas;
 }
 
+// ── 書き出し時に透明の余白を切り落とす ──
+// シェイプは正方形のキャンバスに描いているので、丸・楕円・縦長の形だと左右（または上下）に
+// 透明の余白がそのまま残る。GoodNotesに貼ると、その余白ごと1枚の画像として置かれるため
+// 選択枠が形より大きくなって掴みにくい。完全に透明なピクセルだけを外側から削るので、
+// 絵そのもの（フチ・影を含む）は一切変わらない。
+// 測り方は素材と同じで、縮小してから調べて縮小1ピクセル分だけ外側に余裕を残す
+// （＝切りすぎる方向には絶対にずれない）。1500pxを直接なめると数百msかかるため。
+function trimCanvasTransparent(canvas){
+  const W=canvas.width,H=canvas.height;
+  try{
+    const k=Math.min(TRIM_SCAN_MAX/W,TRIM_SCAN_MAX/H,1);
+    const sw=Math.max(1,Math.round(W*k)),sh=Math.max(1,Math.round(H*k));
+    const c=document.createElement('canvas'); c.width=sw; c.height=sh;
+    const cx=c.getContext('2d',{willReadFrequently:true});
+    cx.drawImage(canvas,0,0,sw,sh);
+    const d=cx.getImageData(0,0,sw,sh).data;
+    let x0=sw,y0=sh,x1=-1,y1=-1;
+    for(let y=0;y<sh;y++){
+      const row=y*sw;
+      for(let x=0;x<sw;x++){
+        if(d[(row+x)*4+3]!==0){
+          if(x<x0)x0=x; if(x>x1)x1=x;
+          if(y<y0)y0=y; if(y>y1)y1=y;
+        }
+      }
+    }
+    if(x1<0) return canvas; // 全部透明（写真なし）：何もしない
+    const m=Math.ceil(1/k); // 縮小1ピクセル＝元の何px分か（安全マージン）
+    const bx=Math.max(0,Math.floor(x0/k)-m), by=Math.max(0,Math.floor(y0/k)-m);
+    const bw=Math.min(W,Math.ceil((x1+1)/k)+m)-bx, bh=Math.min(H,Math.ceil((y1+1)/k)+m)-by;
+    if(bw>=W&&bh>=H) return canvas; // 削るものがない
+    const keep=document.createElement('canvas'); keep.width=bw; keep.height=bh;
+    keep.getContext('2d').drawImage(canvas,bx,by,bw,bh,0,0,bw,bh);
+    canvas.width=bw; canvas.height=bh;
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,bw,bh);
+    ctx.drawImage(keep,0,0);
+  }catch(e){/* 読めなければ切らずにそのまま */}
+  return canvas;
+}
+
 function renderToCanvas(canvas,size){
   // 素材は写真と別経路。正方形に収めると横長のテープやラベルの周りに透明の余白が
   // 大量に入り、GoodNotesで選択枠が正方形になって掴みにくくなるため、
@@ -1324,6 +1365,7 @@ document.getElementById('dl-btn').onclick=()=>{
   if(!userImg)return;
   const off=document.createElement('canvas');
   renderToCanvas(off,selSize);
+  trimCanvasTransparent(off);
   const a=document.createElement('a'); a.href=off.toDataURL('image/png'); a.download='mamaroku-sticker.png'; a.click();
   showMatToast('保存しました ✓');
 };
@@ -1332,6 +1374,7 @@ document.getElementById('copy-btn').onclick=()=>{
   if(!userImg)return;
   const off=document.createElement('canvas');
   renderToCanvas(off,selSize);
+  trimCanvasTransparent(off);
   document.getElementById('copy-modal-img').src=off.toDataURL('image/png');
   document.getElementById('copy-modal').classList.add('show');
 };
