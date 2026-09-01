@@ -177,11 +177,12 @@ gtag('config', 'G-QBYGZ9TTWS');
 
 
   /* ===== DESIGN ===== */
+  /* 元画像の元画像の実データが848pxなので、Retinaでも等倍になる424pxを上限にする */
   .design-hero {
-    width: 100%;
+    width: min(424px, 100%);
     height: auto;
     display: block;
-    margin: 44px 0 0;
+    margin: 44px auto 0;
     border-radius: 4px;
   }
 
@@ -194,9 +195,10 @@ gtag('config', 'G-QBYGZ9TTWS');
   }
 
   .design-cols img {
-    width: 100%;
+    width: min(357px, 100%);   /* 実解像度714pxの半分。これ以上は伸びる */
     height: auto;
     display: block;
+    margin: 0 auto;
   }
 
   .design-point + .design-point { margin-top: 28px; }
@@ -428,14 +430,14 @@ gtag('config', 'G-QBYGZ9TTWS');
     <p class="section__sub">ヴィンテージを愛する人のための、2027年デジタルプランナー。</p>
     <p class="section__lead">長年使い込んだような木のクリップボードと、味わいのある真鍮の金具。デジタルなのに、お気に入りの文房具を開くときの気持ちで始められる。2027年版は、そこをいちばん大事に作りました。</p>
 
-    <img class="design-hero" src="images/planner/design-clip.jpg" width="1241" height="655" alt="使い込まれた木のクリップボードと真鍮の金具のアップ" loading="lazy">
+    <img class="design-hero" src="images/planner/design-clip.jpg" width="848" height="421" alt="使い込まれた木のクリップボードと真鍮の金具のアップ" loading="lazy">
 
     <div class="design-cols">
-      <img src="images/planner/design-type.jpg" width="1001" height="272" alt="活版のようなかすれのある日付と、手描きの罫線" loading="lazy">
+      <img src="images/planner/design-type.jpg" width="714" height="194" alt="活版のようなかすれのある日付と、手描きの罫線" loading="lazy">
       <div>
         <div class="design-point">
           <h3>使い込まれた質感</h3>
-          <p>木目のかすれも、真鍮のくすみも、方眼メモパッドの紙目も、拡大に耐える解像度で描き込んでいます。日付の数字には活版のようなかすれを残しました。</p>
+          <p>木目のかすれ、真鍮のくすみ、方眼メモパッドの紙目。近くで見るほど、細かいところまで作り込んであります。日付の数字には、活版で刷ったようなかすれを残しました。</p>
         </div>
         <div class="design-point">
           <h3>書く場所は、静かに</h3>
