@@ -168,6 +168,51 @@ gtag('config', 'G-QBYGZ9TTWS');
   .section--center { text-align: center; }
   .section--center .section__lead { margin-left: auto; margin-right: auto; }
 
+
+  /* ===== DESIGN ===== */
+  .design-hero {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 44px 0 0;
+    border-radius: 4px;
+  }
+
+  .design-cols {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 40px;
+    align-items: center;
+    margin-top: 48px;
+  }
+
+  .design-cols img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .design-point + .design-point { margin-top: 28px; }
+
+  .design-point h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .design-point p {
+    font-size: 12.5px;
+    color: var(--mid);
+    line-height: 1.95;
+  }
+
+  .design-close {
+    margin-top: 44px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+  }
+
   /* ===== CONTENTS ===== */
   .pages {
     display: grid;
@@ -312,6 +357,7 @@ gtag('config', 'G-QBYGZ9TTWS');
     .section { padding: 60px 20px; }
     .voice { padding: 64px 20px; }
     .pages { grid-template-columns: 1fr; gap: 36px; }
+    .design-cols { grid-template-columns: 1fr; gap: 28px; }
     .spec-row { grid-template-columns: 1fr; }
     .btn-light { padding: 16px 26px; font-size: 13px; max-width: 100%; }
   }
@@ -366,6 +412,33 @@ gtag('config', 'G-QBYGZ9TTWS');
 
   ==========================================================
 -->
+
+<!-- DESIGN -->
+<section class="section">
+  <div class="section__inner">
+    <p class="label">Design</p>
+    <h2 class="section__title">紙の温もりを、画面に。</h2>
+    <p class="section__lead">長年使い込んだような木のクリップボードと、味わいのある真鍮の金具。デジタルなのに、お気に入りの文房具を開くときの気持ちで始められる。2027年版は、そこをいちばん大事に作りました。</p>
+
+    <img class="design-hero" src="images/planner/design-clip.jpg" width="1241" height="655" alt="使い込まれた木のクリップボードと真鍮の金具のアップ" loading="lazy">
+
+    <div class="design-cols">
+      <img src="images/planner/design-type.jpg" width="1001" height="272" alt="活版のようなかすれのある日付と、手描きの罫線" loading="lazy">
+      <div>
+        <div class="design-point">
+          <h3>使い込まれた質感</h3>
+          <p>木目のかすれも、真鍮のくすみも、方眼メモパッドの紙目も、拡大に耐える解像度で描き込んでいます。日付の数字には活版のようなかすれを残しました。</p>
+        </div>
+        <div class="design-point">
+          <h3>書く場所は、静かに</h3>
+          <p>飾りは背景にとどめて、書きこむところは徹底的にシンプルにしています。ウィークリーも1日1ページも、余白を広くとって、何をどう書いても散らからないようにしました。</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="design-close">アナログの手ざわりと、デジタルの身軽さを、両方。</p>
+  </div>
+</section>
 
 <!-- CONTENTS -->
 <section class="section">
