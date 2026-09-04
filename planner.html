@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2027 デジタルプランナー | mamaroku</title>
-<meta name="description" content="mamarokuの2027年デジタルプランナー。824ページ、47,000本以上のリンクで全ページがつながっています。GoodNotesなどのノートアプリで使えるPDF手帳です。">
+<meta name="description" content="mamarokuの2027年デジタルプランナー。予定を管理するだけではなく、その日をどう過ごしたかが残る手帳を2冊つくりました。GoodNotesなどのノートアプリで使えるPDF手帳です。">
 <meta property="og:title" content="2027 デジタルプランナー | mamaroku">
-<meta property="og:description" content="824ページの手帳を、作りました。GoodNotesで使える2027年のデジタルプランナー。">
+<meta property="og:description" content="記録するための手帳を、2冊つくりました。WOOD と LEATHER。">
 <meta property="og:image" content="https://mamaroku.com/images/planner/cover.jpg">
 <meta property="og:type" content="website">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBYGZ9TTWS"></script>
@@ -27,7 +27,6 @@ gtag('config', 'G-QBYGZ9TTWS');
     --dark:    #3D3A37;
     --mid:     #7A7672;
     --white:   #FFFFFF;
-    --radius:  12px;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,10 +41,7 @@ gtag('config', 'G-QBYGZ9TTWS');
   }
 
   /* 文の区切り。狭い画面では文の中で行数を均等に割る（余りの1行を作らない） */
-  .ln {
-    display: block;
-    text-wrap: balance;
-  }
+  .ln { display: block; text-wrap: balance; }
 
   .label {
     font-size: 11px;
@@ -60,48 +56,26 @@ gtag('config', 'G-QBYGZ9TTWS');
   .hero {
     background: var(--paper);
     text-align: center;
-    padding: 64px 24px 0;
+    padding: 64px 24px 56px;
   }
 
   .hero__title {
-    font-size: clamp(24px, 4.4vw, 36px);
+    font-size: clamp(22px, 4.2vw, 34px);
     font-weight: 700;
-    line-height: 1.5;
-    margin-bottom: 18px;
-  }
-
-  .hero__num {
-    display: block;
-    font-size: clamp(56px, 12vw, 96px);
-    line-height: 1;
-    font-weight: 400;
-    letter-spacing: 0.02em;
-    margin-bottom: 10px;
+    line-height: 1.55;
+    margin-bottom: 20px;
+    text-wrap: balance;
   }
 
   .hero__lead {
     font-size: 14px;
     color: var(--mid);
-    max-width: 520px;
+    max-width: 540px;
     margin: 0 auto;
     line-height: 2.1;
   }
 
-  .hero__cover {
-    display: block;
-    width: min(680px, 100%);
-    height: auto;
-    margin: 40px auto 0;
-    box-shadow: 0 18px 44px rgba(61,58,55,0.16);
-  }
-
-  .hero__nav {
-    display: flex;
-    justify-content: center;
-    gap: 28px;
-    padding: 28px 0 40px;
-    flex-wrap: wrap;
-  }
+  .hero__nav { display: flex; justify-content: center; gap: 28px; padding: 32px 0 0; flex-wrap: wrap; }
 
   .hero__nav-link {
     font-size: 12px;
@@ -115,29 +89,136 @@ gtag('config', 'G-QBYGZ9TTWS');
 
   .hero__nav-link:hover { color: var(--dark); border-color: var(--dark); }
 
-  /* ===== STATUS ===== */
-  .status {
-    background: var(--dark);
-    color: var(--white);
-    text-align: center;
-    padding: 40px 24px;
+  /* ===== 2冊のカード ===== */
+  .picks { padding: 72px 24px; }
+
+  .picks__inner {
+    max-width: 940px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 48px 36px;
   }
 
+  .book { display: flex; flex-direction: column; }
+
+  .book__shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--paper);
+    box-shadow: 0 12px 32px rgba(61,58,55,0.14);
+    margin-bottom: 22px;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s;
+  }
+
+  .book__link { text-decoration: none; color: inherit; display: flex; flex-direction: column; flex: 1; }
+  .book__link:hover .book__shot,
+  .book__link:focus-visible .book__shot {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 44px rgba(61,58,55,0.2);
+  }
+  .book__link:focus-visible { outline: 2px solid var(--dark); outline-offset: 6px; }
+
+  .book__name { font-size: 20px; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 4px; }
+
+  .book__catch {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+
+  .book__voice {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--dark);
+    margin-bottom: 16px;
+    padding-left: 13px;
+    border-left: 2px solid var(--taupe);
+    text-wrap: balance;
+  }
+
+  .book__spec {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 4px 0 16px;
+  }
+
+  .book__desc { font-size: 13px; color: var(--mid); line-height: 2; margin-bottom: 18px; flex: 1; }
+
+  .book__more {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--dark);
+    padding-bottom: 3px;
+    align-self: flex-start;
+  }
+
+  .book__soon {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    align-self: flex-start;
+  }
+
+  .book--soon .book__shot { opacity: 0.85; }
+
+  /* ===== セクション ===== */
+  .section { padding: 76px 24px; }
+  .section--paper { background: var(--paper); }
+  .section__inner { max-width: 880px; margin: 0 auto; }
+  .section--center { text-align: center; }
+
+  .section__title {
+    font-size: clamp(19px, 2.8vw, 24px);
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    text-wrap: balance;
+  }
+
+  .section__lead { font-size: 13.5px; color: var(--mid); line-height: 2.1; max-width: 620px; }
+  .section--center .section__lead { margin-left: auto; margin-right: auto; }
+
+  .specs {
+    list-style: none;
+    max-width: 620px;
+    margin: 30px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .specs li { font-size: 13px; color: var(--mid); line-height: 1.95; padding-left: 16px; position: relative; }
+  .specs li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 5px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  /* ===== ステータス ===== */
+  .status { background: var(--dark); color: var(--white); text-align: center; padding: 44px 24px; }
+
   .status__title {
-    font-size: clamp(20px, 3.4vw, 26px);
+    font-size: clamp(19px, 3.2vw, 24px);
     font-weight: 700;
     letter-spacing: 0.08em;
     margin-bottom: 10px;
   }
 
-  .status__desc {
-    font-size: 13px;
-    color: rgba(255,255,255,0.7);
-    line-height: 2;
-    margin-bottom: 26px;
-  }
+  .status__desc { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 2; margin-bottom: 26px; }
 
-  .btn-light {
+  .btn {
     display: inline-block;
     background: var(--white);
     color: var(--dark);
@@ -150,562 +231,121 @@ gtag('config', 'G-QBYGZ9TTWS');
     transition: opacity 0.2s, scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  .btn-light:hover { opacity: 0.88; }
-  .btn-light:active { scale: 0.96; }
+  .btn:hover { opacity: 0.88; }
+  .btn:active { scale: 0.96; }
+  .btn--dark { background: var(--dark); color: var(--white); }
 
-  /* ===== SECTIONS ===== */
-  .section { padding: 84px 24px; }
-  .section--paper { background: var(--paper); }
-  .section__inner { max-width: 880px; margin: 0 auto; }
-
-  .section__title {
-    font-size: clamp(20px, 3vw, 26px);
-    font-weight: 700;
-    line-height: 1.5;
-    margin-bottom: 14px;
-  }
-
-  .section__sub {
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.8;
-    margin-bottom: 16px;
-  }
-
-  .section__lead {
-    font-size: 13.5px;
-    color: var(--mid);
-    line-height: 2.1;
-    max-width: 620px;
-  }
-
-  .section--center { text-align: center; }
-  .section--center .section__lead { margin-left: auto; margin-right: auto; }
-
-
-  /* ===== DESIGN ===== */
-  /* 元画像の元画像の実データが848pxなので、Retinaでも等倍になる424pxを上限にする */
-  .design-hero {
-    width: min(424px, 100%);
-    height: auto;
-    display: block;
-    margin: 44px auto 0;
-    border-radius: 4px;
-  }
-
-  .design-cols {
-    display: grid;
-    grid-template-columns: 0.9fr 1.1fr;
-    gap: 40px;
-    align-items: center;
-    margin-top: 48px;
-  }
-
-  .design-cols img {
-    width: min(357px, 100%);   /* 実解像度714pxの半分。これ以上は伸びる */
-    height: auto;
-    display: block;
-    margin: 0 auto;
-  }
-
-  .design-point + .design-point { margin-top: 28px; }
-
-  .design-point h3 {
-    font-size: 14.5px;
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
-
-  .design-point p {
-    font-size: 12.5px;
-    color: var(--mid);
-    line-height: 1.95;
-  }
-
-  .design-close {
-    margin-top: 44px;
-    font-size: 14px;
-    font-weight: 700;
-    text-align: center;
-  }
-
-
-  /* ===== 書き込み例（タップで拡大） ===== */
-  .shot {
-    display: block;
-    width: 100%;
-    padding: 0;
-    border: 0;
+  .btn--soon {
     background: none;
-    position: relative;
-    cursor: zoom-in;
-    margin-bottom: 18px;
-    font: inherit;
-    color: inherit;
-  }
-
-  .shot img { margin-bottom: 0; }
-
-  .shot__hint {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    background: rgba(255,255,255,0.94);
-    color: var(--dark);
-    font-size: 10.5px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    padding: 5px 11px;
-    border-radius: 999px;
-    box-shadow: 0 2px 8px rgba(61,58,55,0.18);
-    pointer-events: none;
-  }
-
-  .shot:hover .shot__hint { background: var(--dark); color: var(--white); }
-
-  .lb {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    background: rgba(30,28,26,0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    cursor: zoom-out;
-  }
-
-  .lb[hidden] { display: none; }
-
-  .lb__img {
-    max-width: 96vw;
-    max-height: 90vh;
-    width: auto;
-    height: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
-
-  .lb__cap {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 18px;
-    text-align: center;
-    color: rgba(255,255,255,0.75);
-    font-size: 12px;
-    letter-spacing: 0.04em;
-  }
-
-  /* ===== CONTENTS ===== */
-  .pages {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 44px 32px;
-    margin-top: 52px;
-  }
-
-  .page-card img {
-    width: 100%;
-    height: auto;
-    display: block;
-    background: var(--white);
-    box-shadow: 0 10px 28px rgba(61,58,55,0.13);
-    margin-bottom: 18px;
-  }
-
-  .page-card__title {
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
-
-  .page-card__en {
-    font-size: 10px;
-    letter-spacing: 0.18em;
     color: var(--accent);
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-bottom: 8px;
+    border: 1px solid var(--taupe);
+    cursor: default;
+  }
+  .btn--soon:hover { opacity: 1; }
+  .btn--soon:active { scale: 1; }
+
+  .trials {
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
   }
 
-  .page-card__desc {
-    font-size: 12.5px;
-    color: var(--mid);
-    line-height: 1.95;
-  }
+  .foot { text-align: center; padding: 40px 24px 56px; }
 
-  /* ===== VOICE ===== */
-  .voice {
-    background: var(--accent);
-    padding: 88px 24px;
-    text-align: center;
-  }
-
-  .voice__inner { max-width: 620px; margin: 0 auto; }
-
-  .voice__big {
-    font-size: clamp(19px, 3.4vw, 26px);
-    font-weight: 700;
-    color: var(--white);
-    line-height: 1.9;
-    margin-bottom: 18px;
-  }
-
-  .voice__sub {
-    font-size: 13.5px;
-    color: rgba(255,255,255,0.85);
-    line-height: 2.1;
-  }
-
-  .voice__rule {
-    width: 64px;
-    height: 1px;
-    background: rgba(255,255,255,0.45);
-    margin: 30px auto;
-  }
-
-  .voice__last {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--white);
-  }
-
-  /* ===== SPEC ===== */
-  .spec-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    margin-top: 44px;
-    background: var(--taupe);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .spec-card {
-    background: var(--white);
-    padding: 34px 20px;
-    text-align: center;
-  }
-
-  .spec-card__num {
-    font-size: 32px;
-    font-weight: 400;
-    line-height: 1.2;
-    margin-bottom: 8px;
-  }
-
-  .spec-card__num span { font-size: 15px; font-weight: 400; }
-
-  .spec-card__desc {
-    font-size: 12px;
-    color: var(--mid);
-    line-height: 1.9;
-  }
-
-  .notes {
-    margin-top: 40px;
-    font-size: 12.5px;
-    color: var(--mid);
-    line-height: 2.1;
-    list-style: none;
-  }
-
-  .notes li { padding-left: 1.1em; text-indent: -1.1em; }
-  .notes li::before { content: "・"; }
-
-  /* ===== FOOTER ===== */
-  .footer {
-    background: var(--dark);
-    border-top: 1px solid rgba(255,255,255,0.12);
-    padding: 48px 16px;
-    text-align: center;
-  }
-
-  .footer__brand {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--white);
-    letter-spacing: 0.15em;
-    margin-bottom: 8px;
-  }
-
-  .footer__sub {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 0.15em;
-  }
-
-  @media (max-width: 768px) {
-    .hero { padding: 48px 20px 0; }
-    .section { padding: 60px 20px; }
-    .voice { padding: 64px 20px; }
-    .pages { grid-template-columns: 1fr; gap: 36px; }
-    .design-cols { grid-template-columns: 1fr; gap: 28px; }
-    .spec-row { grid-template-columns: 1fr; }
-    .btn-light { padding: 16px 26px; font-size: 13px; max-width: 100%; }
+  @media (max-width: 720px) {
+    .picks__inner { grid-template-columns: 1fr; gap: 52px; }
+    .picks { padding: 56px 24px; }
+    .hero { padding: 52px 22px 44px; }
+    .section { padding: 60px 22px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
     html { scroll-behavior: auto; }
-    .btn-light { transition: none; }
   }
 </style>
 </head>
 <body>
 
-<!-- HERO -->
 <section class="hero">
   <p class="label">2027 Digital Planner</p>
-  <h1 class="hero__title">
-    <span class="hero__num">824</span>
-    ページの手帳を、作りました。
-  </h1>
-  <p class="hero__lead"><span class="ln">iPadとGoodNotesで使う、2027年のデジタルプランナーです。</span><span class="ln">年間・月間・週間・1日1ページ、そして写真を貼るダイアリー。</span><span class="ln">ぜんぶが1冊の中でつながっています。</span></p>
-  <img class="hero__cover" src="images/planner/cover.jpg" width="900" height="642" alt="2027 mamaroku digital planner の表紙">
+  <h1 class="hero__title">記録するための手帳を、2冊つくりました。</h1>
+  <p class="hero__lead"><span class="ln">予定を管理するためだけの手帳ではなく、</span><span class="ln">その日をどう過ごしたかが残る手帳です。</span><span class="ln">どんなふうに1年を残したいかで、選んでください。</span></p>
   <div class="hero__nav">
     <a href="index.html" class="hero__nav-link">← mamaroku design</a>
   </div>
 </section>
 
-<!-- ▼▼▼ 発売ステータス：発売したらこのブロックを差し替えます（下のコメント参照）▼▼▼ -->
-<section class="status">
-  <h2 class="status__title">近日発売</h2>
-  <p class="status__desc"><span class="ln">ただいま最終調整中です。</span><span class="ln">発売のお知らせは、インスタグラムでいちばん最初にお伝えします。</span></p>
-  <a class="btn-light" href="https://www.instagram.com/mamaroku_ipad/" target="_blank" rel="noopener"
-     onclick="gtag('event','planner_notify_instagram')">インスタグラムでお知らせを受け取る</a>
-</section>
-<!--
-  ==========================================================
-  【発売したら】上の <section class="status"> を丸ごと、
-  下の内容に書き換えてください。それだけで購入ページになります。
-  ==========================================================
+<section class="picks">
+  <div class="picks__inner">
 
-<section class="status">
-  <h2 class="status__title">発売中</h2>
-  <p class="status__desc"><span class="ln">2027 デジタルプランナー ／ 824ページ ／ ¥○,○○○（税込）</span><span class="ln">ダウンロード販売です。ご購入後すぐにお使いいただけます。</span></p>
-  <a class="btn-light" href="https://mamaroku-design.stores.jp" target="_blank" rel="noopener"
-     onclick="gtag('event','click_stores_planner')">ストアで見る</a>
-</section>
-
-  ==========================================================
--->
-
-<!-- DESIGN -->
-<section class="section">
-  <div class="section__inner">
-    <p class="label">Design</p>
-    <h2 class="section__title">紙の温もりを、画面に。</h2>
-    <p class="section__sub">ヴィンテージを愛する人のための、2027年デジタルプランナー。</p>
-    <p class="section__lead"><span class="ln">長年使い込んだような木のクリップボードと、味わいのある真鍮の金具。</span><span class="ln">デジタルなのに、お気に入りの文房具を開くときの気持ちで始められる。</span><span class="ln">2027年版は、そこをいちばん大事に作りました。</span></p>
-
-    <img class="design-hero" src="images/planner/design-clip.jpg" width="848" height="421" alt="使い込まれた木のクリップボードと真鍮の金具のアップ" loading="lazy">
-
-    <div class="design-cols">
-      <img src="images/planner/design-type.jpg" width="714" height="194" alt="活版のようなかすれのある日付と、手描きの罫線" loading="lazy">
-      <div>
-        <div class="design-point">
-          <h3>使い込まれた質感</h3>
-          <p><span class="ln">木目のかすれ、真鍮のくすみ、方眼メモパッドの紙目。</span><span class="ln">近くで見るほど、細かいところまで作り込んであります。</span><span class="ln">日付の数字には、活版で刷ったようなかすれを残しました。</span></p>
-        </div>
-        <div class="design-point">
-          <h3>書く場所は、静かに</h3>
-          <p><span class="ln">飾りは背景にとどめて、書きこむところは徹底的にシンプルにしています。</span><span class="ln">ウィークリーも1日1ページも、余白を広くとって、何をどう書いても散らからないようにしました。</span></p>
-        </div>
-      </div>
+    <div class="book">
+      <a class="book__link" href="planner-wood.html">
+        <img class="book__shot" src="images/planner/thumb-wood.jpg" width="1200" height="857"
+             alt="WOOD の1日1ページ。木のクリップボードと真鍮の金具">
+        <p class="book__name">WOOD</p>
+        <p class="book__catch">たくさん残したい人へ</p>
+        <p class="book__voice">「今年のことを、できるだけたくさん残しておきたい」</p>
+        <p class="book__desc">予定も、その日のことも、写真も。1日1ページとダイアリーがあるので、書きたいだけ書けます。月ごと・1年ごとに見返すページまで、ぜんぶ入っています。</p>
+        <p class="book__spec">824ページ ／ 年間・月間・週間・1日1ページ・ダイアリー</p>
+        <span class="book__more">くわしく見る →</span>
+      </a>
     </div>
 
-    <p class="design-close">リアルな手帳の佇まいと、デジタルの身軽さを、両方。</p>
+    <div class="book">
+      <a class="book__link" href="planner-leather.html">
+        <img class="book__shot" src="images/planner/thumb-leather.jpg" width="1200" height="857"
+             alt="LEATHER の見開き。革のバインダーと6穴リング、一面の方眼">
+        <p class="book__name">LEATHER</p>
+        <p class="book__catch">無理なく続けたい人へ</p>
+        <p class="book__voice">「記録はしたい。でも毎日ちゃんと書くのは無理」</p>
+        <p class="book__desc">年間と月間の他は、方眼の日間ページのみ。写真1枚だけでも、一言だけでも、リアルな手帳のデザインがページを引き立ててくれます。</p>
+        <p class="book__spec">201ページ ／ 年間・月間・1見開きに2日</p>
+        <span class="book__more">くわしく見る →</span>
+      </a>
+    </div>
+
   </div>
 </section>
 
-<!-- CONTENTS -->
-<section class="section">
+<section class="section section--paper section--center">
   <div class="section__inner">
-    <p class="label">Contents</p>
-    <h2 class="section__title">中身のこと</h2>
-    <p class="section__lead"><span class="ln">その日をどう書きたいかは、日によって違います。</span><span class="ln">ひとこと残す日も、写真だけの日も、なにも書かない日もある。</span><span class="ln">だから書き方を1つに決めず、いくつも用意しました。</span></p>
-
-    <div class="pages">
-      <div class="page-card">
-        <img src="images/planner/monthly.jpg" width="900" height="642" alt="月間ページ（マンスリー）" loading="lazy">
-        <p class="page-card__en">Monthly</p>
-        <h3 class="page-card__title">月間</h3>
-        <p class="page-card__desc"><span class="ln">1か月がひと目で見えるページ。</span><span class="ln">日付を押すと、その日のページへ飛びます。</span><span class="ln">右側は自由に使えるメモです。</span></p>
-      </div>
-
-      <div class="page-card">
-        <img src="images/planner/weekly.jpg" width="900" height="642" alt="週間ページ（ウィークリー）" loading="lazy">
-        <p class="page-card__en">Weekly</p>
-        <h3 class="page-card__title">週間</h3>
-        <p class="page-card__desc"><span class="ln">1週間を見開きで。</span><span class="ln">予定を立てるにも、1週間分をまとめて振り返るにも使えます。</span></p>
-      </div>
-
-      <div class="page-card">
-        <button class="shot" type="button"
-                data-sample="images/planner/sample-daily.jpg"
-                data-name="daily"
-                aria-label="1日1ページの書き込み例を見る">
-          <img src="images/planner/daily.jpg" width="900" height="642" alt="1日1ページの日次ページ" loading="lazy">
-          <span class="shot__hint">タップで書き込み例</span>
-        </button>
-        <p class="page-card__en">Daily</p>
-        <h3 class="page-card__title">1日1ページ</h3>
-        <p class="page-card__desc"><span class="ln">時間軸とTO DO、メモ、そして方眼のメモパッド。</span><span class="ln">予定の多い日はここに全部書けます。</span></p>
-      </div>
-
-      <div class="page-card">
-        <img src="images/planner/diary.jpg" width="900" height="642" alt="写真を貼るダイアリーページ" loading="lazy">
-        <p class="page-card__en">Diary</p>
-        <h3 class="page-card__title">ダイアリー</h3>
-        <p class="page-card__desc"><span class="ln">左に写真、右は一面の罫線。</span><span class="ln">その日のことを、書きたいだけ書き残せるページです。</span></p>
-      </div>
-
-      <div class="page-card">
-        <img src="images/planner/lookback-month.jpg" width="900" height="643" alt="1か月の写真を並べるルックバックのページ" loading="lazy">
-        <p class="page-card__en">Look Back / Monthly</p>
-        <h3 class="page-card__title">ひと月のふり返り</h3>
-        <p class="page-card__desc"><span class="ln">その月に撮った写真を、ポラロイドを貼ったように並べて、1か月を見返せるページです。</span><span class="ln">12か月分レイアウトがすべて違うから、あとで見返したときも楽しいページに。</span></p>
-      </div>
-
-      <div class="page-card">
-        <img src="images/planner/lookback.jpg" width="900" height="642" alt="1年を振り返るLOOK BACKページ" loading="lazy">
-        <p class="page-card__en">Look Back / Yearly</p>
-        <h3 class="page-card__title">1年のふり返り</h3>
-        <p class="page-card__desc"><span class="ln">毎月1枚ずつ選んで貼ると、12月にこのページが完成します。</span><span class="ln">1年をひと目で見返せるページです。</span></p>
-      </div>
-
-      <div class="page-card">
-        <img src="images/planner/growth.jpg" width="900" height="642" alt="成長の記録ページ" loading="lazy">
-        <p class="page-card__en">Growth Record</p>
-        <h3 class="page-card__title">成長の記録</h3>
-        <p class="page-card__desc"><span class="ln">身長と体重、できるようになったこと、ハマっていること、口ぐせ。</span><span class="ln">その時期の様子をまるごと残しておくページです。</span></p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- VOICE -->
-<section class="voice">
-  <div class="voice__inner">
-    <p class="voice__big"><span class="ln">正直に言うと、</span><span class="ln">全部は埋められません。</span></p>
-    <p class="voice__sub">作った私にも、たぶんできません。</p>
-    <div class="voice__rule"></div>
-    <p class="voice__last">それでいい、と思っています。</p>
-    <div class="voice__rule"></div>
-    <p class="voice__sub">824ページ。どこか一か所でも、続けばうれしいです。</p>
-  </div>
-</section>
-
-<!-- SPEC -->
-<section class="section section--paper">
-  <div class="section__inner">
-    <p class="label">Spec</p>
-    <h2 class="section__title">仕様</h2>
-    <p class="section__lead"><span class="ln">迷子にならないように、ページとページの行き来を全部リンクでつなぎました。</span><span class="ln">日付を押せばその日へ、タブを押せばその項目へ。</span><span class="ln">ページをめくって探す必要はありません。</span></p>
-
-    <div class="spec-row">
-      <div class="spec-card">
-        <div class="spec-card__num">824<span> ページ</span></div>
-        <p class="spec-card__desc">年間・月間・週間・1日1ページ・ダイアリー・成長の記録・ルックバック</p>
-      </div>
-      <div class="spec-card">
-        <div class="spec-card__num">47,000<span> 本以上</span></div>
-        <p class="spec-card__desc">ページ同士をつなぐリンク。日付・タブ・カレンダーのどこを押しても飛べます</p>
-      </div>
-      <div class="spec-card">
-        <div class="spec-card__num">4.5<span> MB</span></div>
-        <p class="spec-card__desc">824ページでこの軽さ。iPadでもストレスなく開いて書けます</p>
-      </div>
-    </div>
-
-    <ul class="notes">
+    <p class="label">Specs</p>
+    <h2 class="section__title">2冊に共通していること</h2>
+    <p class="section__lead"><span class="ln">見た目も中身も違いますが、使いかたと仕組みは同じです。</span><span class="ln">迷子にならないよう、ページの行き来はぜんぶリンクでつないであります。</span></p>
+    <ul class="specs">
       <li>PDF形式です。GoodNotes・Noteshelf・ZoomNotesなど、PDFに手書きできるノートアプリでお使いいただけます</li>
       <li>iPad＋Apple Pencilでの使用を想定して作っています</li>
-      <li>1月はじまり（2027年1月〜12月）です。週間は53週ぶん、1日1ページとダイアリーはそれぞれ365日ぶん。抜けている日はありません</li>
+      <li>日付を押せばその日へ、タブを押せばその項目へ。ページをめくって探す必要はありません</li>
+      <li>1月はじまり（2027年1月〜12月）です</li>
       <li>ダウンロード販売のため、印刷物の発送はありません</li>
     </ul>
   </div>
 </section>
 
-<!--
-  ==========================================================
-  【無料お試し版を配るとき】下の <section> ... </section> を囲っている
-  コメント（この行の上の "-- >" と、下の "= = =" の行）を外すだけで公開されます。
-  PDFは files/mamaroku-planner-trial-2026-10.pdf に配置済み・href も設定済みです。
-  （ファイル名を日本語にすると Cloudflare Pages が配信できないので半角にしてあります。
-   ダウンロード時のファイル名は download 属性で日本語になります）
-  配布開始の予定は2026年9月中旬。
-  ==========================================================
-
 <section class="section section--center">
   <div class="section__inner">
-    <p class="label">Free Trial</p>
-    <h2 class="section__title">まずは1か月、無料でお試しください</h2>
+    <p class="label">Free</p>
+    <h2 class="section__title">どちらも1か月分を、無料でためせます</h2>
     <p class="section__lead"><span class="ln">2027年版とまったく同じデザイン・同じ構成で、2026年10月の1か月分をお配りしています。</span><span class="ln">ご自分のiPadとノートアプリで、書き心地とリンクの動きをたしかめてから選んでいただけます。</span></p>
-    <p style="margin-top:32px">
-      <a class="btn-light" style="background:var(--dark);color:var(--white)"
-         href="files/mamaroku-planner-trial-2026-10.pdf"
-         download="mamaroku_2026年10月_お試し版.pdf"
-         onclick="gtag('event','planner_trial_download',{month:'2026-10'})">無料お試し版をダウンロード</a>
-    </p>
+    <div class="trials">
+      <a class="btn btn--dark" href="files/mamaroku-planner-trial-2026-10.pdf" download>WOOD をためす</a>
+      <span class="btn btn--soon">LEATHER は準備中</span>
+    </div>
   </div>
 </section>
 
-  ==========================================================
--->
-
-<!-- ▼▼▼ ページ下部のCTA：発売したらここも差し替えます ▼▼▼ -->
 <section class="status">
   <h2 class="status__title">近日発売</h2>
-  <p class="status__desc">
-    発売のお知らせは、インスタグラムでいちばん最初にお伝えします。
-  </p>
-  <a class="btn-light" href="https://www.instagram.com/mamaroku_ipad/" target="_blank" rel="noopener"
-     onclick="gtag('event','planner_notify_instagram',{position:'bottom'})">インスタグラムでお知らせを受け取る</a>
+  <p class="status__desc"><span class="ln">ただいま最終調整中です。</span><span class="ln">発売のお知らせは、インスタグラムでいちばん最初にお伝えします。</span></p>
+  <a class="btn" href="https://www.instagram.com/mamaroku_ipad/" target="_blank" rel="noopener">インスタグラムを見る</a>
 </section>
-<!--
-  【発売したら】上のブロックのボタンを、下の1行に差し替えてください。
-  見出しは「発売中」、説明文は価格の案内に。
 
-  <a class="btn-light" href="https://mamaroku-design.stores.jp" target="_blank" rel="noopener"
-     onclick="gtag('event','click_stores_planner',{position:'bottom'})">ストアで見る</a>
--->
-
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="footer__brand">mamaroku</div>
-  <div class="footer__sub">baby memory template</div>
-</footer>
-
-<!-- 書き込み例のライトボックス -->
-<div class="lb" id="lb" hidden>
-  <img class="lb__img" id="lbImg" src="" alt="">
-  <p class="lb__cap">画面のどこかをタップすると閉じます</p>
+<div class="foot">
+  <a href="index.html" class="hero__nav-link">← mamaroku design</a>
 </div>
-
-<script>
-(function () {
-  var lb = document.getElementById('lb'), img = document.getElementById('lbImg');
-  function close() {
-    lb.hidden = true;
-    img.removeAttribute('src');
-    document.body.style.overflow = '';
-  }
-  document.querySelectorAll('.shot').forEach(function (b) {
-    b.addEventListener('click', function () {
-      img.src = b.dataset.sample;
-      img.alt = b.getAttribute('aria-label') || '';
-      lb.hidden = false;
-      document.body.style.overflow = 'hidden';
-      if (window.gtag) gtag('event', 'planner_sample_open', { page: b.dataset.name || '' });
-    });
-  });
-  lb.addEventListener('click', close);
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !lb.hidden) close();
-  });
-})();
-</script>
 
 </body>
 </html>
