@@ -1,0 +1,46 @@
+{
+  "updatedAt": "2026-09-08T01:52:08.586Z",
+  "categories": [
+    "フレーム",
+    "TAPE",
+    "TAPE2",
+    "DATE",
+    "label",
+    "PAPER",
+    "clip",
+    "コラージュ",
+    "紙モノ"
+  ],
+  "catTargets": {
+    "コラージュ": "illust",
+    "label": "both",
+    "DATE": "both",
+    "TAPE2": "illust",
+    "紙モノ": "illust"
+  },
+  "lockedCats": [],
+  "files": {
+    "フレーム": "c01.json",
+    "TAPE": "c02.json",
+    "TAPE2": "c03.json",
+    "DATE": "c04.json",
+    "label": "c05.json",
+    "PAPER": "c06.json",
+    "clip": "c07.json",
+    "コラージュ": "c08.json",
+    "紙モノ": "c09.json"
+  },
+  "shapes": "shapes.json",
+  "hashes": {
+    "フレーム": "2b225a9ca1065c63729dceb6e0c3ae36",
+    "TAPE": "b60d3cbd34b3c7cdd611f70ccd5c713b",
+    "TAPE2": "6164ec92f731b7a393f180628d18e955",
+    "DATE": "d76e64c6efeeed04e3ed098842e098d8",
+    "label": "c25eab95790a0acd878c0504d81719f2",
+    "PAPER": "22ed10a989a36065547048cd38f7fb80",
+    "clip": "9feb75ff378fb962130a28e1241ea0aa",
+    "コラージュ": "f0a480325ac40f54000b8085c2cff751",
+    "紙モノ": "6d6920a3d255895cd2d6321727bdc437",
+    "__shapes": "fe6a5f57b4240eddddd1924012935785"
+  }
+}

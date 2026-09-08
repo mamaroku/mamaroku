@@ -521,6 +521,44 @@ const SHAPES = [{"cat": "illust", "inner": "<path fill=\"__C__\" d=\"M293.3,224.
 const IDB_NAME='mamarokuIllustDB', IDB_VER=2, IDB_STORE='materials', CS_STORE='customShapes';
 const CAT_KEY='mamaroku_categories';
 const CAT_TARGET_KEY='mamaroku_cat_targets';
+
+// ── 素材の読み込み（2026-09-08）──────────────────────────────
+// materials.json 一枚だと Cloudflare Pages の「1ファイル25MiBまで」に当たり
+// デプロイが止まるため、materials/ 配下のカテゴリ別ファイルへ分割した。
+// 旧形式の materials.json も残っていれば読めるようフォールバックを持たせてある。
+async function mmGetJSON(p){
+  const repo=localStorage.getItem('mamaroku_gh_repo');
+  const token=localStorage.getItem('mamaroku_gh_token');
+  if(repo&&token){
+    try{
+      const mr=await fetch(`https://api.github.com/repos/${repo}/contents/${p}`,{headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+      if(mr.ok){
+        const meta=await mr.json();
+        const br=await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`,{headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3.raw'}});
+        if(br.ok)return await br.json();
+      }
+    }catch(e){}
+  }
+  try{const r=await fetch(p+'?_='+Date.now());if(r.ok)return await r.json();}catch(e){}
+  return null;
+}
+function mmDir(){return (localStorage.getItem('mamaroku_gh_filepath')||'materials.json').replace(/[^/]*$/,'')+'materials/';}
+// want: 'illust' | 'sticker' | null(=全部)。自分に関係するカテゴリだけ取りにいく。
+async function mmLoadBundle(want){
+  const dir=mmDir();
+  const index=await mmGetJSON(dir+'index.json');
+  if(!index||!index.files)return null;
+  const targets=index.catTargets||{};
+  const cats=index.categories||Object.keys(index.files);
+  const need=want?cats.filter(c=>{const t=targets[c]||'both';return t==='both'||t===want;}):cats;
+  const parts=await Promise.all(need.map(c=>mmGetJSON(dir+index.files[c])));
+  const materials={};
+  need.forEach((c,i)=>{materials[c]=(parts[i]&&parts[i].items)||[];});
+  const out={updatedAt:index.updatedAt,categories:cats,catTargets:targets,lockedCats:index.lockedCats||[],materials:materials};
+  if(index.shapes){const cs=await mmGetJSON(dir+index.shapes);if(cs)out.customShapes=cs;}
+  return out;
+}
+
 const LOCKED_CATS_KEY='mamaroku_locked_cats';
 function openDB(){
   return new Promise((resolve,reject)=>{
@@ -796,7 +834,7 @@ async function renderGrid(){
   });
   customShapes=await csGetAll().catch(()=>[]);
   if(!customShapes.length){
-    try{const r=await fetch('materials.json');if(r.ok){const d=await r.json();if(d.customShapes&&d.customShapes.length){await csPutMany(d.customShapes);customShapes=d.customShapes;}}}catch(e){}
+    try{const d=(await mmLoadBundle(null))||(await mmGetJSON('materials.json'));if(d&&d.customShapes&&d.customShapes.length){await csPutMany(d.customShapes);customShapes=d.customShapes;}}catch(e){}
   }
   customShapes.sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity));
   if(customShapes.length){
@@ -896,7 +934,7 @@ async function loadMaterials(){
     const cats=(admCats.length?admCats:Object.keys(bycat)).filter(c=>{const t=admCatTargets[c]||'both';return t==='both'||t==='illust';});
     renderByCat(bycat,cats);return;
   }
-  fetch('materials.json').then(r=>r.ok?r.json():null).then(data=>{
+  (async()=>{return (await mmLoadBundle('illust'))||(await mmGetJSON('materials.json'));})().then(data=>{
     if(!data){container.innerHTML='<div style="font-size:11px;color:var(--faint);padding:4px;">素材なし</div>';return;}
     const bycat={};const cats=data.categories||Object.keys(data.materials||{});
     Object.keys(data.materials||{}).forEach(cat=>{bycat[cat]=(data.materials[cat]||[]).map(item=>({src:item.data,label:item.name||cat,sortOrder:item.sortOrder}));Object.keys(bycat).forEach(c=>bycat[c].sort((a,b)=>(a.sortOrder??Infinity)-(b.sortOrder??Infinity)));});
@@ -1641,19 +1679,77 @@ document.getElementById('adm-gh-save').onclick=()=>{
   setTimeout(()=>{st.textContent='';},2000);
 };
 async function admPushToGitHub(jsonStr){
+  // 2026-09-08: materials.json 一枚だと Cloudflare Pages の1ファイル25MiB制限で
+  // デプロイが止まるため、materials/ 配下のカテゴリ別ファイルに分けて送る。
   const token=localStorage.getItem('mamaroku_gh_token');
   const repo=localStorage.getItem('mamaroku_gh_repo')||'mamaroku/mamaroku';
-  const path=localStorage.getItem('mamaroku_gh_filepath')||'materials.json';
-  const url=`https://api.github.com/repos/${repo}/contents/${path}`;
+  const dir=mmDir();
   const headers={'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
-  const sizeMB=(jsonStr.length/1024/1024).toFixed(2);
-  let sha;
-  try{const r=await fetch(url,{headers});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
-  const content=btoa(unescape(encodeURIComponent(jsonStr)));
-  const body={message:'Update materials.json',content};
-  if(sha)body.sha=sha;
-  const res=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
-  if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(`HTTP ${res.status}: ${err.message||'不明なエラー'} (${sizeMB}MB)`);}
+  const LIMIT=25*1024*1024;
+  const enc=new TextEncoder();
+  const obj=JSON.parse(jsonStr);
+  const cats=obj.categories||Object.keys(obj.materials||{});
+  const st=document.getElementById('adm-gh-push-status');
+
+  async function hash(str){
+    try{
+      const buf=await crypto.subtle.digest('SHA-256',enc.encode(str));
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
+    }catch(e){ // file:// など crypto.subtle が使えない環境の保険
+      let h=0x811c9dc5;
+      for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+      return 'fnv'+h.toString(16)+'-'+str.length;
+    }
+  }
+  function b64(str){
+    const bytes=enc.encode(str);
+    let bin='';
+    for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+    return btoa(bin);
+  }
+  async function putFile(path,str){
+    const url=`https://api.github.com/repos/${repo}/contents/${path}`;
+    let sha;
+    try{const r=await fetch(url,{headers});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
+    const body={message:`Update ${path}`,content:b64(str)};
+    if(sha)body.sha=sha;
+    const res=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(`${path} → HTTP ${res.status}: ${e.message||'不明なエラー'}`);}
+  }
+
+  const parts=[],files={},hashes={};
+  for(let i=0;i<cats.length;i++){
+    const c=cats[i],name='c'+String(i+1).padStart(2,'0')+'.json';
+    const str=JSON.stringify({category:c,items:(obj.materials||{})[c]||[]});
+    files[c]=name;hashes[c]=await hash(str);
+    parts.push({key:c,path:dir+name,str});
+  }
+  let shapesName=null;
+  if(obj.customShapes&&obj.customShapes.length){
+    shapesName='shapes.json';
+    const str=JSON.stringify(obj.customShapes);
+    hashes['__shapes']=await hash(str);
+    parts.push({key:'__shapes',path:dir+shapesName,str});
+  }
+
+  const over=parts.filter(p=>enc.encode(p.str).length>LIMIT);
+  if(over.length)throw new Error(`1ファイル25MiBの上限を超えるカテゴリがあります: ${over.map(p=>p.key).join(', ')}。カテゴリを分けるか素材を減らしてください。`);
+
+  // 前回と中身が変わったファイルだけ送る
+  const remote=await mmGetJSON(dir+'index.json');
+  const rh=(remote&&remote.hashes)||{};
+  const changed=parts.filter(p=>rh[p.key]!==hashes[p.key]);
+  const total=changed.length+1;
+  for(let i=0;i<changed.length;i++){
+    if(st)st.textContent=`アップロード中... (${i+1}/${total}) ${changed[i].key}`;
+    await putFile(changed[i].path,changed[i].str);
+  }
+  if(st)st.textContent=`アップロード中... (${total}/${total}) 索引`;
+  await putFile(dir+'index.json',JSON.stringify({
+    updatedAt:obj.updatedAt||new Date().toISOString(),
+    categories:cats,catTargets:obj.catTargets||{},lockedCats:obj.lockedCats||[],
+    files:files,shapes:shapesName,hashes:hashes
+  },null,2));
   return true;
 }
 
@@ -1765,8 +1861,11 @@ async function syncFromRemote(){
     const repo=localStorage.getItem('mamaroku_gh_repo');
     const token=localStorage.getItem('mamaroku_gh_token');
     const path=localStorage.getItem('mamaroku_gh_filepath')||'materials.json';
-    // 1. トークンがあればGitHub API（どの環境でも最新を取得）
-    if(repo&&token){
+    // 0. 分割形式（materials/index.json ＋ カテゴリ別ファイル）を最優先
+    d=await mmLoadBundle('illust');
+    if(d)syncMsg='✓ 素材を読み込みました';
+    // 1. トークンがあればGitHub API（旧 materials.json 形式へのフォールバック）
+    if(!d&&repo&&token){
       try{
         const mr=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{
           headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}

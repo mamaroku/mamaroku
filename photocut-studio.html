@@ -1456,36 +1456,57 @@ window.addEventListener('resize',resizePreview);
 let MATERIALS = [];
 
 async function loadMaterialsFromJSON() {
-  let data = null;
   const isLocal = location.protocol === 'file:';
   const repo = localStorage.getItem('mamaroku_gh_repo');
   const token = localStorage.getItem('mamaroku_gh_token');
   if(localStorage.getItem('mamaroku_gh_filepath')==='mamaroku/materials.json') localStorage.setItem('mamaroku_gh_filepath','materials.json');
   const path = localStorage.getItem('mamaroku_gh_filepath') || 'materials.json';
-  // 1. トークンがあればGitHub API（どの環境でも最新を取得）
-  if(repo && token) {
+  const dir = path.replace(/[^/]*$/, '') + 'materials/';
+
+  // トークンがあればGitHub APIから（どの環境でも最新を取得）、無ければ同じ場所から取る
+  async function ghFetch(p) {
+    if(!(repo && token)) return null;
     try {
-      const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+      const mr = await fetch(`https://api.github.com/repos/${repo}/contents/${p}`, {
         headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
       });
-      if(mr.ok) {
-        const meta = await mr.json();
-        const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
-          headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
-        });
-        if(br.ok) data = await br.json();
-      }
-    } catch(e) {}
+      if(!mr.ok) return null;
+      const meta = await mr.json();
+      const br = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${meta.sha}`, {
+        headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw'}
+      });
+      return br.ok ? await br.json() : null;
+    } catch(e) { return null; }
+  }
+  async function getJSON(p) {
+    const g = await ghFetch(p);
+    if(g) return g;
+    try { const r = await fetch(p + '?_=' + Date.now()); if(r.ok) return await r.json(); } catch(e) {}
+    return null;
+  }
+
+  let data = null;
+  // 1. 分割形式（materials/index.json ＋ カテゴリ別ファイル）
+  //    materials.json 一枚だと Cloudflare Pages の1ファイル25MiB制限に当たるため、
+  //    2026-09-08 にカテゴリ別へ分割した。photocut は自分に関係するカテゴリだけ読む。
+  const index = await getJSON(dir + 'index.json');
+  if(index && index.files) {
+    const targets = index.catTargets || {};
+    const cats = index.categories || Object.keys(index.files);
+    const need = cats.filter(c => { const t = targets[c] || 'both'; return t === 'both' || t === 'sticker'; });
+    const parts = await Promise.all(need.map(c => getJSON(dir + index.files[c])));
+    const materials = {};
+    need.forEach((c, i) => { materials[c] = (parts[i] && parts[i].items) || []; });
+    data = {updatedAt: index.updatedAt, categories: cats, catTargets: targets,
+            lockedCats: index.lockedCats || [], materials: materials};
   }
   // 2. file://かつトークンなし → localStorageキャッシュ
   if(!data && isLocal) {
     const cache = localStorage.getItem('mamaroku_materials_cache');
     if(cache) { try { data = JSON.parse(cache); } catch(e) {} }
   }
-  // 3. 最終フォールバック: materials.json直接
-  if(!data) {
-    try { const r = await fetch('materials.json?_=' + Date.now()); if(r.ok) data = await r.json(); } catch(e) {}
-  }
+  // 3. 旧形式（materials.json 一枚）へのフォールバック
+  if(!data) data = await getJSON(path);
   if(!data) return [];
   if(Array.isArray(data.lockedCats)) PREMIUM_MATERIAL_CATS = data.lockedCats;
   const catTargets = data.catTargets || {};
