@@ -1,2 +1,7 @@
 .DS_Store
 CLAUDE.md
+
+# 編集前のバックアップ（手元にだけ置く。履歴はgitが持っている）
+*.bak
+*.bak-*
+illust-backup-*.json
