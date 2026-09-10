@@ -54,7 +54,7 @@ html,body{height:100%;width:100%;background:var(--bg);font-family:'Zen Kaku Goth
   flex:1;min-height:0;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.55);padding:8px;gap:6px;
+  background:rgba(0,0,0,0.28);padding:8px;gap:6px;
   position:relative;overflow:hidden;
 }
 #preview{display:block;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
@@ -1289,7 +1289,7 @@ function trimCanvasTransparent(canvas){
   return canvas;
 }
 
-function renderToCanvas(canvas,size){
+function renderToCanvas(canvas,size,guide){
   // 素材は写真と別経路。正方形に収めると横長のテープやラベルの周りに透明の余白が
   // 大量に入り、GoodNotesで選択枠が正方形になって掴みにくくなるため、
   // 元の縦横比のまま余白を切って書き出す。素材には枠・影・シェイプは付けない。
@@ -1335,6 +1335,15 @@ function renderToCanvas(canvas,size){
   }
   if(borderC)ctx.drawImage(borderC,0,0);
   ctx.drawImage(photoC,pad,pad);
+  // プレビューでだけ、切り抜きの輪郭に細い線を引く。
+  // 保存・コピーは guide を渡さないので、書き出した画像には入らない。
+  if(guide){
+    ctx.save();
+    ctx.translate(pad,pad);
+    ctx.strokeStyle='rgba(0,0,0,0.85)';
+    drawShapeElements(ctx,size,'stroke',Math.max(1,size*0.005));
+    ctx.restore();
+  }
 }
 
 
@@ -1348,7 +1357,7 @@ function render(){
   if(!userImg)return;
   try{
     const cv=document.getElementById('preview');
-    renderToCanvas(cv,previewBaseSize||240);
+    renderToCanvas(cv,previewBaseSize||240,true);   // プレビューは輪郭線あり
     // canvasは正方形とは限らない（素材モード・フチや影のはみ出し）ので、
     // 長辺がプレビュー枠に収まるようCSSサイズを縦横比どおりに合わせる。
     const box=previewBaseSize||240;
