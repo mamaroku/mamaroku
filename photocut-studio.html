@@ -1370,15 +1370,46 @@ function render(){
 }
 
 // ── Download / Copy ──
+// canvas → PNGのBlobを待ち時間なしで作る（toBlobは非同期で、タップ直後の許可が切れるため）
+function canvasPngBlobSync(cv){
+  const url=cv.toDataURL('image/png');
+  const bin=atob(url.slice(url.indexOf(',')+1));
+  const buf=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+  return new Blob([buf],{type:'image/png'});
+}
+// iPad/iPhoneのSafariは <a download> では写真アプリに保存できない（data:のタブが開くだけ）。
+// タッチ端末では共有シートを開いて「画像を保存」やGoodNotesを選べるようにする。
+// 共有シートはHTTPSでしか使えないので、http接続（iPadからのローカル確認）などでは
+// COPYと同じ画像表示モーダルで長押し保存を案内する。Macは従来どおりダウンロード。
+const COPY_HINT_HTML=document.getElementById('copy-modal-hint').innerHTML;
+function showSaveModal(cv){
+  document.getElementById('copy-modal-hint').innerHTML='📱 画像を<strong>長押し</strong> →「"写真"に保存」';
+  document.getElementById('copy-modal-img').src=cv.toDataURL('image/png');
+  document.getElementById('copy-modal').classList.add('show');
+}
 document.getElementById('dl-btn').onclick=()=>{
   if(!userImg)return;
   const off=document.createElement('canvas');
   renderToCanvas(off,selSize);
   trimCanvasTransparent(off);
-  const a=document.createElement('a'); a.href=off.toDataURL('image/png'); a.download='mamaroku-sticker.png'; a.click();
+  if(navigator.maxTouchPoints>0){
+    if(navigator.canShare){
+      const file=new File([canvasPngBlobSync(off)],'mamaroku-sticker.png',{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        // 閉じただけ(AbortError)なら何もしない。共有自体が失敗したら長押し保存の案内を出す
+        navigator.share({files:[file]}).catch(e=>{ if(e.name!=='AbortError') showSaveModal(off); });
+        return;
+      }
+    }
+    showSaveModal(off);
+    return;
+  }
+  const a=document.createElement('a'); a.href=off.toDataURL('image/png'); a.download='mamaroku-sticker.png';
+  document.body.appendChild(a); a.click(); a.remove();
   showMatToast('保存しました ✓');
 };
-function closeCopyModal(){ document.getElementById('copy-modal').classList.remove('show'); document.getElementById('copy-modal-img').src=''; if(copyModalUrl){URL.revokeObjectURL(copyModalUrl);copyModalUrl=null;} }
+function closeCopyModal(){ document.getElementById('copy-modal').classList.remove('show'); document.getElementById('copy-modal-img').src=''; document.getElementById('copy-modal-hint').innerHTML=COPY_HINT_HTML; if(copyModalUrl){URL.revokeObjectURL(copyModalUrl);copyModalUrl=null;} }
 document.getElementById('copy-btn').onclick=()=>{
   if(!userImg)return;
   const off=document.createElement('canvas');
@@ -1572,11 +1603,7 @@ function hideMaterialScreen() {
 function materialPngBlobSync(img, maxSize) {
   const cv = document.createElement('canvas');
   drawMaterialTo(cv, img, maxSize);
-  const url = cv.toDataURL('image/png');
-  const bin = atob(url.slice(url.indexOf(',') + 1));
-  const buf = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-  return new Blob([buf], { type: 'image/png' });
+  return canvasPngBlobSync(cv);
 }
 // 何かの理由で↑が使えないとき（画像がまだ読み込み中、canvasが汚染されている等）の
 // 保険：以前と同じく素材をそのままPNGで渡す
