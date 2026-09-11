@@ -1253,8 +1253,10 @@ function drawMaterialTo(canvas,img,maxSize){
 // 透明の余白がそのまま残る。GoodNotesに貼ると、その余白ごと1枚の画像として置かれるため
 // 選択枠が形より大きくなって掴みにくい。完全に透明なピクセルだけを外側から削るので、
 // 絵そのもの（フチ・影を含む）は一切変わらない。
-// 測り方は素材と同じで、縮小してから調べて縮小1ピクセル分だけ外側に余裕を残す
-// （＝切りすぎる方向には絶対にずれない）。1500pxを直接なめると数百msかかるため。
+// 測り方は2段階。まず素材と同じく縮小してから調べて、縮小1ピクセル分だけ外側に余裕を
+// 残した大まかな枠を出す（1500pxを全部なめると数百msかかるため）。
+// 次にその枠の端の細い帯だけを実寸で調べ直し、絵のある最初の列・行でぴったり切る
+// （2026-09-11 kumiさん指定で余白なしに。以前はこの余裕が1〜10pxの余白として残っていた）。
 function trimCanvasTransparent(canvas){
   const W=canvas.width,H=canvas.height;
   try{
@@ -1276,8 +1278,37 @@ function trimCanvasTransparent(canvas){
     }
     if(x1<0) return canvas; // 全部透明（写真なし）：何もしない
     const m=Math.ceil(1/k); // 縮小1ピクセル＝元の何px分か（安全マージン）
-    const bx=Math.max(0,Math.floor(x0/k)-m), by=Math.max(0,Math.floor(y0/k)-m);
-    const bw=Math.min(W,Math.ceil((x1+1)/k)+m)-bx, bh=Math.min(H,Math.ceil((y1+1)/k)+m)-by;
+    // 大まかな枠 [L,R)×[T,B)。絵は必ずこの内側にある
+    let L=Math.max(0,Math.floor(x0/k)-m), T=Math.max(0,Math.floor(y0/k)-m);
+    let R=Math.min(W,Math.ceil((x1+1)/k)+m), B=Math.min(H,Math.ceil((y1+1)/k)+m);
+    // 端の帯（幅 band）を実寸で読んで、絵のある最初の列・行を探す。帯に無ければ内側へ進む
+    const g=canvas.getContext('2d');
+    const band=3*m+2;
+    for(let x=L;x<R;x+=band){                       // 左
+      const w=Math.min(band,R-x),h=B-T,d=g.getImageData(x,T,w,h).data;
+      let hit=-1;
+      for(let c=0;c<w&&hit<0;c++)for(let r=0;r<h;r++)if(d[(r*w+c)*4+3]!==0){hit=c;break;}
+      if(hit>=0){L=x+hit;break;}
+    }
+    for(let x=R;x>L;x-=band){                       // 右
+      const w=Math.min(band,x-L),h=B-T,sx=x-w,d=g.getImageData(sx,T,w,h).data;
+      let hit=-1;
+      for(let c=w-1;c>=0&&hit<0;c--)for(let r=0;r<h;r++)if(d[(r*w+c)*4+3]!==0){hit=c;break;}
+      if(hit>=0){R=sx+hit+1;break;}
+    }
+    for(let y=T;y<B;y+=band){                       // 上
+      const w=R-L,h=Math.min(band,B-y),d=g.getImageData(L,y,w,h).data;
+      let hit=-1;
+      for(let r=0;r<h&&hit<0;r++)for(let c=0;c<w;c++)if(d[(r*w+c)*4+3]!==0){hit=r;break;}
+      if(hit>=0){T=y+hit;break;}
+    }
+    for(let y=B;y>T;y-=band){                       // 下
+      const w=R-L,h=Math.min(band,y-T),sy=y-h,d=g.getImageData(L,sy,w,h).data;
+      let hit=-1;
+      for(let r=h-1;r>=0&&hit<0;r--)for(let c=0;c<w;c++)if(d[(r*w+c)*4+3]!==0){hit=r;break;}
+      if(hit>=0){B=sy+hit+1;break;}
+    }
+    const bx=L, by=T, bw=R-L, bh=B-T;
     if(bw>=W&&bh>=H) return canvas; // 削るものがない
     const keep=document.createElement('canvas'); keep.width=bw; keep.height=bh;
     keep.getContext('2d').drawImage(canvas,bx,by,bw,bh,0,0,bw,bh);
