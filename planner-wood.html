@@ -297,6 +297,27 @@ gtag('config', 'G-QBYGZ9TTWS');
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
 
+  .lb__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    color: var(--dark);
+    font-size: 22px;
+    line-height: 44px;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .lb__nav--prev { left: 12px; }
+  .lb__nav--next { right: 12px; }
+  .lb__nav[hidden] { display: none; }
+
   .lb__cap {
     position: absolute;
     left: 0;
@@ -560,7 +581,13 @@ gtag('config', 'G-QBYGZ9TTWS');
       </div>
 
       <div class="page-card">
-        <img src="images/planner/monthly.jpg" width="900" height="642" alt="月間ページ（マンスリー）" loading="lazy">
+        <button class="shot" type="button"
+                data-sample="images/planner/sample-monthly.jpg"
+                data-name="monthly"
+                aria-label="月間ページの書き込み例を見る">
+          <img src="images/planner/monthly.jpg" width="900" height="642" alt="月間ページ（マンスリー）" loading="lazy">
+          <span class="shot__hint">タップで書き込み例</span>
+        </button>
         <p class="page-card__en">Monthly</p>
         <h3 class="page-card__title">月間</h3>
         <p class="page-card__desc"><span class="ln">1か月がひと目で見えるページ。</span><span class="ln">日付を押すと、その日のページへ飛びます。</span><span class="ln">右側は自由に使えるメモです。</span></p>
@@ -587,21 +614,39 @@ gtag('config', 'G-QBYGZ9TTWS');
       </div>
 
       <div class="page-card">
-        <img src="images/planner/diary.jpg" width="900" height="642" alt="写真を貼るダイアリーページ" loading="lazy">
+        <button class="shot" type="button"
+                data-sample="images/planner/sample-diary.jpg"
+                data-name="diary"
+                aria-label="ダイアリーページの書き込み例を見る">
+          <img src="images/planner/diary.jpg" width="900" height="642" alt="写真を貼るダイアリーページ" loading="lazy">
+          <span class="shot__hint">タップで書き込み例</span>
+        </button>
         <p class="page-card__en">Diary</p>
         <h3 class="page-card__title">ダイアリー</h3>
         <p class="page-card__desc"><span class="ln">左に写真、右は一面の罫線。</span><span class="ln">その日のことを、書きたいだけ書き残せるページです。</span></p>
       </div>
 
       <div class="page-card">
-        <img src="images/planner/lookback-month.jpg" width="900" height="643" alt="1か月の写真を並べるルックバックのページ" loading="lazy">
+        <button class="shot" type="button"
+                data-sample="images/planner/sample-lookback-month-1.jpg,images/planner/sample-lookback-month-2.jpg"
+                data-name="lookback-month"
+                aria-label="ひと月のふり返りページの書き込み例を見る">
+          <img src="images/planner/lookback-month.jpg" width="900" height="643" alt="1か月の写真を並べるルックバックのページ" loading="lazy">
+          <span class="shot__hint">タップで書き込み例</span>
+        </button>
         <p class="page-card__en">Look Back / Monthly</p>
         <h3 class="page-card__title">ひと月のふり返り</h3>
         <p class="page-card__desc"><span class="ln">その月に撮った写真を、ポラロイドを貼ったように並べて、1か月を見返せるページです。</span><span class="ln">12か月分レイアウトがすべて違うから、あとで見返したときも楽しいページに。</span></p>
       </div>
 
       <div class="page-card">
-        <img src="images/planner/lookback.jpg" width="900" height="642" alt="1年を振り返るLOOK BACKページ" loading="lazy">
+        <button class="shot" type="button"
+                data-sample="images/planner/sample-lookback-year.jpg"
+                data-name="lookback-year"
+                aria-label="1年のふり返りページの書き込み例を見る">
+          <img src="images/planner/lookback.jpg" width="900" height="642" alt="1年を振り返るLOOK BACKページ" loading="lazy">
+          <span class="shot__hint">タップで書き込み例</span>
+        </button>
         <p class="page-card__en">Look Back / Yearly</p>
         <h3 class="page-card__title">1年のふり返り</h3>
         <p class="page-card__desc"><span class="ln">毎月1枚ずつ選んで貼ると、12月にこのページが完成します。</span><span class="ln">1年をひと目で見返せるページです。</span></p>
@@ -700,29 +745,49 @@ gtag('config', 'G-QBYGZ9TTWS');
 <!-- 書き込み例のライトボックス -->
 <div class="lb" id="lb" hidden>
   <img class="lb__img" id="lbImg" src="" alt="">
-  <p class="lb__cap">画面のどこかをタップすると閉じます</p>
+  <button class="lb__nav lb__nav--prev" id="lbPrev" type="button" aria-label="前の書き込み例" hidden>‹</button>
+  <button class="lb__nav lb__nav--next" id="lbNext" type="button" aria-label="次の書き込み例" hidden>›</button>
+  <p class="lb__cap" id="lbCap">画面のどこかをタップすると閉じます</p>
 </div>
 
 <script>
 (function () {
   var lb = document.getElementById('lb'), img = document.getElementById('lbImg');
+  var prev = document.getElementById('lbPrev'), next = document.getElementById('lbNext');
+  var cap = document.getElementById('lbCap');
+  var list = [], idx = 0;
+  // data-sample はカンマ区切りで複数枚にできる（2枚以上なら左右の矢印で切り替え）
+  function show() {
+    img.src = list[idx];
+    var multi = list.length > 1;
+    prev.hidden = next.hidden = !multi;
+    cap.textContent = (multi ? (idx + 1) + ' / ' + list.length + '　' : '') + '画面のどこかをタップすると閉じます';
+  }
   function close() {
     lb.hidden = true;
     img.removeAttribute('src');
     document.body.style.overflow = '';
   }
+  function step(d) { idx = (idx + d + list.length) % list.length; show(); }
   document.querySelectorAll('.shot').forEach(function (b) {
     b.addEventListener('click', function () {
-      img.src = b.dataset.sample;
+      list = b.dataset.sample.split(',');
+      idx = 0;
       img.alt = b.getAttribute('aria-label') || '';
+      show();
       lb.hidden = false;
       document.body.style.overflow = 'hidden';
       if (window.gtag) gtag('event', 'planner_sample_open', { page: b.dataset.name || '' });
     });
   });
+  prev.addEventListener('click', function (e) { e.stopPropagation(); step(-1); });
+  next.addEventListener('click', function (e) { e.stopPropagation(); step(1); });
   lb.addEventListener('click', close);
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !lb.hidden) close();
+    if (lb.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (list.length > 1 && e.key === 'ArrowLeft') step(-1);
+    else if (list.length > 1 && e.key === 'ArrowRight') step(1);
   });
 })();
 </script>
