@@ -602,7 +602,10 @@ let dtStyle='film', dtInk='#ffffff', dtUrl=null, dtBlob=null;
 
 
 // ── Premium ──
-const PREMIUM_SHAPE_CATS=['basic_2','unenu_2','cloud','flower','template','template_2','planner','biribiri'];
+// 2026-09-13 変更：'planner' を有料から外した。
+// LOOK BACKの写真枠に合わせるための縦長シェイプで、2027プランナーを買った人が使う道具。
+// 有料プランナーを買ってさらにプレミアム解除も必要、では体験が噛み合わないため無料開放する。
+const PREMIUM_SHAPE_CATS=['basic_2','unenu_2','cloud','flower','template','template_2','biribiri'];
 let PREMIUM_MATERIAL_CATS=['PAPER','label','コラージュ']; // materials.jsonのlockedCatsで上書きされる
 const PREMIUM_HASH='561fd0e4f3e56e3dc4b99c8eb682d646a0eec6bbb344523afc50379c78989f42';
 
