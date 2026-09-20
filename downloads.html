@@ -159,7 +159,7 @@
       .dl-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     }
 
-    /* アクセスコード入力画面 */
+    /* パスワード入力画面 */
     .gate {
       position: fixed;
       inset: 0;
@@ -177,14 +177,7 @@
       color: var(--teal-dark);
       margin-bottom: 28px;
     }
-    .gate-title { font-size: 1.3rem; margin-bottom: 10px; }
-    .gate-sub {
-      font-size: 0.78rem;
-      color: #777;
-      font-family: 'Noto Sans JP', sans-serif;
-      line-height: 1.7;
-      margin-bottom: 24px;
-    }
+    .gate-title { font-size: 1.3rem; margin-bottom: 24px; }
     .gate-input {
       width: 100%;
       padding: 13px 14px;
@@ -225,10 +218,9 @@
   <div class="gate" id="gate">
     <div class="gate-box">
       <div class="gate-logo">mamaroku design</div>
-      <h2 class="gate-title">アクセスコードを入力</h2>
-      <p class="gate-sub">コードを入力してください</p>
-      <input type="text" id="gate-input" class="gate-input" placeholder="コードを入力" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-      <button class="gate-btn" id="gate-btn">確認する</button>
+      <h2 class="gate-title">パスワードを入力してください</h2>
+      <input type="text" id="gate-input" class="gate-input" placeholder="パスワードを入力" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button class="gate-btn" id="gate-btn">送信</button>
       <p class="gate-err" id="gate-err"></p>
     </div>
   </div>
@@ -378,14 +370,14 @@
           return true;
         } catch (e) {
           sessionStorage.removeItem(SS_KEY);
-          if (!fromSession) gateErr.textContent = 'コードが正しくありません。もう一度ご確認ください。';
+          if (!fromSession) gateErr.textContent = 'パスワードが正しくありません。もう一度ご確認ください。';
           return false;
         }
       }
 
       gateBtn.onclick = function () {
         var code = gateInput.value.trim();
-        if (!code) { gateErr.textContent = 'コードを入力してください。'; return; }
+        if (!code) { gateErr.textContent = 'パスワードを入力してください。'; return; }
         gateErr.textContent = '確認中...';
         tryCode(code, false);
       };
