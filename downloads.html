@@ -356,9 +356,19 @@
         render(data);
       }
 
+      // どこで止まっているかを知るための計測。
+      //   downloads_gate_shown … パスワード画面が出た（＝分母）
+      //   downloads_unlock      … 通過した（input=自分で入力／session=同じ端末での再訪）
+      //   downloads_unlock_fail … パスワードが違った
+      // これと download_click を並べると、「入れずに帰った」のか「見るだけだった」のかが分かる。
+      function track(name, params) {
+        if (typeof gtag === 'function') gtag('event', name, params || {});
+      }
+
       function showGate() {
         wrap.style.display = 'none';
         gate.style.display = 'flex';
+        track('downloads_gate_shown');
         setTimeout(function () { gateInput.focus(); }, 50);
       }
 
@@ -366,11 +376,15 @@
         try {
           var data = await decryptPayload(code, envelope);
           sessionStorage.setItem(SS_KEY, code);
+          track('downloads_unlock', { method: fromSession ? 'session' : 'input' });
           unlock(data);
           return true;
         } catch (e) {
           sessionStorage.removeItem(SS_KEY);
-          if (!fromSession) gateErr.textContent = 'パスワードが正しくありません。もう一度ご確認ください。';
+          if (!fromSession) {
+            gateErr.textContent = 'パスワードが正しくありません。もう一度ご確認ください。';
+            track('downloads_unlock_fail');
+          }
           return false;
         }
       }
