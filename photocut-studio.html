@@ -1358,7 +1358,9 @@ function renderToCanvas(canvas,size,guide){
     bCtx.save(); bCtx.translate(pad,pad);
     bCtx.fillStyle=borderColor; drawShapeElements(bCtx,size,'fill',0);
     bCtx.strokeStyle=borderColor; drawShapeElements(bCtx,size,'stroke',borderPx*2);
-    bCtx.globalCompositeOperation='destination-out'; drawShapeElements(bCtx,size,'fill',0);
+    // 内側はくり抜かずに塗ったまま残し、その上に写真を重ねる。
+    // くり抜くと輪郭の半透明ピクセルがフチ・写真の両方で欠けて境目が透け、
+    // 手描き風の細い凹凸のところでは塗りのない点として見えていた（2026-10-02）。
     bCtx.restore();
   }
   if(hasShadow){
