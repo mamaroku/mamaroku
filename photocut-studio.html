@@ -1150,7 +1150,65 @@ function applyTransform(ctx,tf){
   if(rm)ctx.rotate(+rm[1]*Math.PI/180);
   if(sm)ctx.scale(+sm[1],+sm[1]);
 }
-function drawShapeElements(ctx,size,mode,strokeWidth){
+// フチ用の太い線は、手描き風の細かいガタガタ（0.1単位で行ったり来たりする小さな曲線）を
+// そのままなぞるとSafariの線の計算が破綻し、フチの帯に三角形の穴が開く（Chromeでは出ない・2026-10-02）。
+// そこで輪郭を折れ線に直し、シェイプの枠の1/300間隔（書き出し1600pxで約5px）に点を打ち直した
+// なめらかな線を代わりになぞる。ずれは手描きのガタガタの幅ほどで、太いフチに隠れて見た目は変わらない。
+// 写真を切り抜く塗り（fill）は元の輪郭のまま。
+// getPointAtLengthは1点ごとに輪郭を頭から数え直すため形によっては15秒かかった。自前で計算する。
+const smoothPathCache=new Map();
+function flattenSvgPath(d,minSeg){
+  const tok=d.match(/[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/g)||[];
+  const pts=[]; let i=0,cmd='',x=0,y=0,sx=0,sy=0,cx2=0,cy2=0,prevC=false,subpaths=0;
+  const num=()=>parseFloat(tok[i++]);
+  const cubic=(x1,y1,x2,y2,ex,ey)=>{
+    // 大きな曲線は細かく分ける（一律8分割だと丸の形で直線が内側を通り、フチが2〜3pxへこんだ）
+    const len=Math.hypot(x1-x,y1-y)+Math.hypot(x2-x1,y2-y1)+Math.hypot(ex-x2,ey-y2);
+    const n=Math.min(256,Math.max(2,Math.ceil(len/minSeg)));
+    for(let k=1;k<=n;k++){const t=k/n,u=1-t;
+      pts.push([u*u*u*x+3*u*u*t*x1+3*u*t*t*x2+t*t*t*ex, u*u*u*y+3*u*u*t*y1+3*u*t*t*y2+t*t*t*ey]);}
+    cx2=x2;cy2=y2;x=ex;y=ey;prevC=true;
+  };
+  while(i<tok.length){
+    if(/[a-zA-Z]/.test(tok[i])) cmd=tok[i++];
+    const rel=cmd===cmd.toLowerCase(), ox=rel?x:0, oy=rel?y:0;
+    switch(cmd.toUpperCase()){
+      case 'M': if(++subpaths>1) return null; x=ox+num();y=oy+num();sx=x;sy=y;pts.push([x,y]);prevC=false;cmd=rel?'l':'L';break;
+      case 'L': x=ox+num();y=oy+num();pts.push([x,y]);prevC=false;break;
+      case 'H': x=(rel?x:0)+num();pts.push([x,y]);prevC=false;break;
+      case 'V': y=(rel?y:0)+num();pts.push([x,y]);prevC=false;break;
+      case 'C': {const a=ox+num(),b=oy+num(),c=ox+num(),e=oy+num(),f=ox+num(),g=oy+num();cubic(a,b,c,e,f,g);break;}
+      case 'S': {const a=prevC?2*x-cx2:x,b=prevC?2*y-cy2:y,c=ox+num(),e=oy+num(),f=ox+num(),g=oy+num();cubic(a,b,c,e,f,g);break;}
+      case 'Z': x=sx;y=sy;pts.push([x,y]);prevC=false;break;
+      default: return null;                         // Q/T/Aなど未対応の命令は元の輪郭を使う
+    }
+  }
+  return pts.length>2?pts:null;
+}
+function smoothPath2D(d,vbW){
+  const key=vbW+'|'+d;
+  if(smoothPathCache.has(key)) return smoothPathCache.get(key);
+  let p2=null;
+  try{
+    const pts=flattenSvgPath(d,vbW/2000);                    // 輪郭が1本の形だけ（複数あると折れ線でつながる）
+    if(pts){
+      const step=vbW/300;
+      p2=new Path2D(); p2.moveTo(pts[0][0],pts[0][1]);
+      let [px,py]=pts[0], carry=0;
+      for(let k=1;k<pts.length;k++){
+        const [qx,qy]=pts[k], seg=Math.hypot(qx-px,qy-py);
+        let t=step-carry;
+        while(t<=seg){ p2.lineTo(px+(qx-px)*t/seg, py+(qy-py)*t/seg); t+=step; }
+        carry=seg-(t-step); px=qx; py=qy;
+      }
+      p2.closePath();
+    }
+  }catch(e){ p2=null; }
+  if(!p2) p2=new Path2D(d);
+  smoothPathCache.set(key,p2);
+  return p2;
+}
+function drawShapeElements(ctx,size,mode,strokeWidth,smoothStroke){
   const vbParts=VBOXES[selIdx].split(' ').map(Number);
   const vbX=vbParts[0],vbY=vbParts[1],vbW=vbParts[2],vbH=vbParts[3];
   const sc=Math.min(size/vbW,size/vbH);
@@ -1169,7 +1227,8 @@ function drawShapeElements(ctx,size,mode,strokeWidth){
     if(tf2) applyTransform(ctx,tf2);
     ctx.beginPath();
     if(t==='path'){
-      const p=new Path2D(el.getAttribute('d'));
+      const d=el.getAttribute('d');
+      const p=(mode==='stroke'&&smoothStroke)?smoothPath2D(d,vbW):new Path2D(d);
       if(mode==='fill') ctx.fill(p); else ctx.stroke(p);
     } else if(t==='circle'){
       ctx.arc(+el.getAttribute('cx')||0, +el.getAttribute('cy')||0, +el.getAttribute('r')||0, 0, Math.PI*2);
@@ -1357,7 +1416,7 @@ function renderToCanvas(canvas,size,guide){
     const bCtx=borderC.getContext('2d');
     bCtx.save(); bCtx.translate(pad,pad);
     bCtx.fillStyle=borderColor; drawShapeElements(bCtx,size,'fill',0);
-    bCtx.strokeStyle=borderColor; drawShapeElements(bCtx,size,'stroke',borderPx*2);
+    bCtx.strokeStyle=borderColor; drawShapeElements(bCtx,size,'stroke',borderPx*2,true);
     // 内側はくり抜かずに塗ったまま残し、その上に写真を重ねる。
     // くり抜くと輪郭の半透明ピクセルがフチ・写真の両方で欠けて境目が透け、
     // 手描き風の細い凹凸のところでは塗りのない点として見えていた（2026-10-02）。
