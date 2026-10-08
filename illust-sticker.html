@@ -122,10 +122,40 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 
 /* FRAME TEXT PANEL */
 #panel.frame-mode{max-height:660px;}
-.panel-sec#sec-frame{padding:12px 14px;display:none;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;box-sizing:border-box;}
+.panel-sec#sec-frame{padding:0 16px 14px;display:none;flex-direction:column;max-height:640px;overflow-y:auto;box-sizing:border-box;background:#fbf9f4 repeating-linear-gradient(to bottom,transparent 0 31px,#ece6dc 31px 32px);}
+#sec-frame .fr-pvwrap{position:sticky;top:0;z-index:2;margin:0 -16px;padding:18px 16px 10px;background:linear-gradient(#fbf9f4 88%,rgba(251,249,244,0));}
+#sec-frame .fr-paper{position:relative;background:#fff;box-shadow:0 2px 8px rgba(60,50,40,.1);padding:12px;transform:rotate(-.6deg);}
+#sec-frame .fr-paper::before{content:'';position:absolute;top:-8px;left:50%;width:70px;height:18px;margin-left:-35px;background:rgba(214,196,170,.55);transform:rotate(2deg);z-index:1;}
+#sec-frame #fr-preview-box{border:none;}
+#sec-frame .fr-copyrow{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;}
+#sec-frame .fr-copyrow .dt-hint{flex:1;text-align:right;}
+#sec-frame #fr-copy{padding:8px 22px;}
+#sec-frame .fr-sec{padding:8px 0 12px;}
+#sec-frame .fr-sh{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;}
+#sec-frame .fr-no{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--faint);letter-spacing:.05em;}
+#sec-frame .fr-lb{font-size:12.5px;letter-spacing:.12em;font-weight:400;color:var(--text);}
+#sec-frame .fr-tiles{display:grid;gap:8px;}
+#sec-frame .fr-t4{grid-template-columns:repeat(4,1fr);}
+#sec-frame .fr-t3{grid-template-columns:repeat(3,1fr);}
+#sec-frame .fr-t2{grid-template-columns:repeat(2,1fr);}
+#sec-frame .fr-tile{padding:0;background:#fff;border:1px solid #e6dfd3;border-radius:10px;aspect-ratio:1;max-height:96px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 2px rgba(60,50,40,.06);color:var(--text);}
+#sec-frame .fr-t2 .fr-tile{aspect-ratio:auto;padding:11px 0;flex-direction:row;gap:10px;}
+#sec-frame .fr-tile small{font-size:10px;color:var(--muted);letter-spacing:.05em;}
+#sec-frame .fr-tile.selected,#sec-frame .fr-pill.selected{background:#fff;color:var(--text);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);}
+#sec-frame .fr-moji{font-size:22px;line-height:1;}
+#sec-frame .fr-dir{font-size:13px;line-height:1;display:inline-block;}
+#sec-frame .fr-ic{width:30px;height:20px;display:block;}
+#sec-frame .fr-ic.kaku{border:1.5px solid var(--text);}
+#sec-frame .fr-ic.marukado{border:1.5px solid var(--text);border-radius:7px;}
+#sec-frame .fr-ic.niju{border:4px double var(--text);}
+#sec-frame .fr-ic.none{border:1.5px dashed #bbb;}
+#sec-frame .fr-pills{display:flex;gap:6px;margin-top:8px;}
+#sec-frame .fr-pill{padding:5px 16px;border-radius:99px;background:#fff;border:1px solid #e6dfd3;font-size:11.5px;color:var(--text);}
+#sec-frame .fr-crow{display:flex;align-items:center;gap:12px;min-height:32px;}
+#sec-frame .fr-crow b{font-weight:400;font-size:11.5px;width:34px;color:var(--muted);flex-shrink:0;}
 .dt-ink-none{background:linear-gradient(135deg,#fff 42%,#d66 42%,#d66 58%,#fff 58%);}
 .panel-sec#sec-frame.active{display:flex;}
-.fr-textarea{width:100%;border:1px solid var(--bdl);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px;resize:none;line-height:1.6;box-sizing:border-box;}
+.fr-textarea{width:100%;border:none;border-bottom:1.5px solid var(--text);border-radius:0;background:transparent;color:var(--text);font-family:inherit;font-size:15px;padding:0 2px;resize:none;line-height:32px;box-sizing:border-box;outline:none;}
 .dt-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;}
 #ph-search{width:100%;padding:9px 14px;border:1.5px solid var(--bdl);background:var(--bg);font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:8px;flex-shrink:0;}
 #ph-search:focus{border-color:var(--acc);}
@@ -316,53 +346,48 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <div class="dt-hint">コピーしてGoodnotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
     </div>
     <div class="panel-sec" id="sec-frame">
-      <div>
-        <div class="dt-label">テキスト（改行で複数行）</div>
-        <textarea class="fr-textarea" id="fr-text" rows="2" placeholder="きょうのできごと"></textarea>
+      <div class="fr-pvwrap">
+        <div class="fr-paper"><div id="fr-preview-box"><img id="fr-preview" draggable="true" alt="囲みテキスト"></div></div>
+        <div class="fr-copyrow"><span class="dt-hint">うまくいかない時はプレビューを長押し→コピー</span><button id="fr-copy">コピー</button></div>
       </div>
-      <div>
-        <div class="dt-label">フォント</div>
-        <div class="dt-row" id="fr-fonts">
-          <button class="dt-style selected" data-font="mincho">明朝</button>
-          <button class="dt-style" data-font="gothic">ゴシック</button>
-          <button class="dt-style" data-font="maru">丸ゴシック</button>
-          <button class="dt-style" data-weight="300" id="fr-w-light">細</button>
-          <button class="dt-style selected" data-weight="600" id="fr-w-bold">太</button>
+      <div class="fr-sec">
+        <div class="fr-sh"><span class="fr-no">No.1</span><span class="fr-lb">テキスト</span></div>
+        <textarea class="fr-textarea" id="fr-text" rows="2" placeholder="ここに入力"></textarea>
+      </div>
+      <div class="fr-sec">
+        <div class="fr-sh"><span class="fr-no">No.2</span><span class="fr-lb">枠</span></div>
+        <div class="fr-tiles fr-t4" id="fr-frames">
+          <button class="dt-style fr-tile selected" data-frame="kaku"><span class="fr-ic kaku"></span><small>四角</small></button>
+          <button class="dt-style fr-tile" data-frame="marukado"><span class="fr-ic marukado"></span><small>角丸</small></button>
+          <button class="dt-style fr-tile" data-frame="niju"><span class="fr-ic niju"></span><small>二重</small></button>
+          <button class="dt-style fr-tile" data-frame="none"><span class="fr-ic none"></span><small>なし</small></button>
         </div>
       </div>
-      <div>
-        <div class="dt-label">向き</div>
-        <div class="dt-row" id="fr-dirs">
-          <button class="dt-style selected" data-dir="h">横書き</button>
-          <button class="dt-style" data-dir="v">縦書き</button>
+      <div class="fr-sec" id="fr-fonts">
+        <div class="fr-sh"><span class="fr-no">No.3</span><span class="fr-lb">フォント</span></div>
+        <div class="fr-tiles fr-t3">
+          <button class="dt-style fr-tile selected" data-font="mincho"><span class="fr-moji" style="font-family:'Hiragino Mincho ProN',serif">あ</span><small>明朝</small></button>
+          <button class="dt-style fr-tile" data-font="gothic"><span class="fr-moji" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif">あ</span><small>ゴシック</small></button>
+          <button class="dt-style fr-tile" data-font="maru"><span class="fr-moji" style="font-family:'Hiragino Maru Gothic ProN',sans-serif">あ</span><small>丸ゴシック</small></button>
+        </div>
+        <div class="fr-pills">
+          <button class="dt-style fr-pill" data-weight="300" id="fr-w-light">細</button>
+          <button class="dt-style fr-pill selected" data-weight="600" id="fr-w-bold">太</button>
         </div>
       </div>
-      <div>
-        <div class="dt-label">枠</div>
-        <div class="dt-row" id="fr-frames">
-          <button class="dt-style selected" data-frame="kaku">四角</button>
-          <button class="dt-style" data-frame="marukado">角丸</button>
-          <button class="dt-style" data-frame="niju">二重</button>
-          <button class="dt-style" data-frame="none">なし</button>
+      <div class="fr-sec">
+        <div class="fr-sh"><span class="fr-no">No.4</span><span class="fr-lb">向き</span></div>
+        <div class="fr-tiles fr-t2" id="fr-dirs">
+          <button class="dt-style fr-tile selected" data-dir="h"><span class="fr-dir">≡</span><small>横書き</small></button>
+          <button class="dt-style fr-tile" data-dir="v"><span class="fr-dir" style="transform:rotate(90deg)">≡</span><small>縦書き</small></button>
         </div>
       </div>
-      <div>
-        <div class="dt-label">文字の色</div>
-        <div class="dt-row" id="fr-inks-text"></div>
+      <div class="fr-sec">
+        <div class="fr-sh"><span class="fr-no">No.5</span><span class="fr-lb">色</span></div>
+        <div class="fr-crow"><b>文字</b><div class="dt-row" id="fr-inks-text"></div></div>
+        <div class="fr-crow"><b>枠</b><div class="dt-row" id="fr-inks-frame"></div></div>
+        <div class="fr-crow"><b>背景</b><div class="dt-row" id="fr-inks-bg"></div></div>
       </div>
-      <div>
-        <div class="dt-label">枠の色</div>
-        <div class="dt-row" id="fr-inks-frame"></div>
-      </div>
-      <div>
-        <div class="dt-label">背景の色</div>
-        <div class="dt-row" id="fr-inks-bg"></div>
-      </div>
-      <div class="dt-preview-wrap">
-        <div id="fr-preview-box"><img id="fr-preview" draggable="true" alt="囲みテキスト"></div>
-        <button id="fr-copy">コピー</button>
-      </div>
-      <div class="dt-hint">コピーしてGoodnotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
     </div>
   </div>
   <div id="zoom-row" style="display:none;">
@@ -2205,7 +2230,7 @@ const FR_SMALL=new Set([...'ゃゅょっぁぃぅぇぉゎャュョッァィゥ�
 function frRenderCanvas(){
   const raw=document.getElementById('fr-text').value;
   let lines=raw.split('\n').map(s=>s.trim()).filter(s=>s!=='');
-  if(!lines.length)lines=['きょうのできごと'];
+  if(!lines.length)lines=['ここに入力'];
   const fs=72, sp=fs*0.1;
   const font=`${frWeight} ${fs}px ${FR_FONTS[frFont]}`;
   const cv=document.createElement('canvas');
