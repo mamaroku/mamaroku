@@ -2284,9 +2284,10 @@ function frRenderCanvas(){
   const lw=Math.max(3,fs*0.055);
   const m=lw*4; // 枠線と二重枠のための余白
   let boxW,boxH,padX,padY,lh,chH,colW;
+  const inset=frFrame==='niju'?lw*2.2:0; // 二重は内側の塗りから測る
   if(frDir==='v'){
     chH=fs*1.2; colW=fs*1.55;
-    padX=fs*0.5; padY=fs*0.6;
+    padX=fs*0.8+inset; padY=fs*0.85+inset;
     const maxLen=Math.max(...lines.map(l=>[...l].length));
     boxW=lines.length*colW+padX*2;
     boxH=maxLen*chH+padY*2;
@@ -2294,7 +2295,7 @@ function frRenderCanvas(){
     lh=fs*1.5;
     try{ctx0.letterSpacing=sp+'px';}catch(e){}
     let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
-    padX=fs*1.0; padY=fs*0.55;
+    padX=fs*1.2+inset; padY=fs*0.8+inset;
     boxW=maxW+padX*2; boxH=lines.length*lh+padY*2;
   }
   cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
