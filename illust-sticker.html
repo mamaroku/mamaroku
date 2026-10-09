@@ -53,6 +53,10 @@ html,body{height:100%;width:100%;background:var(--bg);font-family:'Zen Kaku Goth
 .preset:hover{transform:scale(1.15);}
 .preset.sel{outline:2px solid var(--acc);outline-offset:2px;}
 #custom-row{display:flex;align-items:center;gap:10px;}
+#color-recent-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+#color-recent{display:flex;gap:8px;flex-wrap:wrap;}
+.rc-label{font-size:10px;letter-spacing:.08em;color:var(--faint);flex-shrink:0;}
+.rc-inline{display:flex;gap:8px;align-items:center;padding-left:8px;border-left:1px solid var(--bdl);}
 #color-swatch{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);flex-shrink:0;}
 #color-native{width:36px;height:36px;padding:0;border:none;background:none;cursor:pointer;}
 #color-hex{font-size:12px;font-family:monospace;color:var(--text);}
@@ -148,7 +152,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #sec-frame .fr-ic{width:30px;height:20px;display:block;}
 #sec-frame .fr-ic.kaku{border:1.5px solid var(--text);}
 #sec-frame .fr-ic.marukado{border:1.5px solid var(--text);border-radius:7px;}
-#sec-frame .fr-ic.niju{border:4px double var(--text);}
+#sec-frame .fr-ic.niju{border:1px solid var(--text);padding:2px;background:var(--faint);background-clip:content-box;}
 #sec-frame .fr-ic.none{border:1.5px dashed #bbb;}
 #sec-frame .fr-pills{display:flex;gap:6px;margin-top:8px;}
 #sec-frame .fr-pill{padding:5px 16px;border-radius:99px;background:#fff;border:1px solid #e6dfd3;font-size:11.5px;color:var(--text);}
@@ -292,6 +296,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   <div id="panel">
     <div class="panel-sec active" id="sec-color">
       <div id="color-presets"></div>
+      <div id="color-recent-wrap"><span class="rc-label">最近使った色</span><div id="color-recent"></div></div>
       <div id="custom-row">
         <div id="color-swatch"></div>
         <span style="font-size:11px;color:var(--muted);">カスタム</span>
@@ -875,6 +880,30 @@ async function renderGrid(){
   }
 }
 
+// ── 最近使った色（カスタムで選んだ色を全タブ共通で記憶） ──
+const RC_KEY='mamaroku_recent_colors',RC_MAX=5;
+let rcList=[];try{rcList=JSON.parse(localStorage.getItem(RC_KEY))||[];}catch(e){}
+const rcRows=[];
+function rcAdd(c){
+  c=c.toLowerCase();rcList=[c,...rcList.filter(x=>x!==c)].slice(0,RC_MAX);
+  try{localStorage.setItem(RC_KEY,JSON.stringify(rcList));}catch(e){}
+  rcRows.forEach(rcRender);
+}
+function rcRender(r){
+  r.el.innerHTML='';
+  rcList.forEach(c=>{
+    const b=document.createElement('button');
+    b.className=r.cls;b.style.background=c;b.dataset.color=c;b.dataset.ink=c;b.title='最近使った色 '+c;
+    if(r.isSel&&r.isSel(c))b.classList.add(r.selCls);
+    b.onclick=()=>r.onPick(c,b);
+    r.el.appendChild(b);
+  });
+  r.el.style.display=rcList.length?'':'none';
+  if(r.after)r.after();
+}
+// el=並べる場所, cls=丸ボタンのclass, onPick=押した時, isSel/selCls=作り直した時に選択状態を保つ
+function rcMount(el,cls,onPick,isSel,selCls,after){const r={el,cls,onPick,isSel,selCls,after};rcRows.push(r);rcRender(r);}
+
 // ── Color ──
 function updateSwatch(){const sw=document.getElementById('color-swatch');sw.style.background=selColor;sw.style.borderColor=selColor==='#ffffff'?'#bbb':selColor;}
 function setColor(c){selColor=c;updateSwatch();document.getElementById('color-native').value=c;document.getElementById('color-hex').textContent=c.toUpperCase();document.querySelectorAll('.preset').forEach(p=>p.classList.toggle('sel',p.dataset.color===c));renderGrid();updatePreview();}
@@ -890,6 +919,8 @@ updateSwatch();
   p.onclick=()=>{copyColor(c);};document.getElementById('color-presets').appendChild(p);
 });
 document.getElementById('color-native').oninput=function(){fillMode='color';setColor(this.value);};
+document.getElementById('color-native').addEventListener('change',function(){rcAdd(this.value);});
+rcMount(document.getElementById('color-recent'),'preset',c=>copyColor(c),c=>c===selColor,'sel',()=>{document.getElementById('color-recent-wrap').style.display=rcList.length?'':'none';});
 // カラーもタップだけでコピー（素材と同じ挙動）。カスタムカラーはドラッグ中に連続発火するため対象外
 function copyColor(c){
   fillMode='color';setColor(c);
@@ -2154,6 +2185,8 @@ function dtSetup(){
   const cust=document.createElement('label');
   cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
   cust.innerHTML='<span id="dt-chip"></span><input type="color" id="dt-picker" value="#ff8a3c">';
+  const dtRecent=document.createElement('span');dtRecent.className='rc-inline';
+  inkRow.appendChild(dtRecent);
   inkRow.appendChild(cust);
   const hex=document.createElement('span');hex.id='dt-hex';hex.textContent=dtInk;
   inkRow.appendChild(hex);
@@ -2164,6 +2197,11 @@ function dtSetup(){
     document.querySelectorAll('#sec-date .dt-ink').forEach(x=>x.classList.remove('selected'));
     cust.classList.add('selected');
     dtUpdatePreview();
+  });
+  document.getElementById('dt-picker').addEventListener('change',e=>rcAdd(e.target.value));
+  rcMount(dtRecent,'dt-ink',(c,b)=>{
+    dtInk=c;document.querySelectorAll('#sec-date .dt-ink').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+    hex.textContent=c;dtUpdatePreview();
   });
   document.querySelectorAll('#dt-styles .dt-style').forEach(b=>{
     b.onclick=()=>{
@@ -2209,10 +2247,13 @@ function frBuildInks(rowId,presets,initial,custDefault,onPick){
     b.onclick=()=>{setSel(b);hex.textContent=c==='none'?'なし':c;onPick(c);};
     row.appendChild(b);
   });
+  const recent=document.createElement('span');recent.className='rc-inline';
+  row.appendChild(recent);
   const cust=document.createElement('label');
   cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
   cust.innerHTML='<span></span><input type="color" value="'+custDefault+'">';
   row.appendChild(cust);
+  rcMount(recent,'dt-ink',(c,b)=>{setSel(b);hex.textContent=c;onPick(c);});
   hex.textContent=initial==='none'?'なし':initial;
   row.appendChild(hex);
   cust.querySelector('input').addEventListener('input',e=>{
@@ -2220,6 +2261,7 @@ function frBuildInks(rowId,presets,initial,custDefault,onPick){
     cust.querySelector('span').style.background=v;
     setSel(cust);hex.textContent=v;onPick(v);
   });
+  cust.querySelector('input').addEventListener('change',e=>rcAdd(e.target.value));
 }
 function frRRect(ctx,x,y,w,h,r){
   ctx.beginPath();
@@ -2259,7 +2301,7 @@ function frRenderCanvas(){
   const ctx=cv.getContext('2d');
   ctx.lineWidth=lw;
   // 背景（枠の形に合わせて塗る）
-  if(frInkBg!=='none'){
+  if(frInkBg!=='none'&&frFrame!=='niju'){
     ctx.fillStyle=frInkBg;
     if(frFrame==='marukado'){frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.fill();}
     else ctx.fillRect(m,m,boxW,boxH);
@@ -2270,9 +2312,12 @@ function frRenderCanvas(){
   }else if(frFrame==='marukado'){
     frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.stroke();
   }else if(frFrame==='niju'){
+    // 外側に細い線、すき間をあけて内側を塗る（背景なしの時は内側も細い線）
+    const g=lw*2.2;
+    ctx.lineWidth=lw*0.6;
     ctx.strokeRect(m,m,boxW,boxH);
-    ctx.lineWidth=lw*0.5;
-    ctx.strokeRect(m+lw*2.4,m+lw*2.4,boxW-lw*4.8,boxH-lw*4.8);
+    if(frInkBg!=='none'){ctx.fillStyle=frInkBg;ctx.fillRect(m+g,m+g,boxW-g*2,boxH-g*2);}
+    else ctx.strokeRect(m+g,m+g,boxW-g*2,boxH-g*2);
   }
   ctx.fillStyle=frInkText;
   ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
