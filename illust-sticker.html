@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="イラストスタンプ">
+<link href="fonts/wafupop/wafupop.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=Silkscreen&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f8f6f2;--sur:#fdfcfa;--bd:#d8d4cc;--bdl:#e8e4de;--text:#3a3630;--muted:#5a5450;--faint:#7a7670;--acc:#5a524a;--hover:#f0ede8;--rose:#d4a5a5;--blush:#f4e8e4;}
@@ -365,10 +366,11 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       </div>
       <div class="fr-sec" id="fr-fonts">
         <div class="fr-sh"><span class="fr-no">No.3</span><span class="fr-lb">フォント</span></div>
-        <div class="fr-tiles fr-t3">
+        <div class="fr-tiles fr-t4">
           <button class="dt-style fr-tile selected" data-font="mincho"><span class="fr-moji" style="font-family:'Hiragino Mincho ProN',serif">あ</span><small>明朝</small></button>
           <button class="dt-style fr-tile" data-font="gothic"><span class="fr-moji" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif">あ</span><small>ゴシック</small></button>
           <button class="dt-style fr-tile" data-font="maru"><span class="fr-moji" style="font-family:'Hiragino Maru Gothic ProN',sans-serif">あ</span><small>丸ゴシック</small></button>
+          <button class="dt-style fr-tile" data-font="tegaki"><span class="fr-moji" style="font-family:'Wafupop',sans-serif;font-size:24px">あ</span><small>手書き</small></button>
         </div>
         <div class="fr-pills">
           <button class="dt-style fr-pill" data-weight="300" id="fr-w-light">細</button>
@@ -2192,7 +2194,8 @@ let frInkText='#231815', frInkFrame='#231815', frInkBg='none';
 const FR_FONTS={
   mincho:"'Hiragino Mincho ProN',serif",
   gothic:"'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif",
-  maru:"'Hiragino Maru Gothic ProN',sans-serif"
+  maru:"'Hiragino Maru Gothic ProN',sans-serif",
+  tegaki:"'Wafupop','Hiragino Maru Gothic ProN',sans-serif"
 };
 function frBuildInks(rowId,presets,initial,custDefault,onPick){
   const row=document.getElementById(rowId);
@@ -2299,6 +2302,8 @@ function frRenderCanvas(){
   return cv;
 }
 async function frMakeBlob(){
+  // 手書き（和風ぽっぷ）は使う文字の分だけWebフォントを読み込んでから描く
+  if(frFont==='tegaki')await document.fonts.load(`72px "Wafupop"`,document.getElementById('fr-text').value||'ここに入力').catch(()=>{});
   return await new Promise(r=>frRenderCanvas().toBlob(r,'image/png'));
 }
 async function frUpdatePreview(){
