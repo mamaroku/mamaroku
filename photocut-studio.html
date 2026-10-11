@@ -6,6 +6,7 @@
 <title>mamaroku | Photocut Studio</title>
 <link rel="icon" href="icon.png" type="image/png">
 <link rel="apple-touch-icon" href="mamaroku_icon.jpg">
+<link href="fonts/wafupop/wafupop.css" rel="stylesheet">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="mamaroku">
@@ -192,6 +193,59 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #howto-screen.active{display:flex;}
 #howto-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #howto-content img{width:100%;display:block;}
+
+
+/* ── 文字囲み画面（illust-sticker の「囲み」を移植） ── */
+#text-screen{display:none;flex-direction:column;height:100%;}
+#text-screen.active{display:flex;}
+#text-screen{position:relative;}
+#text-screen.locked #text-body{opacity:.4;filter:grayscale(.3);}
+#text-lock-hint{position:absolute;left:0;right:0;top:60px;bottom:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;text-align:center;z-index:5;}
+#text-screen.locked #text-lock-hint{display:flex;}
+#text-lock-hint .dlh-txt{font-size:11px;letter-spacing:.12em;color:var(--muted);}
+#text-lock-hint .dlh-sub{font-size:9px;letter-spacing:.1em;color:var(--faint);}
+#fr-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
+#fr-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
+#fr-preview{max-width:94%;max-height:80px;object-fit:contain;}
+#fr-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
+
+
+#text-body{padding:0 16px 96px;display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;box-sizing:border-box;background:#fbf9f4 repeating-linear-gradient(to bottom,transparent 0 31px,#ece6dc 31px 32px);}
+#text-screen .fr-pvwrap{position:sticky;top:0;z-index:2;margin:0 -16px;padding:18px 16px 10px;background:linear-gradient(#fbf9f4 88%,rgba(251,249,244,0));}
+#text-screen .fr-paper{position:relative;background:#fff;box-shadow:0 2px 8px rgba(60,50,40,.1);padding:12px;transform:rotate(-.6deg);}
+#text-screen .fr-paper::before{content:'';position:absolute;top:-8px;left:50%;width:70px;height:18px;margin-left:-35px;background:rgba(214,196,170,.55);transform:rotate(2deg);z-index:1;}
+#text-screen #fr-preview-box{border:none;}
+#text-screen .fr-copyrow{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;}
+#text-screen .fr-copyrow .dt-hint{flex:1;text-align:right;}
+#text-screen #fr-copy{padding:8px 22px;}
+#text-screen .fr-sec{padding:8px 0 12px;}
+#text-screen .fr-sh{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;}
+#text-screen .fr-no{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--faint);letter-spacing:.05em;}
+#text-screen .fr-lb{font-size:12.5px;letter-spacing:.12em;font-weight:400;color:var(--text);}
+#text-screen .fr-tiles{display:grid;gap:8px;}
+#text-screen .fr-t4{grid-template-columns:repeat(4,1fr);}
+#text-screen .fr-t3{grid-template-columns:repeat(3,1fr);}
+#text-screen .fr-t2{grid-template-columns:repeat(2,1fr);}
+#text-screen .fr-tile{padding:0;background:#fff;border:1px solid #e6dfd3;border-radius:10px;aspect-ratio:1;max-height:96px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 2px rgba(60,50,40,.06);color:var(--text);}
+#text-screen .fr-t2 .fr-tile{aspect-ratio:auto;padding:11px 0;flex-direction:row;gap:10px;}
+#text-screen .fr-tile small{font-size:10px;color:var(--muted);letter-spacing:.05em;}
+#text-screen .fr-tile.selected,#text-screen .fr-pill.selected{background:#fff;color:var(--text);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);}
+#text-screen .fr-moji{font-size:22px;line-height:1;}
+#text-screen .fr-dir{font-size:13px;line-height:1;display:inline-block;}
+#text-screen .fr-ic{width:30px;height:20px;display:block;}
+#text-screen .fr-ic.kaku{border:1.5px solid var(--text);}
+#text-screen .fr-ic.marukado{border:1.5px solid var(--text);border-radius:7px;}
+#text-screen .fr-ic.niju{border:1px solid var(--text);padding:2px;background:var(--faint);background-clip:content-box;}
+#text-screen .fr-ic.none{border:1.5px dashed #bbb;}
+#text-screen .fr-pills{display:flex;gap:6px;margin-top:8px;}
+#text-screen .fr-pill{padding:5px 16px;border-radius:99px;background:#fff;border:1px solid #e6dfd3;font-size:11.5px;color:var(--text);}
+#text-screen .fr-crow{display:flex;align-items:center;gap:12px;min-height:32px;}
+#text-screen .fr-crow b{font-weight:400;font-size:11.5px;width:34px;color:var(--muted);flex-shrink:0;}
+.fr-textarea{width:100%;border:none;border-bottom:1.5px solid var(--text);border-radius:0;background:transparent;color:var(--text);font-family:inherit;font-size:15px;padding:0 2px;resize:none;line-height:32px;box-sizing:border-box;outline:none;}
+#text-screen .dt-ink-none{background:linear-gradient(135deg,#fff 42%,#d66 42%,#d66 58%,#fff 58%);}
+#text-screen .rc-inline{display:flex;gap:8px;align-items:center;padding-left:8px;border-left:1px solid var(--bdl);}
+#text-screen .dt-row{margin-bottom:0;}
+#text-screen .dt-hint{margin-top:0;}
 
 /* ── 素材ギャラリー画面 ── */
 #material-screen {
@@ -420,6 +474,62 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
   <div class="mat-grid" id="mat-grid"></div>
 
 </div>
+<div id="text-screen">
+  <div class="mat-header">
+    <h2>文字を囲む</h2>
+    <button class="mat-back" onclick="hideTextScreen()">← もどる</button>
+  </div>
+  <div id="text-lock-hint">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="30" height="35" fill="var(--muted)"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>
+    <div class="dlh-txt">タップして解除</div>
+    <div class="dlh-sub">プレミアムコードで文字囲みが使えます</div>
+  </div>
+  <div id="text-body">
+    <div class="fr-pvwrap">
+      <div class="fr-paper"><div id="fr-preview-box"><img id="fr-preview" draggable="true" alt="囲みテキスト"></div></div>
+      <div class="fr-copyrow"><span class="dt-hint">うまくいかない時はプレビューを長押し→コピー</span><button id="fr-copy">コピー</button></div>
+    </div>
+    <div class="fr-sec">
+      <div class="fr-sh"><span class="fr-no">No.1</span><span class="fr-lb">テキスト</span></div>
+      <textarea class="fr-textarea" id="fr-text" rows="2" placeholder="ここに入力"></textarea>
+    </div>
+    <div class="fr-sec">
+      <div class="fr-sh"><span class="fr-no">No.2</span><span class="fr-lb">枠</span></div>
+      <div class="fr-tiles fr-t4" id="fr-frames">
+        <button class="dt-style fr-tile selected" data-frame="kaku"><span class="fr-ic kaku"></span><small>四角</small></button>
+        <button class="dt-style fr-tile" data-frame="marukado"><span class="fr-ic marukado"></span><small>角丸</small></button>
+        <button class="dt-style fr-tile" data-frame="niju"><span class="fr-ic niju"></span><small>二重</small></button>
+        <button class="dt-style fr-tile" data-frame="none"><span class="fr-ic none"></span><small>なし</small></button>
+      </div>
+    </div>
+    <div class="fr-sec" id="fr-fonts">
+      <div class="fr-sh"><span class="fr-no">No.3</span><span class="fr-lb">フォント</span></div>
+      <div class="fr-tiles fr-t4">
+        <button class="dt-style fr-tile selected" data-font="mincho"><span class="fr-moji" style="font-family:'Hiragino Mincho ProN',serif">あ</span><small>明朝</small></button>
+        <button class="dt-style fr-tile" data-font="gothic"><span class="fr-moji" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif">あ</span><small>ゴシック</small></button>
+        <button class="dt-style fr-tile" data-font="maru"><span class="fr-moji" style="font-family:'Hiragino Maru Gothic ProN',sans-serif">あ</span><small>丸ゴシック</small></button>
+        <button class="dt-style fr-tile" data-font="tegaki"><span class="fr-moji" style="font-family:'Wafupop',sans-serif;font-size:24px">あ</span><small>手書き</small></button>
+      </div>
+      <div class="fr-pills">
+        <button class="dt-style fr-pill" data-weight="300" id="fr-w-light">細</button>
+        <button class="dt-style fr-pill selected" data-weight="600" id="fr-w-bold">太</button>
+      </div>
+    </div>
+    <div class="fr-sec">
+      <div class="fr-sh"><span class="fr-no">No.4</span><span class="fr-lb">向き</span></div>
+      <div class="fr-tiles fr-t2" id="fr-dirs">
+        <button class="dt-style fr-tile selected" data-dir="h"><span class="fr-dir">≡</span><small>横書き</small></button>
+        <button class="dt-style fr-tile" data-dir="v"><span class="fr-dir" style="transform:rotate(90deg)">≡</span><small>縦書き</small></button>
+      </div>
+    </div>
+    <div class="fr-sec">
+      <div class="fr-sh"><span class="fr-no">No.5</span><span class="fr-lb">色</span></div>
+      <div class="fr-crow"><b>文字</b><div class="dt-row" id="fr-inks-text"></div></div>
+      <div class="fr-crow"><b>枠</b><div class="dt-row" id="fr-inks-frame"></div></div>
+      <div class="fr-crow"><b>背景</b><div class="dt-row" id="fr-inks-bg"></div></div>
+    </div>
+  </div>
+</div>
 <div id="main-screen" class="active">
 
   <!-- TOP BAR: save / copy -->
@@ -480,6 +590,12 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span class="tool-lbl">日付</span>
       <svg id="date-lock" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="currentColor" style="position:absolute;top:5px;right:calc(50% - 22px);width:11px;height:13px;color:var(--faint);"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>
+    </button>
+    <!-- text（文字囲み） -->
+    <button class="tool-btn" id="tool-text" onclick="showTextScreen()" style="position:relative;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M8.5 10h7M12 10v5"/></svg>
+      <span class="tool-lbl">text</span>
+      <svg id="text-lock" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="currentColor" style="position:absolute;top:5px;right:calc(50% - 22px);width:11px;height:13px;color:var(--faint);"><path d="M19,55 A31,31 0 0,1 81,55 L67,55 A17,17 0 0,0 33,55 Z"/><path fill-rule="evenodd" d="M16,55 L84,55 A6,6 0 0,1 90,61 L90,109 A6,6 0 0,1 84,115 L16,115 A6,6 0 0,1 10,109 L10,61 A6,6 0 0,1 16,55 Z M50,68 A8,8 0 0,1 50,84 A8,8 0 0,0 50,68 Z M46,84 L54,84 L54,96 L46,96 Z"/></svg>
     </button>
     <!-- material -->
     <button class="tool-btn" id="tool-material" onclick="showMaterialScreen()">
@@ -678,6 +794,11 @@ function updateDateLock(){
   if(lock)lock.style.display=premiumUnlocked?'none':'block';
   const pd=document.getElementById('panel-date');
   if(pd)pd.classList.toggle('locked',!premiumUnlocked);
+  // 2026-10-11 文字囲み（text）もプレミアム限定にした（kumiさん判断）。日付と同じく、画面は見られて操作すると解除画面が出る
+  const tl=document.getElementById('text-lock');
+  if(tl)tl.style.display=premiumUnlocked?'none':'block';
+  const ts=document.getElementById('text-screen');
+  if(ts)ts.classList.toggle('locked',!premiumUnlocked);
 }
 async function tryUnlockPremium(){
   const val=document.getElementById('premium-code-input').value.trim();
@@ -1688,6 +1809,213 @@ function showHowtoScreen() {
 }
 function hideHowtoScreen() {
   document.getElementById('howto-screen').classList.remove('active');
+  document.getElementById('main-screen').classList.add('active');
+  setTimeout(()=>{ resizePreview(); if(userImg) render(); }, 100);
+}
+// 2026-10-11 追加：文字囲み画面（下のナビの「text」）。プレミアム限定（鍵の表示は updateDateLock でまとめて切り替える）
+// ── 最近使った色（カスタムで選んだ色を全タブ共通で記憶） ──
+const RC_KEY='mamaroku_recent_colors',RC_MAX=5;
+let rcList=[];try{rcList=JSON.parse(localStorage.getItem(RC_KEY))||[];}catch(e){}
+const rcRows=[];
+function rcAdd(c){
+  c=c.toLowerCase();rcList=[c,...rcList.filter(x=>x!==c)].slice(0,RC_MAX);
+  try{localStorage.setItem(RC_KEY,JSON.stringify(rcList));}catch(e){}
+  rcRows.forEach(rcRender);
+}
+function rcRender(r){
+  r.el.innerHTML='';
+  rcList.forEach(c=>{
+    const b=document.createElement('button');
+    b.className=r.cls;b.style.background=c;b.dataset.color=c;b.dataset.ink=c;b.title='最近使った色 '+c;
+    if(r.isSel&&r.isSel(c))b.classList.add(r.selCls);
+    b.onclick=()=>r.onPick(c,b);
+    r.el.appendChild(b);
+  });
+  r.el.style.display=rcList.length?'':'none';
+  if(r.after)r.after();
+}
+// el=並べる場所, cls=丸ボタンのclass, onPick=押した時, isSel/selCls=作り直した時に選択状態を保つ
+function rcMount(el,cls,onPick,isSel,selCls,after){const r={el,cls,onPick,isSel,selCls,after};rcRows.push(r);rcRender(r);}
+// ── 文字囲み（illust-sticker の「囲み」を移植。描画の仕組みは同じ） ──
+let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frDir='h', frUrl=null;
+let frInkText='#231815', frInkFrame='#231815', frInkBg='none';
+const FR_FONTS={
+  mincho:"'Hiragino Mincho ProN',serif",
+  gothic:"'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif",
+  maru:"'Hiragino Maru Gothic ProN',sans-serif",
+  tegaki:"'Wafupop','Hiragino Maru Gothic ProN',sans-serif"
+};
+function frBuildInks(rowId,presets,initial,custDefault,onPick){
+  const row=document.getElementById(rowId);
+  const hex=document.createElement('span');hex.className='dt-hint';
+  const setSel=el=>{row.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');};
+  presets.forEach(({c,n})=>{
+    const b=document.createElement('button');
+    b.className='dt-ink'+(c===initial?' selected':'')+(c==='none'?' dt-ink-none':'');
+    if(c!=='none')b.style.background=c;
+    b.title=n;b.dataset.ink=c;
+    b.onclick=()=>{setSel(b);hex.textContent=c==='none'?'なし':c;onPick(c);};
+    row.appendChild(b);
+  });
+  const recent=document.createElement('span');recent.className='rc-inline';
+  row.appendChild(recent);
+  const cust=document.createElement('label');
+  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
+  cust.innerHTML='<span></span><input type="color" value="'+custDefault+'">';
+  row.appendChild(cust);
+  rcMount(recent,'dt-ink',(c,b)=>{setSel(b);hex.textContent=c;onPick(c);});
+  hex.textContent=initial==='none'?'なし':initial;
+  row.appendChild(hex);
+  cust.querySelector('input').addEventListener('input',e=>{
+    const v=e.target.value;
+    cust.querySelector('span').style.background=v;
+    setSel(cust);hex.textContent=v;onPick(v);
+  });
+  cust.querySelector('input').addEventListener('change',e=>rcAdd(e.target.value));
+}
+function frRRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+// 縦書きで回転させる文字・位置調整する文字
+const FR_ROT=new Set([...'ー〜～−-–—…‥()（）「」『』[]［］<>＜＞=＝']);
+const FR_PUNCT=new Set([...'、。，．']);
+const FR_SMALL=new Set([...'ゃゅょっぁぃぅぇぉゎャュョッァィゥェォヮ']);
+function frRenderCanvas(){
+  const raw=document.getElementById('fr-text').value;
+  let lines=raw.split('\n').map(s=>s.trim()).filter(s=>s!=='');
+  if(!lines.length)lines=['ここに入力'];
+  const fs=72, sp=fs*0.1;
+  const font=`${frWeight} ${fs}px ${FR_FONTS[frFont]}`;
+  const cv=document.createElement('canvas');
+  const ctx0=cv.getContext('2d');
+  ctx0.font=font;
+  const lw=Math.max(3,fs*0.055);
+  const m=lw*4; // 枠線と二重枠のための余白
+  let boxW,boxH,padX,padY,lh,chH,colW;
+  const inset=frFrame==='niju'?lw*2.2:0; // 二重は内側の塗りから測る
+  if(frDir==='v'){
+    chH=fs*1.2; colW=fs*1.55;
+    padX=fs*0.8+inset; padY=fs*0.85+inset;
+    const maxLen=Math.max(...lines.map(l=>[...l].length));
+    boxW=lines.length*colW+padX*2;
+    boxH=maxLen*chH+padY*2;
+  }else{
+    lh=fs*1.5;
+    try{ctx0.letterSpacing=sp+'px';}catch(e){}
+    let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
+    padX=fs*1.2+inset; padY=fs*0.8+inset;
+    boxW=maxW+padX*2; boxH=lines.length*lh+padY*2;
+  }
+  cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
+  const ctx=cv.getContext('2d');
+  ctx.lineWidth=lw;
+  // 背景（枠の形に合わせて塗る）
+  if(frInkBg!=='none'&&frFrame!=='niju'){
+    ctx.fillStyle=frInkBg;
+    if(frFrame==='marukado'){frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.fill();}
+    else ctx.fillRect(m,m,boxW,boxH);
+  }
+  ctx.strokeStyle=frInkFrame;
+  if(frFrame==='kaku'){
+    ctx.strokeRect(m,m,boxW,boxH);
+  }else if(frFrame==='marukado'){
+    frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.stroke();
+  }else if(frFrame==='niju'){
+    // 外側に細い線、すき間をあけて内側を塗る（背景なしの時は内側も細い線）
+    const g=lw*2.2;
+    ctx.lineWidth=lw*0.6;
+    ctx.strokeRect(m,m,boxW,boxH);
+    if(frInkBg!=='none'){ctx.fillStyle=frInkBg;ctx.fillRect(m+g,m+g,boxW-g*2,boxH-g*2);}
+    else ctx.strokeRect(m+g,m+g,boxW-g*2,boxH-g*2);
+  }
+  ctx.fillStyle=frInkText;
+  ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
+  if(frDir==='v'){
+    // 1行=1列、右から左へ
+    lines.forEach((col,ci)=>{
+      const x=m+boxW-padX-colW*(ci+0.5);
+      [...col].forEach((ch,ri)=>{
+        const y=m+padY+chH*(ri+0.5);
+        if(FR_ROT.has(ch)){
+          ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/2);ctx.fillText(ch,0,0);ctx.restore();
+        }else if(FR_PUNCT.has(ch)){
+          ctx.fillText(ch,x+fs*0.5,y-fs*0.5);
+        }else if(FR_SMALL.has(ch)){
+          ctx.fillText(ch,x+fs*0.1,y-fs*0.08);
+        }else{
+          ctx.fillText(ch,x,y);
+        }
+      });
+    });
+  }else{
+    try{ctx.letterSpacing=sp+'px';}catch(e){}
+    // letter-spacing分は右に余るので中心を少し左に補正
+    const cx=m+boxW/2+(sp/2);
+    lines.forEach((l,i)=>{ctx.fillText(l,cx,m+padY+lh*(i+0.5));});
+  }
+  return cv;
+}
+async function frMakeBlob(){
+  // 手書き（和風ぽっぷ）は使う文字の分だけWebフォントを読み込んでから描く
+  if(frFont==='tegaki')await document.fonts.load(`72px "Wafupop"`,document.getElementById('fr-text').value||'ここに入力').catch(()=>{});
+  return await new Promise(r=>frRenderCanvas().toBlob(r,'image/png'));
+}
+async function frUpdatePreview(){
+  const blob=await frMakeBlob();
+  if(frUrl)URL.revokeObjectURL(frUrl);
+  frUrl=URL.createObjectURL(blob);
+  document.getElementById('fr-preview').src=frUrl;
+  document.getElementById('fr-preview-box').classList.toggle('light',dtIsDark(frInkBg!=='none'?frInkBg:frInkText));
+}
+function frSetup(){
+  frBuildInks('fr-inks-text',[{c:'#231815',n:'ブラック'},{c:'#ffffff',n:'ホワイト'}],frInkText,'#a06070',v=>{frInkText=v;frUpdatePreview();});
+  frBuildInks('fr-inks-frame',[{c:'#231815',n:'ブラック'},{c:'#ffffff',n:'ホワイト'}],frInkFrame,'#a06070',v=>{frInkFrame=v;frUpdatePreview();});
+  frBuildInks('fr-inks-bg',[{c:'none',n:'なし（透明）'},{c:'#ffffff',n:'ホワイト'},{c:'#f5eee8',n:'クリーム'}],frInkBg,'#f5eee8',v=>{frInkBg=v;frUpdatePreview();});
+  document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(b=>{
+    b.onclick=()=>{frFont=b.dataset.font;document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  document.querySelectorAll('#fr-fonts .dt-style[data-weight]').forEach(b=>{
+    b.onclick=()=>{frWeight=b.dataset.weight;document.querySelectorAll('#fr-fonts .dt-style[data-weight]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  document.querySelectorAll('#fr-frames .dt-style').forEach(b=>{
+    b.onclick=()=>{frFrame=b.dataset.frame;document.querySelectorAll('#fr-frames .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  document.querySelectorAll('#fr-dirs .dt-style').forEach(b=>{
+    b.onclick=()=>{frDir=b.dataset.dir;document.querySelectorAll('#fr-dirs .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
+  });
+  let frTimer=null;
+  document.getElementById('fr-text').addEventListener('input',()=>{
+    clearTimeout(frTimer);frTimer=setTimeout(frUpdatePreview,250);
+  });
+  document.getElementById('fr-preview').addEventListener('dragstart',e=>{if(frUrl)e.dataTransfer.setData('text/uri-list',frUrl);});
+  document.getElementById('fr-copy').onclick=async()=>{
+    if (typeof gtag === 'function') gtag('event', 'text_copy', { frame: frFrame, font: frFont, dir: frDir });
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':frMakeBlob()})]);showMatToast('コピーしました ✓');}
+    catch(e){
+      // クリップボードが使えない端末：画像を出して長押しでコピーしてもらう
+      const blob=await frMakeBlob();
+      setCopyModalSrc(URL.createObjectURL(blob));
+      document.getElementById('copy-modal').classList.add('show');
+    }
+  };
+  frUpdatePreview();
+}
+function showTextScreen() {
+  if(!frInitDone){
+    frInitDone=true;frSetup();
+    // プレミアム未解除のとき、中を操作しようとしたら解除コード画面を出す
+    document.getElementById('text-body').addEventListener('pointerdown',function(e){
+      if(!premiumUnlocked){ e.preventDefault(); e.stopPropagation(); showUnlockModal(); }
+    },true);
+  }
+  updateDateLock();
+  document.getElementById('main-screen').classList.remove('active');
+  document.getElementById('text-screen').classList.add('active');
+}
+function hideTextScreen() {
+  document.getElementById('text-screen').classList.remove('active');
   document.getElementById('main-screen').classList.add('active');
   setTimeout(()=>{ resizePreview(); if(userImg) render(); }, 100);
 }
