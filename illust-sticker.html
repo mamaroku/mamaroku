@@ -2290,7 +2290,7 @@ function frRenderCanvas(){
   const tab=frFrame==='fusen'?fs*0.4:0; // 付箋ののり部分（横は左、縦は上）
   if(frDir==='v'){
     chH=fs*1.2; colW=fs*1.55;
-    padX=fs*0.8+inset; padY=fs*0.85+inset+notch;
+    padX=fs*0.8+inset; padY=fs*0.65+inset+notch;
     const maxLen=Math.max(...lines.map(l=>[...l].length));
     boxW=lines.length*colW+padX*2;
     boxH=maxLen*chH+padY*2+tab;
@@ -2303,7 +2303,7 @@ function frRenderCanvas(){
     lh=fs*1.5;
     try{ctx0.letterSpacing=sp+'px';}catch(e){}
     let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
-    padX=fs*1.2+inset+notch; padY=fs*0.8+inset;
+    padX=fs*1.2+inset+notch; padY=fs*0.6+inset;
     boxW=maxW+padX*2+tab; boxH=lines.length*lh+padY*2;
     if(frFrame==='pill'){
       const r=boxH/2, d=(lines.length-1)*lh/2+fs*0.5;
