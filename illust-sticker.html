@@ -146,13 +146,11 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #sec-frame .fr-tile{padding:0;background:#fff;border:1px solid #e6dfd3;border-radius:10px;aspect-ratio:1;max-height:96px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 2px rgba(60,50,40,.06);color:var(--text);}
 #sec-frame .fr-t2 .fr-tile{aspect-ratio:auto;padding:11px 0;flex-direction:row;gap:10px;}
 #sec-frame .fr-tile small{font-size:10px;color:var(--muted);letter-spacing:.05em;}
-#sec-frame .fr-tile.selected,#sec-frame .fr-pill.selected{background:#fff;color:var(--text);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);}
+#sec-frame .fr-tile.selected{background:#fff;color:var(--text);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);}
 #sec-frame .fr-moji{font-size:22px;line-height:1;}
 #sec-frame .fr-dir{font-size:13px;line-height:1;display:inline-block;}
 #sec-frame #fr-frames .fr-tile{aspect-ratio:auto;padding:12px 0;}
 #sec-frame .fr-fic{width:76px;height:34px;display:block;overflow:visible;font-size:11.5px;letter-spacing:.08em;}
-#sec-frame .fr-pills{display:flex;gap:6px;margin-top:8px;}
-#sec-frame .fr-pill{padding:5px 16px;border-radius:99px;background:#fff;border:1px solid #e6dfd3;font-size:11.5px;color:var(--text);}
 #sec-frame .fr-crow{display:flex;align-items:center;gap:12px;min-height:32px;}
 #sec-frame .fr-crow b{font-weight:400;font-size:11.5px;width:34px;color:var(--muted);flex-shrink:0;}
 .dt-ink-none{background:linear-gradient(135deg,#fff 42%,#d66 42%,#d66 58%,#fff 58%);}
@@ -377,10 +375,6 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
           <button class="dt-style fr-tile" data-font="gothic"><span class="fr-moji" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif">あ</span><small>ゴシック</small></button>
           <button class="dt-style fr-tile" data-font="maru"><span class="fr-moji" style="font-family:'Hiragino Maru Gothic ProN',sans-serif">あ</span><small>丸ゴシック</small></button>
           <button class="dt-style fr-tile" data-font="tegaki"><span class="fr-moji" style="font-family:'Wafupop',sans-serif;font-size:24px">あ</span><small>手書き</small></button>
-        </div>
-        <div class="fr-pills">
-          <button class="dt-style fr-pill" data-weight="300" id="fr-w-light">細</button>
-          <button class="dt-style fr-pill selected" data-weight="600" id="fr-w-bold">太</button>
         </div>
       </div>
       <div class="fr-sec">
@@ -2228,7 +2222,7 @@ function dtSetup(){
 }
 
 // ── 囲みテキスト ──
-let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frDir='h', frUrl=null;
+let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frDir='h', frUrl=null; // 太さは「太」で固定
 let frInkText='#231815', frInkFrame='#231815', frInkBg='none';
 const FR_FONTS={
   mincho:"'Hiragino Mincho ProN',serif",
@@ -2423,9 +2417,6 @@ function frSetup(){
   frBuildInks('fr-inks-bg',[{c:'none',n:'なし（透明）'},{c:'#ffffff',n:'ホワイト'},{c:'#f5eee8',n:'クリーム'}],frInkBg,'#f5eee8',v=>{frInkBg=v;frUpdatePreview();});
   document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(b=>{
     b.onclick=()=>{frFont=b.dataset.font;document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
-  });
-  document.querySelectorAll('#fr-fonts .dt-style[data-weight]').forEach(b=>{
-    b.onclick=()=>{frWeight=b.dataset.weight;document.querySelectorAll('#fr-fonts .dt-style[data-weight]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
   });
   document.querySelectorAll('#fr-frames .dt-style').forEach(b=>{
     b.onclick=()=>{frFrame=b.dataset.frame;document.querySelectorAll('#fr-frames .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
