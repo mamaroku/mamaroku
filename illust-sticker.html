@@ -154,6 +154,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #sec-frame .fr-ic.marukado{border:1.5px solid var(--text);border-radius:7px;}
 #sec-frame .fr-ic.niju{border:1px solid var(--text);padding:2px;background:var(--faint);background-clip:content-box;}
 #sec-frame .fr-ic.none{border:1.5px dashed #bbb;}
+#sec-frame .fr-ic.dot{border:2px dotted var(--text);}
 #sec-frame .fr-pills{display:flex;gap:6px;margin-top:8px;}
 #sec-frame .fr-pill{padding:5px 16px;border-radius:99px;background:#fff;border:1px solid #e6dfd3;font-size:11.5px;color:var(--text);}
 #sec-frame .fr-crow{display:flex;align-items:center;gap:12px;min-height:32px;}
@@ -366,6 +367,9 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
           <button class="dt-style fr-tile selected" data-frame="kaku"><span class="fr-ic kaku"></span><small>四角</small></button>
           <button class="dt-style fr-tile" data-frame="marukado"><span class="fr-ic marukado"></span><small>角丸</small></button>
           <button class="dt-style fr-tile" data-frame="niju"><span class="fr-ic niju"></span><small>二重</small></button>
+          <button class="dt-style fr-tile" data-frame="dot"><span class="fr-ic dot"></span><small>点々</small></button>
+          <button class="dt-style fr-tile" data-frame="ribbon"><svg class="fr-ic" viewBox="0 0 30 20"><path d="M1 3H29L25 10L29 17H1L5 10Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><small>リボン</small></button>
+          <button class="dt-style fr-tile" data-frame="fusen"><svg class="fr-ic" viewBox="0 0 30 20"><rect x="1" y="2" width="28" height="16" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="2" width="5" height="16" fill="currentColor"/></svg><small>付箋</small></button>
           <button class="dt-style fr-tile" data-frame="none"><span class="fr-ic none"></span><small>なし</small></button>
         </div>
       </div>
@@ -2285,24 +2289,57 @@ function frRenderCanvas(){
   const m=lw*4; // 枠線と二重枠のための余白
   let boxW,boxH,padX,padY,lh,chH,colW;
   const inset=frFrame==='niju'?lw*2.2:0; // 二重は内側の塗りから測る
+  const notch=frFrame==='ribbon'?fs*0.55:0; // リボンの切れ込みの深さ
+  const tab=frFrame==='fusen'?fs*0.4:0; // 付箋ののり部分（横は左、縦は上）
   if(frDir==='v'){
     chH=fs*1.2; colW=fs*1.55;
-    padX=fs*0.8+inset; padY=fs*0.85+inset;
+    padX=fs*0.8+inset; padY=fs*0.85+inset+notch;
     const maxLen=Math.max(...lines.map(l=>[...l].length));
     boxW=lines.length*colW+padX*2;
-    boxH=maxLen*chH+padY*2;
+    boxH=maxLen*chH+padY*2+tab;
   }else{
     lh=fs*1.5;
     try{ctx0.letterSpacing=sp+'px';}catch(e){}
     let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
-    padX=fs*1.2+inset; padY=fs*0.8+inset;
-    boxW=maxW+padX*2; boxH=lines.length*lh+padY*2;
+    padX=fs*1.2+inset+notch; padY=fs*0.8+inset;
+    boxW=maxW+padX*2+tab; boxH=lines.length*lh+padY*2;
   }
   cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
   const ctx=cv.getContext('2d');
   ctx.lineWidth=lw;
+  // リボン：両端（縦書きは上下）をV字に切り込む
+  const ribbonPath=()=>{
+    const x0=m,y0=m,x1=m+boxW,y1=m+boxH;
+    ctx.beginPath();
+    if(frDir==='v'){
+      ctx.moveTo(x0,y0);ctx.lineTo(m+boxW/2,y0+notch);ctx.lineTo(x1,y0);
+      ctx.lineTo(x1,y1);ctx.lineTo(m+boxW/2,y1-notch);ctx.lineTo(x0,y1);
+    }else{
+      ctx.moveTo(x0,y0);ctx.lineTo(x1,y0);ctx.lineTo(x1-notch,m+boxH/2);
+      ctx.lineTo(x1,y1);ctx.lineTo(x0,y1);ctx.lineTo(x0+notch,m+boxH/2);
+    }
+    ctx.closePath();
+  };
+  ctx.lineJoin='round';
   // 背景（枠の形に合わせて塗る）
-  if(frInkBg!=='none'&&frFrame!=='niju'){
+  if(frFrame==='fusen'){
+    // 付箋：本体に背景色＋うっすら影、のり部分を枠の色で塗る（背景なしの時は本体を細い線で）
+    if(frInkBg!=='none'){
+      ctx.save();
+      ctx.shadowColor='rgba(0,0,0,.18)';ctx.shadowBlur=lw*2;ctx.shadowOffsetX=lw*0.6;ctx.shadowOffsetY=lw*0.8;
+      ctx.fillStyle=frInkBg;ctx.fillRect(m,m,boxW,boxH);
+      ctx.restore();
+    }else{
+      ctx.strokeStyle=frInkFrame;ctx.lineWidth=lw*0.6;
+      ctx.strokeRect(m,m,boxW,boxH);
+      ctx.lineWidth=lw;
+    }
+    ctx.fillStyle=frInkFrame;
+    if(frDir==='v')ctx.fillRect(m,m,boxW,tab);
+    else ctx.fillRect(m,m,tab,boxH);
+  }else if(frInkBg!=='none'&&frFrame==='ribbon'){
+    ctx.fillStyle=frInkBg;ribbonPath();ctx.fill();
+  }else if(frInkBg!=='none'&&frFrame!=='niju'){
     ctx.fillStyle=frInkBg;
     if(frFrame==='marukado'){frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.fill();}
     else ctx.fillRect(m,m,boxW,boxH);
@@ -2312,6 +2349,17 @@ function frRenderCanvas(){
     ctx.strokeRect(m,m,boxW,boxH);
   }else if(frFrame==='marukado'){
     frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.stroke();
+  }else if(frFrame==='dot'){
+    // 丸い点を並べる（角に点が来るよう、辺ごとに間隔を割り付ける）
+    ctx.fillStyle=frInkFrame;
+    const r=lw*0.85, gap=lw*3;
+    const dots=(ax,ay,bx,by)=>{
+      const n=Math.max(1,Math.round(Math.hypot(bx-ax,by-ay)/gap));
+      for(let i=0;i<n;i++){ctx.beginPath();ctx.arc(ax+(bx-ax)*i/n,ay+(by-ay)*i/n,r,0,Math.PI*2);ctx.fill();}
+    };
+    dots(m,m,m+boxW,m);dots(m+boxW,m,m+boxW,m+boxH);dots(m+boxW,m+boxH,m,m+boxH);dots(m,m+boxH,m,m);
+  }else if(frFrame==='ribbon'){
+    ribbonPath();ctx.stroke();
   }else if(frFrame==='niju'){
     // 外側に細い線、すき間をあけて内側を塗る（背景なしの時は内側も細い線）
     const g=lw*2.2;
@@ -2327,7 +2375,7 @@ function frRenderCanvas(){
     lines.forEach((col,ci)=>{
       const x=m+boxW-padX-colW*(ci+0.5);
       [...col].forEach((ch,ri)=>{
-        const y=m+padY+chH*(ri+0.5);
+        const y=m+padY+tab+chH*(ri+0.5);
         if(FR_ROT.has(ch)){
           ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/2);ctx.fillText(ch,0,0);ctx.restore();
         }else if(FR_PUNCT.has(ch)){
@@ -2342,7 +2390,7 @@ function frRenderCanvas(){
   }else{
     try{ctx.letterSpacing=sp+'px';}catch(e){}
     // letter-spacing分は右に余るので中心を少し左に補正
-    const cx=m+boxW/2+(sp/2);
+    const cx=m+boxW/2+(sp/2)+tab/2;
     lines.forEach((l,i)=>{ctx.fillText(l,cx,m+padY+lh*(i+0.5));});
   }
   return cv;
