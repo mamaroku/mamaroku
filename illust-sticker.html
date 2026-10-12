@@ -152,6 +152,7 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 #sec-frame .fr-ic{width:30px;height:20px;display:block;}
 #sec-frame .fr-ic.kaku{border:1.5px solid var(--text);}
 #sec-frame .fr-ic.marukado{border:1.5px solid var(--text);border-radius:7px;}
+#sec-frame .fr-ic.pill{border:1.5px solid var(--text);border-radius:10px;}
 #sec-frame .fr-ic.niju{border:1px solid var(--text);padding:2px;background:var(--faint);background-clip:content-box;}
 #sec-frame .fr-ic.none{border:1.5px dashed #bbb;}
 #sec-frame .fr-ic.dot{border:2px dotted var(--text);}
@@ -363,9 +364,10 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
       </div>
       <div class="fr-sec">
         <div class="fr-sh"><span class="fr-no">No.2</span><span class="fr-lb">枠</span></div>
-        <div class="fr-tiles fr-t4" id="fr-frames">
+        <div class="fr-tiles fr-t3" id="fr-frames">
           <button class="dt-style fr-tile selected" data-frame="kaku"><span class="fr-ic kaku"></span><small>四角</small></button>
           <button class="dt-style fr-tile" data-frame="marukado"><span class="fr-ic marukado"></span><small>角丸</small></button>
+          <button class="dt-style fr-tile" data-frame="pill"><span class="fr-ic pill"></span><small>丸</small></button>
           <button class="dt-style fr-tile" data-frame="niju"><span class="fr-ic niju"></span><small>二重</small></button>
           <button class="dt-style fr-tile" data-frame="dot"><span class="fr-ic dot"></span><small>点々</small></button>
           <button class="dt-style fr-tile" data-frame="ribbon"><svg class="fr-ic" viewBox="0 0 30 20"><path d="M1 3H29L25 10L29 17H1L5 10Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><small>リボン</small></button>
@@ -2297,12 +2299,22 @@ function frRenderCanvas(){
     const maxLen=Math.max(...lines.map(l=>[...l].length));
     boxW=lines.length*colW+padX*2;
     boxH=maxLen*chH+padY*2+tab;
+    if(frFrame==='pill'){
+      const r=boxW/2, d=lines.length*colW/2;
+      const add=Math.max(0,r-Math.sqrt(Math.max(0,r*r-d*d))+fs*0.4-padY);
+      padY+=add;boxH+=add*2;
+    }
   }else{
     lh=fs*1.5;
     try{ctx0.letterSpacing=sp+'px';}catch(e){}
     let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
     padX=fs*1.2+inset+notch; padY=fs*0.8+inset;
     boxW=maxW+padX*2+tab; boxH=lines.length*lh+padY*2;
+    if(frFrame==='pill'){
+      const r=boxH/2, d=(lines.length-1)*lh/2+fs*0.5;
+      const add=Math.max(0,r-Math.sqrt(Math.max(0,r*r-d*d))+fs*0.4-padX);
+      padX+=add;boxW+=add*2;
+    }
   }
   cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
   const ctx=cv.getContext('2d');
@@ -2342,6 +2354,7 @@ function frRenderCanvas(){
   }else if(frInkBg!=='none'&&frFrame!=='niju'){
     ctx.fillStyle=frInkBg;
     if(frFrame==='marukado'){frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.fill();}
+    else if(frFrame==='pill'){frRRect(ctx,m,m,boxW,boxH,Math.min(boxW,boxH)/2);ctx.fill();}
     else ctx.fillRect(m,m,boxW,boxH);
   }
   ctx.strokeStyle=frInkFrame;
@@ -2349,6 +2362,8 @@ function frRenderCanvas(){
     ctx.strokeRect(m,m,boxW,boxH);
   }else if(frFrame==='marukado'){
     frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.stroke();
+  }else if(frFrame==='pill'){
+    frRRect(ctx,m,m,boxW,boxH,Math.min(boxW,boxH)/2);ctx.stroke();
   }else if(frFrame==='dot'){
     // 丸い点を並べる（角に点が来るよう、辺ごとに間隔を割り付ける）
     ctx.fillStyle=frInkFrame;
