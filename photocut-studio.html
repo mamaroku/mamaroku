@@ -1832,7 +1832,7 @@ function rcRender(r){
 // el=並べる場所, cls=丸ボタンのclass, onPick=押した時, isSel/selCls=作り直した時に選択状態を保つ
 function rcMount(el,cls,onPick,isSel,selCls,after){const r={el,cls,onPick,isSel,selCls,after};rcRows.push(r);rcRender(r);}
 // ── 文字囲み（illust-sticker の「囲み」を移植。描画の仕組みは同じ） ──
-let frInitDone=false, frFont='mincho', frWeight='600', frFrame='kaku', frDir='h', frUrl=null; // 太さは「太」で固定
+let frInitDone=false, frFont='mincho', frWeight='400', frFrame='kaku', frDir='h', frUrl=null; // 太らせない（太字だと漢字が潰れて見えるため）
 let frInkText='#231815', frInkFrame='#231815', frInkBg='none';
 const FR_FONTS={
   mincho:"'Hiragino Mincho ProN',serif",
