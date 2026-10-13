@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="イラストスタンプ">
-<link href="fonts/wafupop/wafupop.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Darumadrop+One&family=Silkscreen&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f8f6f2;--sur:#fdfcfa;--bd:#d8d4cc;--bdl:#e8e4de;--text:#3a3630;--muted:#5a5450;--faint:#7a7670;--acc:#5a524a;--hover:#f0ede8;--rose:#d4a5a5;--blush:#f4e8e4;}
@@ -120,42 +119,11 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
 .dt-ink-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0;}
 #dt-hex{font-size:11px;color:var(--muted);letter-spacing:.05em;}
 .dt-preview-wrap{display:flex;align-items:center;gap:14px;}
-#dt-preview-box,#fr-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
-#dt-preview-box.light,#fr-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
-#dt-preview,#fr-preview{max-width:94%;max-height:80px;object-fit:contain;}
-#dt-copy,#fr-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
+#dt-preview-box{flex:1;min-width:0;height:92px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#57534e 0% 25%,#44403b 0% 50%) 0 0/16px 16px;border:1px solid var(--bdl);}
+#dt-preview-box.light{background:repeating-conic-gradient(#efece6 0% 25%,#fdfcfa 0% 50%) 0 0/16px 16px;}
+#dt-preview{max-width:94%;max-height:80px;object-fit:contain;}
+#dt-copy{padding:9px 22px;font-size:12px;letter-spacing:.15em;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer;font-family:inherit;flex-shrink:0;}
 
-/* FRAME TEXT PANEL */
-#panel.frame-mode{max-height:660px;flex-shrink:1;min-height:0;display:flex;flex-direction:column;}
-.panel-sec#sec-frame{padding:0 16px 96px;display:none;flex-direction:column;flex:1;min-height:0;max-height:640px;overflow-y:auto;box-sizing:border-box;background:#fbf9f4 repeating-linear-gradient(to bottom,transparent 0 31px,#ece6dc 31px 32px);}
-#sec-frame .fr-pvwrap{position:sticky;top:0;z-index:2;margin:0 -16px;padding:18px 16px 10px;background:linear-gradient(#fbf9f4 88%,rgba(251,249,244,0));}
-#sec-frame .fr-paper{position:relative;background:#fff;box-shadow:0 2px 8px rgba(60,50,40,.1);padding:12px;transform:rotate(-.6deg);}
-#sec-frame .fr-paper::before{content:'';position:absolute;top:-8px;left:50%;width:70px;height:18px;margin-left:-35px;background:rgba(214,196,170,.55);transform:rotate(2deg);z-index:1;}
-#sec-frame #fr-preview-box{border:none;}
-#sec-frame .fr-copyrow{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;}
-#sec-frame .fr-copyrow .dt-hint{flex:1;text-align:right;}
-#sec-frame #fr-copy{padding:8px 22px;}
-#sec-frame .fr-sec{padding:8px 0 12px;}
-#sec-frame .fr-sh{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;}
-#sec-frame .fr-no{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--faint);letter-spacing:.05em;}
-#sec-frame .fr-lb{font-size:12.5px;letter-spacing:.12em;font-weight:400;color:var(--text);}
-#sec-frame .fr-tiles{display:grid;gap:8px;}
-#sec-frame .fr-t4{grid-template-columns:repeat(4,1fr);}
-#sec-frame .fr-t3{grid-template-columns:repeat(3,1fr);}
-#sec-frame .fr-t2{grid-template-columns:repeat(2,1fr);}
-#sec-frame .fr-tile{padding:0;background:#fff;border:1px solid #e6dfd3;border-radius:10px;aspect-ratio:1;max-height:96px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 2px rgba(60,50,40,.06);color:var(--text);}
-#sec-frame .fr-t2 .fr-tile{aspect-ratio:auto;padding:11px 0;flex-direction:row;gap:10px;}
-#sec-frame .fr-tile small{font-size:10px;color:var(--muted);letter-spacing:.05em;}
-#sec-frame .fr-tile.selected{background:#fff;color:var(--text);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);}
-#sec-frame .fr-moji{font-size:22px;line-height:1;}
-#sec-frame .fr-dir{font-size:13px;line-height:1;display:inline-block;}
-#sec-frame #fr-frames .fr-tile{aspect-ratio:auto;padding:12px 0;}
-#sec-frame .fr-fic{width:76px;height:34px;display:block;overflow:visible;font-size:11.5px;letter-spacing:.08em;}
-#sec-frame .fr-crow{display:flex;align-items:center;gap:12px;min-height:32px;}
-#sec-frame .fr-crow b{font-weight:400;font-size:11.5px;width:34px;color:var(--muted);flex-shrink:0;}
-.dt-ink-none{background:linear-gradient(135deg,#fff 42%,#d66 42%,#d66 58%,#fff 58%);}
-.panel-sec#sec-frame.active{display:flex;}
-.fr-textarea{width:100%;border:none;border-bottom:1.5px solid var(--text);border-radius:0;background:transparent;color:var(--text);font-family:inherit;font-size:15px;padding:0 2px;resize:none;line-height:32px;box-sizing:border-box;outline:none;}
 .dt-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;}
 #ph-search{width:100%;padding:9px 14px;border:1.5px solid var(--bdl);background:var(--bg);font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:8px;flex-shrink:0;}
 #ph-search:focus{border-color:var(--acc);}
@@ -286,7 +254,6 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
     <button class="tool-tab" id="tab-photo" onclick="switchTab('photo')">写真・素材</button>
     <button class="tool-tab" id="tab-phrase" onclick="switchTab('phrase')">フレーズ</button>
     <button class="tool-tab" id="tab-date" onclick="switchTab('date')">日付</button>
-    <button class="tool-tab" id="tab-frame" onclick="switchTab('frame')">囲み</button>
   </div>
   <div id="panel">
     <div class="panel-sec active" id="sec-color">
@@ -345,51 +312,6 @@ input[type=range]{flex:1;accent-color:var(--acc);cursor:pointer;}
         <button id="dt-copy">コピー</button>
       </div>
       <div class="dt-hint">コピーしてGoodnotesなどにペースト（背景は透過PNG）。うまくいかない時はプレビューを長押し→コピー。</div>
-    </div>
-    <div class="panel-sec" id="sec-frame">
-      <div class="fr-pvwrap">
-        <div class="fr-paper"><div id="fr-preview-box"><img id="fr-preview" draggable="true" alt="囲みテキスト"></div></div>
-        <div class="fr-copyrow"><span class="dt-hint">うまくいかない時はプレビューを長押し→コピー</span><button id="fr-copy">コピー</button></div>
-      </div>
-      <div class="fr-sec">
-        <div class="fr-sh"><span class="fr-no">No.1</span><span class="fr-lb">テキスト</span></div>
-        <textarea class="fr-textarea" id="fr-text" rows="2" placeholder="ここに入力"></textarea>
-      </div>
-      <div class="fr-sec">
-        <div class="fr-sh"><span class="fr-no">No.2</span><span class="fr-lb">枠</span></div>
-<div class="fr-tiles fr-t3" id="fr-frames">
-          <button class="dt-style fr-tile selected" data-frame="kaku"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1" y="1" width="74" height="32" stroke="currentColor" fill="none" stroke-width="1.5"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">四角</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="marukado"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1" y="1" width="74" height="32" rx="7" stroke="currentColor" fill="none" stroke-width="1.5"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">角丸</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="pill"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1" y="1" width="74" height="32" rx="16" stroke="currentColor" fill="none" stroke-width="1.5"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">丸</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="niju"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1" y="1" width="74" height="32" stroke="currentColor" fill="none" stroke-width=".8"/><rect x="4" y="4" width="68" height="26" fill="#ece6dc"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">二重</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="dot"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1.5" y="1.5" width="73" height="31" stroke="currentColor" fill="none" stroke-width="2" stroke-dasharray="0 4" stroke-linecap="round"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">点々</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="ribbon"><svg class="fr-fic" viewBox="0 0 76 34"><path d="M1 1H75L68 17L75 33H1L8 17Z" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linejoin="round"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">リボン</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="fusen"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1" y="1" width="74" height="32" stroke="currentColor" fill="none" stroke-width=".8"/><rect x="1" y="1" width="7" height="32" fill="currentColor"/><text x="41" y="17" text-anchor="middle" dominant-baseline="central" fill="currentColor">付箋</text></svg></button>
-          <button class="dt-style fr-tile" data-frame="none"><svg class="fr-fic" viewBox="0 0 76 34"><rect x="1" y="1" width="74" height="32" fill="none" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4 3"/><text x="38" y="17" text-anchor="middle" dominant-baseline="central" fill="var(--muted)">なし</text></svg></button>
-        </div>
-      </div>
-      <div class="fr-sec" id="fr-fonts">
-        <div class="fr-sh"><span class="fr-no">No.3</span><span class="fr-lb">フォント</span></div>
-        <div class="fr-tiles fr-t4">
-          <button class="dt-style fr-tile selected" data-font="mincho"><span class="fr-moji" style="font-family:'Hiragino Mincho ProN',serif">あ</span><small>明朝</small></button>
-          <button class="dt-style fr-tile" data-font="gothic"><span class="fr-moji" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif">あ</span><small>ゴシック</small></button>
-          <button class="dt-style fr-tile" data-font="maru"><span class="fr-moji" style="font-family:'Hiragino Maru Gothic ProN',sans-serif">あ</span><small>丸ゴシック</small></button>
-          <button class="dt-style fr-tile" data-font="tegaki"><span class="fr-moji" style="font-family:'Wafupop',sans-serif;font-size:24px">あ</span><small>手書き</small></button>
-        </div>
-      </div>
-      <div class="fr-sec">
-        <div class="fr-sh"><span class="fr-no">No.4</span><span class="fr-lb">向き</span></div>
-        <div class="fr-tiles fr-t2" id="fr-dirs">
-          <button class="dt-style fr-tile selected" data-dir="h"><span class="fr-dir">≡</span><small>横書き</small></button>
-          <button class="dt-style fr-tile" data-dir="v"><span class="fr-dir" style="transform:rotate(90deg)">≡</span><small>縦書き</small></button>
-        </div>
-      </div>
-      <div class="fr-sec">
-        <div class="fr-sh"><span class="fr-no">No.5</span><span class="fr-lb">色</span></div>
-        <div class="fr-crow"><b>文字</b><div class="dt-row" id="fr-inks-text"></div></div>
-        <div class="fr-crow"><b>枠</b><div class="dt-row" id="fr-inks-frame"></div></div>
-        <div class="fr-crow"><b>背景</b><div class="dt-row" id="fr-inks-bg"></div></div>
-      </div>
     </div>
   </div>
   <div id="zoom-row" style="display:none;">
@@ -790,7 +712,7 @@ function switchTab(tab){
     document.getElementById('tab-photo').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-photo').classList.add('active');
-    panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode','frame-mode');panelOpen=true;
+    panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
         app.classList.add('photo-mode');
     return;
   }
@@ -800,7 +722,7 @@ function switchTab(tab){
     document.getElementById('tab-phrase').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-phrase').classList.add('active');
-    panel.classList.add('open','phrase-mode');panel.classList.remove('date-mode','frame-mode');panelOpen=true;
+    panel.classList.add('open','phrase-mode');panel.classList.remove('date-mode');panelOpen=true;
     app.classList.remove('photo-mode');    if(!phInitDone){phSetup();phInitDone=true;}
     return;
   }
@@ -810,20 +732,9 @@ function switchTab(tab){
     document.getElementById('tab-date').classList.add('active');
     document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-date').classList.add('active');
-    panel.classList.add('open','date-mode');panel.classList.remove('phrase-mode','frame-mode');panelOpen=true;
+    panel.classList.add('open','date-mode');panel.classList.remove('phrase-mode');panelOpen=true;
     app.classList.remove('photo-mode');
     if(!dtInitDone){dtSetup();dtInitDone=true;}
-    return;
-  }
-  if(tab==='frame'){
-    activeTab=tab;
-    document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
-    document.getElementById('tab-frame').classList.add('active');
-    document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
-    document.getElementById('sec-frame').classList.add('active');
-    panel.classList.add('open','frame-mode');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
-    app.classList.remove('photo-mode');
-    if(!frInitDone){frSetup();frInitDone=true;}
     return;
   }
   app.classList.remove('photo-mode');
@@ -833,7 +744,7 @@ function switchTab(tab){
   document.getElementById('tab-color').classList.add('active');
   document.querySelectorAll('.panel-sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-color').classList.add('active');
-  panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode','frame-mode');panelOpen=true;
+  panel.classList.add('open');panel.classList.remove('phrase-mode','date-mode');panelOpen=true;
   document.getElementById('zoom-row').style.display='none';
 }
 
@@ -2219,221 +2130,6 @@ function dtSetup(){
     catch(e){if(dtUrl){window.open(dtUrl,'_blank');showToast('画像を長押しでコピーできます');}}
   };
   dtUpdatePreview();
-}
-
-// ── 囲みテキスト ──
-let frInitDone=false, frFont='mincho', frWeight='400', frFrame='kaku', frDir='h', frUrl=null; // 太らせない（太字だと漢字が潰れて見えるため）
-let frInkText='#231815', frInkFrame='#231815', frInkBg='none';
-const FR_FONTS={
-  mincho:"'Hiragino Mincho ProN',serif",
-  gothic:"'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif",
-  maru:"'Hiragino Maru Gothic ProN',sans-serif",
-  tegaki:"'Wafupop','Hiragino Maru Gothic ProN',sans-serif"
-};
-function frBuildInks(rowId,presets,initial,custDefault,onPick){
-  const row=document.getElementById(rowId);
-  const hex=document.createElement('span');hex.className='dt-hint';
-  const setSel=el=>{row.querySelectorAll('.dt-ink').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');};
-  presets.forEach(({c,n})=>{
-    const b=document.createElement('button');
-    b.className='dt-ink'+(c===initial?' selected':'')+(c==='none'?' dt-ink-none':'');
-    if(c!=='none')b.style.background=c;
-    b.title=n;b.dataset.ink=c;
-    b.onclick=()=>{setSel(b);hex.textContent=c==='none'?'なし':c;onPick(c);};
-    row.appendChild(b);
-  });
-  const recent=document.createElement('span');recent.className='rc-inline';
-  row.appendChild(recent);
-  const cust=document.createElement('label');
-  cust.className='dt-ink dt-ink-custom';cust.title='カスタムカラー';
-  cust.innerHTML='<span></span><input type="color" value="'+custDefault+'">';
-  row.appendChild(cust);
-  rcMount(recent,'dt-ink',(c,b)=>{setSel(b);hex.textContent=c;onPick(c);});
-  hex.textContent=initial==='none'?'なし':initial;
-  row.appendChild(hex);
-  cust.querySelector('input').addEventListener('input',e=>{
-    const v=e.target.value;
-    cust.querySelector('span').style.background=v;
-    setSel(cust);hex.textContent=v;onPick(v);
-  });
-  cust.querySelector('input').addEventListener('change',e=>rcAdd(e.target.value));
-}
-function frRRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
-}
-// 縦書きで回転させる文字・位置調整する文字
-const FR_ROT=new Set([...'ー〜～−-–—…‥()（）「」『』[]［］<>＜＞=＝']);
-const FR_PUNCT=new Set([...'、。，．']);
-const FR_SMALL=new Set([...'ゃゅょっぁぃぅぇぉゎャュョッァィゥェォヮ']);
-function frRenderCanvas(){
-  const raw=document.getElementById('fr-text').value;
-  let lines=raw.split('\n').map(s=>s.trim()).filter(s=>s!=='');
-  if(!lines.length)lines=['ここに入力'];
-  const fs=72, sp=fs*0.1;
-  const font=`${frWeight} ${fs}px ${FR_FONTS[frFont]}`;
-  const cv=document.createElement('canvas');
-  const ctx0=cv.getContext('2d');
-  ctx0.font=font;
-  const lw=Math.max(3,fs*0.055);
-  const m=lw*4; // 枠線と二重枠のための余白
-  let boxW,boxH,padX,padY,lh,chH,colW;
-  const inset=frFrame==='niju'?lw*2.2:0; // 二重は内側の塗りから測る
-  const notch=frFrame==='ribbon'?fs*0.55:0; // リボンの切れ込みの深さ
-  const tab=frFrame==='fusen'?fs*0.4:0; // 付箋ののり部分（横は左、縦は上）
-  if(frDir==='v'){
-    chH=fs*1.2; colW=fs*1.55;
-    padX=fs*0.8+inset; padY=fs*0.35+inset+notch;
-    const maxLen=Math.max(...lines.map(l=>[...l].length));
-    boxW=lines.length*colW+padX*2;
-    boxH=maxLen*chH+padY*2+tab;
-    if(frFrame==='pill'){
-      const r=boxW/2, d=lines.length*colW/2;
-      const add=Math.max(0,r-Math.sqrt(Math.max(0,r*r-d*d))+fs*0.4-padY);
-      padY+=add;boxH+=add*2;
-    }
-  }else{
-    lh=fs*1.5;
-    try{ctx0.letterSpacing=sp+'px';}catch(e){}
-    let maxW=0;lines.forEach(l=>{maxW=Math.max(maxW,ctx0.measureText(l).width);});
-    padX=fs*1.2+inset+notch; padY=fs*0.3+inset;
-    boxW=maxW+padX*2+tab; boxH=lines.length*lh+padY*2;
-    if(frFrame==='pill'){
-      const r=boxH/2, d=(lines.length-1)*lh/2+fs*0.5;
-      const add=Math.max(0,r-Math.sqrt(Math.max(0,r*r-d*d))+fs*0.4-padX);
-      padX+=add;boxW+=add*2;
-    }
-  }
-  cv.width=Math.ceil(boxW+m*2);cv.height=Math.ceil(boxH+m*2);
-  const ctx=cv.getContext('2d');
-  ctx.lineWidth=lw;
-  // リボン：両端（縦書きは上下）をV字に切り込む
-  const ribbonPath=()=>{
-    const x0=m,y0=m,x1=m+boxW,y1=m+boxH;
-    ctx.beginPath();
-    if(frDir==='v'){
-      ctx.moveTo(x0,y0);ctx.lineTo(m+boxW/2,y0+notch);ctx.lineTo(x1,y0);
-      ctx.lineTo(x1,y1);ctx.lineTo(m+boxW/2,y1-notch);ctx.lineTo(x0,y1);
-    }else{
-      ctx.moveTo(x0,y0);ctx.lineTo(x1,y0);ctx.lineTo(x1-notch,m+boxH/2);
-      ctx.lineTo(x1,y1);ctx.lineTo(x0,y1);ctx.lineTo(x0+notch,m+boxH/2);
-    }
-    ctx.closePath();
-  };
-  ctx.lineJoin='round';
-  // 背景（枠の形に合わせて塗る）
-  if(frFrame==='fusen'){
-    // 付箋：本体に背景色＋うっすら影、のり部分を枠の色で塗る（背景なしの時は本体を細い線で）
-    if(frInkBg!=='none'){
-      ctx.save();
-      ctx.shadowColor='rgba(0,0,0,.18)';ctx.shadowBlur=lw*2;ctx.shadowOffsetX=lw*0.6;ctx.shadowOffsetY=lw*0.8;
-      ctx.fillStyle=frInkBg;ctx.fillRect(m,m,boxW,boxH);
-      ctx.restore();
-    }else{
-      ctx.strokeStyle=frInkFrame;ctx.lineWidth=lw*0.6;
-      ctx.strokeRect(m,m,boxW,boxH);
-      ctx.lineWidth=lw;
-    }
-    ctx.fillStyle=frInkFrame;
-    if(frDir==='v')ctx.fillRect(m,m,boxW,tab);
-    else ctx.fillRect(m,m,tab,boxH);
-  }else if(frInkBg!=='none'&&frFrame==='ribbon'){
-    ctx.fillStyle=frInkBg;ribbonPath();ctx.fill();
-  }else if(frInkBg!=='none'&&frFrame!=='niju'){
-    ctx.fillStyle=frInkBg;
-    if(frFrame==='marukado'){frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.fill();}
-    else if(frFrame==='pill'){frRRect(ctx,m,m,boxW,boxH,Math.min(boxW,boxH)/2);ctx.fill();}
-    else ctx.fillRect(m,m,boxW,boxH);
-  }
-  ctx.strokeStyle=frInkFrame;
-  if(frFrame==='kaku'){
-    ctx.strokeRect(m,m,boxW,boxH);
-  }else if(frFrame==='marukado'){
-    frRRect(ctx,m,m,boxW,boxH,fs*0.45);ctx.stroke();
-  }else if(frFrame==='pill'){
-    frRRect(ctx,m,m,boxW,boxH,Math.min(boxW,boxH)/2);ctx.stroke();
-  }else if(frFrame==='dot'){
-    // 丸い点を並べる（角に点が来るよう、辺ごとに間隔を割り付ける）
-    ctx.fillStyle=frInkFrame;
-    const r=lw*0.85, gap=lw*3;
-    const dots=(ax,ay,bx,by)=>{
-      const n=Math.max(1,Math.round(Math.hypot(bx-ax,by-ay)/gap));
-      for(let i=0;i<n;i++){ctx.beginPath();ctx.arc(ax+(bx-ax)*i/n,ay+(by-ay)*i/n,r,0,Math.PI*2);ctx.fill();}
-    };
-    dots(m,m,m+boxW,m);dots(m+boxW,m,m+boxW,m+boxH);dots(m+boxW,m+boxH,m,m+boxH);dots(m,m+boxH,m,m);
-  }else if(frFrame==='ribbon'){
-    ribbonPath();ctx.stroke();
-  }else if(frFrame==='niju'){
-    // 外側に細い線、すき間をあけて内側を塗る（背景なしの時は内側も細い線）
-    const g=lw*2.2;
-    ctx.lineWidth=lw*0.6;
-    ctx.strokeRect(m,m,boxW,boxH);
-    if(frInkBg!=='none'){ctx.fillStyle=frInkBg;ctx.fillRect(m+g,m+g,boxW-g*2,boxH-g*2);}
-    else ctx.strokeRect(m+g,m+g,boxW-g*2,boxH-g*2);
-  }
-  ctx.fillStyle=frInkText;
-  ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
-  if(frDir==='v'){
-    // 1行=1列、右から左へ
-    lines.forEach((col,ci)=>{
-      const x=m+boxW-padX-colW*(ci+0.5);
-      [...col].forEach((ch,ri)=>{
-        const y=m+padY+tab+chH*(ri+0.5);
-        if(FR_ROT.has(ch)){
-          ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/2);ctx.fillText(ch,0,0);ctx.restore();
-        }else if(FR_PUNCT.has(ch)){
-          ctx.fillText(ch,x+fs*0.5,y-fs*0.5);
-        }else if(FR_SMALL.has(ch)){
-          ctx.fillText(ch,x+fs*0.1,y-fs*0.08);
-        }else{
-          ctx.fillText(ch,x,y);
-        }
-      });
-    });
-  }else{
-    try{ctx.letterSpacing=sp+'px';}catch(e){}
-    // letter-spacing分は右に余るので中心を少し左に補正
-    const cx=m+boxW/2+(sp/2)+tab/2;
-    lines.forEach((l,i)=>{ctx.fillText(l,cx,m+padY+lh*(i+0.5));});
-  }
-  return cv;
-}
-async function frMakeBlob(){
-  // 手書き（和風ぽっぷ）は使う文字の分だけWebフォントを読み込んでから描く
-  if(frFont==='tegaki')await document.fonts.load(`72px "Wafupop"`,document.getElementById('fr-text').value||'ここに入力').catch(()=>{});
-  return await new Promise(r=>frRenderCanvas().toBlob(r,'image/png'));
-}
-async function frUpdatePreview(){
-  const blob=await frMakeBlob();
-  if(frUrl)URL.revokeObjectURL(frUrl);
-  frUrl=URL.createObjectURL(blob);
-  document.getElementById('fr-preview').src=frUrl;
-  document.getElementById('fr-preview-box').classList.toggle('light',dtIsDark(frInkBg!=='none'?frInkBg:frInkText));
-}
-function frSetup(){
-  frBuildInks('fr-inks-text',[{c:'#231815',n:'ブラック'},{c:'#ffffff',n:'ホワイト'}],frInkText,'#a06070',v=>{frInkText=v;frUpdatePreview();});
-  frBuildInks('fr-inks-frame',[{c:'#231815',n:'ブラック'},{c:'#ffffff',n:'ホワイト'}],frInkFrame,'#a06070',v=>{frInkFrame=v;frUpdatePreview();});
-  frBuildInks('fr-inks-bg',[{c:'none',n:'なし（透明）'},{c:'#ffffff',n:'ホワイト'},{c:'#f5eee8',n:'クリーム'}],frInkBg,'#f5eee8',v=>{frInkBg=v;frUpdatePreview();});
-  document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(b=>{
-    b.onclick=()=>{frFont=b.dataset.font;document.querySelectorAll('#fr-fonts .dt-style[data-font]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
-  });
-  document.querySelectorAll('#fr-frames .dt-style').forEach(b=>{
-    b.onclick=()=>{frFrame=b.dataset.frame;document.querySelectorAll('#fr-frames .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
-  });
-  document.querySelectorAll('#fr-dirs .dt-style').forEach(b=>{
-    b.onclick=()=>{frDir=b.dataset.dir;document.querySelectorAll('#fr-dirs .dt-style').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');frUpdatePreview();};
-  });
-  let frTimer=null;
-  document.getElementById('fr-text').addEventListener('input',()=>{
-    clearTimeout(frTimer);frTimer=setTimeout(frUpdatePreview,250);
-  });
-  document.getElementById('fr-preview').addEventListener('dragstart',e=>{if(frUrl)e.dataTransfer.setData('text/uri-list',frUrl);});
-  document.getElementById('fr-copy').onclick=async()=>{
-    try{await navigator.clipboard.write([new ClipboardItem({'image/png':frMakeBlob()})]);showToast('コピーしました ✓');}
-    catch(e){if(frUrl){window.open(frUrl,'_blank');showToast('画像を長押しでコピーできます');}}
-  };
-  frUpdatePreview();
 }
 
 // ── Init ──
