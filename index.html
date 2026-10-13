@@ -429,6 +429,20 @@
       box-shadow: 0 10px 22px rgba(0,0,0,0.24);
     }
 
+    /* 新作の NEW マーク（カード左上に少しはみ出して貼る） */
+    .product-grid a.is-new { position: relative; }
+    .product-grid a.is-new img.product-new {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 26%;
+      max-width: 72px;
+      border-radius: 0;
+      box-shadow: none;
+      rotate: -8deg;
+      pointer-events: none;
+    }
+
     .product-meta {
       display: block;
       padding: 9px 2px 0;
@@ -922,8 +936,9 @@
         <p class="lineup-price">¥1,280〜（税込）・無料テンプレートあり</p>
         <a class="btn-outline lineup-try" href="free.html">まずは無料テンプレートで試す</a>
         <div class="product-grid">
-          <a href="https://mamaroku-design.stores.jp/items/6acc4da1d4de8d18ea4e7ca8" target="_blank" rel="noopener">
+          <a class="is-new" href="https://mamaroku-design.stores.jp/items/6acc4da1d4de8d18ea4e7ca8" target="_blank" rel="noopener">
             <img loading="lazy" decoding="async" src="images/redesign/product-11-akicolle.jpg" width="600" height="600" alt="あきコレ（オータムカラー・ハロウィンと秋のテンプレート）">
+            <img class="product-new" src="images/redesign/badge-new.png" width="89" height="89" alt="NEW">
             <span class="product-meta">
               <span class="product-name">あきコレ</span>
               <span class="product-spec">¥1,280 ／ 全22ページ</span>
