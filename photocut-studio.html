@@ -1894,7 +1894,7 @@ function frRenderCanvas(){
   const tab=frFrame==='fusen'?fs*0.4:0; // 付箋ののり部分（横は左、縦は上）
   if(frDir==='v'){
     chH=fs*1.2; colW=fs*1.55;
-    padX=fs*0.8+inset; padY=fs*0.35+inset+notch;
+    padX=fs*0.3+inset; padY=fs*1.1+inset+notch; // 横書きを90度回したのと同じ余白（文字の並ぶ方向は広く、横は狭く）
     const maxLen=Math.max(...lines.map(l=>[...l].length));
     boxW=lines.length*colW+padX*2;
     boxH=maxLen*chH+padY*2+tab;
