@@ -360,6 +360,15 @@
 
     .lineup-try { margin-bottom: 34px; }
 
+    /* ── 2027 デジタルプランナー ── */
+    .planner-label { font-size: 0.68rem; letter-spacing: 0.2em; color: rgba(245,242,237,0.6); margin-bottom: 8px; }
+    .planner-title { font-size: 1.15rem; font-weight: 500; letter-spacing: 0.08em; color: var(--cream); margin: 0 0 24px; }
+    .planner-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 24px; }
+    .planner-pair a { display: block; text-decoration: none; }
+    .planner-pair img { width: 100%; height: auto; border-radius: 4px; display: block; }
+    .planner-name { display: block; margin-top: 8px; font-size: 0.72rem; letter-spacing: 0.18em; color: var(--cream); }
+    .planner-note { font-size: 0.72rem; color: rgba(245,242,237,0.6); margin-top: 14px; letter-spacing: 0.03em; }
+
     .sidebar-instagram {
       margin-top: 16px;
       width: 140px;
@@ -815,6 +824,7 @@
           <li><a href="#dekiru">→ mamarokuで、できること</a></li>
           <li><a href="#our-story">→ Our Story</a></li>
           <li><a href="#lineup">→ LINE UP</a></li>
+          <li><a href="#planner">→ 2027 Digital Planner</a></li>
           <li><a href="#howto">→ How to Start</a></li>
           <li><a href="#photocut">→ Photocut Studio</a></li>
           <li><a href="#howto-tips">→ おすすめの使い方</a></li>
@@ -1016,6 +1026,26 @@
           </a>
         </div>
         <a class="btn-black" href="https://mamaroku-design.stores.jp/" target="_blank" rel="noopener">ストアで全部を見る →</a>
+      </section>
+
+      <!-- 2027 デジタルプランナー（特設ページへの導線） -->
+      <section class="section" id="planner">
+        <p class="planner-label">2027 DIGITAL PLANNER</p>
+        <h2 class="planner-title">2027 デジタルプランナー</h2>
+        <div class="planner-pair">
+          <a href="planner-wood.html">
+            <img loading="lazy" decoding="async" src="images/planner/thumb-wood.jpg" width="1200" height="857" alt="2027 デジタルプランナー WOOD">
+            <span class="planner-name">WOOD</span>
+          </a>
+          <a href="planner-leather.html">
+            <img loading="lazy" decoding="async" src="images/planner/thumb-leather.jpg" width="1200" height="849" alt="2027 デジタルプランナー LEATHER">
+            <span class="planner-name">LEATHER</span>
+          </a>
+        </div>
+        <p class="lineup-intro">予定を管理するだけでなく、<br>その日をどう過ごしたかが残る手帳。<br>WOOD と LEATHER の2冊をつくりました。</p>
+        <p class="lineup-price">WOOD ¥3,250 ／ LEATHER ¥2,450（税込）<br>無料のお試し版あり</p>
+        <a class="btn-black" href="planner2027II.html">くわしく見る →</a>
+        <p class="planner-note">お試し版（2026年10月分）は、<br>特設ページから無料でダウンロードできます</p>
       </section>
 
       <!-- Photocut Studio -->
@@ -1316,7 +1346,9 @@
           return;
         }
 
-        if (href.indexOf('free.html') > -1) {
+        if (href.indexOf('planner2027II') > -1 || href.indexOf('planner-wood') > -1 || href.indexOf('planner-leather') > -1) {
+          gtag('event', 'click_planner_page', { link_text: name });
+        } else if (href.indexOf('free.html') > -1) {
           gtag('event', 'click_free_template', { link_text: name });
         } else if (href.indexOf('photocut-studio') > -1) {
           gtag('event', 'click_photocut_studio', { link_text: name });
